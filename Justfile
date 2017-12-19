@@ -16,7 +16,7 @@ install:
     @cp $(fd 'atsfmt$' -IH dist-newstyle | tail -n1) ~/.local/bin
     @cp man/atsfmt.1 ~/.local/share/man/man1
 
-ci:
+ci: test
     cabal new-build
     cabal new-test
     hlint src app bench test
@@ -29,11 +29,11 @@ ci:
     weeder
 
 test:
-    @patscc -DATS_MEMALLOC_LIBC test/data/polyglot.dats -cleanaft -o pre &> /dev/null
-    atsfmt test/data/polyglot.dats > tmp.dats
-    @patscc -DATS_MEMALLOC_LIBC tmp.dats -cleanaft -o post &> /dev/null
-    diff <(./pre) <(./post)
-    @rm -f pre post *.c tmp.dats
+    @rm -rf rm .ghc.environment.* polyglot
+    @git clone https://github.com/vmchale/polyglot
+    cd polyglot && atsfmt src/polyglot.dats -i
+    cd polyglot && ./shake.hs
+    @rm -rf polyglot
 
 size:
     @sn d $(fd 'atsfmt$' -IH dist-newstyle | tail -n1)
