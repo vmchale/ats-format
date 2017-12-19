@@ -13,6 +13,8 @@ atsfmt - a source code formatter for ATS
 
   atsfmt -\-default-config
 
+  ac file.dats | atsfmt
+
 # DESCRIPTION
 
 **atsfmt** is an opinionated formatter for that ATS2 language.

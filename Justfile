@@ -14,6 +14,7 @@ manpages:
 install:
     @cabal new-build
     @cp $(fd 'atsfmt$' -IH dist-newstyle | tail -n1) ~/.local/bin
+    @cp man/atsfmt.1 ~/.local/share/man/man1
 
 ci: test
     cabal new-build
