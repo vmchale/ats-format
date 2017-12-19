@@ -16,7 +16,7 @@ install:
     @cp $(fd 'atsfmt$' -IH dist-newstyle | tail -n1) ~/.local/bin
     @cp man/atsfmt.1 ~/.local/share/man/man1
 
-ci: test
+ci:
     cabal new-build
     cabal new-test
     hlint src app bench test

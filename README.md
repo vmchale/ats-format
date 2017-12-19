@@ -3,18 +3,19 @@
 [![Build Status](https://travis-ci.org/vmchale/ats-format.svg?branch=master)](https://travis-ci.org/vmchale/ats-format)
 
 This is a code formatter for [ATS](http://www.ats-lang.org/). It is
-a work-in-progress, but it can handle a good chunk of the language already.
+a work-in-progress, but it can handle a subset of the language already.
 
 If you find something that's not listed in `TODO.md` feel free to open
 an issue.
 
 ## Configuration
 
-`atsfmt` is configured with the `.atsfmt.toml` file. You can generate a default
-config file with
+`atsfmt` is configured with the `.atsfmt.toml` file. As an example:
 
-```bash
- $ atsfmt --default-config
+```toml
+ribbon = 0.6 # maximum ribbon fraction
+width = 120 # maximum width
+clang-format = false # call clang-format on inline code
 ```
 
 ## Installation
