@@ -24,6 +24,7 @@ ci:
     yamllint .travis.yml
     yamllint .hlint.yaml
     yamllint .stylish-haskell.yaml
+    yamllint .yamllint
     stack build --test --bench --no-run-tests --no-run-benchmarks
     weeder
 
