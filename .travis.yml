@@ -44,7 +44,7 @@ install:
 script:
   - stack --no-terminal build --haddock --no-haddock-deps
   - stack test --no-run-tests
-  - curl -sL https://raw.githubusercontent.com/vmchale/tomlcheck/master/sh/check | sh -s .atsconfig.toml
+  - curl -sL https://raw.githubusercontent.com/vmchale/tomlcheck/master/sh/check | sh -s .atsfmt.toml
   - |
     if [ `uname` = "Linux" ]
     then
