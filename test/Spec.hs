@@ -1,8 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import           Language.ATS.Lexer       (lexATS)
-import           Language.ATS.Parser      (parseATS)
-import           Language.ATS.PrettyPrint (printATS)
+import           Language.ATS
 import           Test.Hspec
 
 main :: IO ()

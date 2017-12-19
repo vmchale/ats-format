@@ -1,6 +1,6 @@
 module Main where
 
-import           Language.ATS.Exec (exec)
+import           Language.ATS (exec)
 
 main :: IO ()
 main = exec

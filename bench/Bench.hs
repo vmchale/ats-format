@@ -1,9 +1,7 @@
 module Main where
 
 import           Criterion.Main
-import           Language.ATS.Lexer
-import           Language.ATS.Parser
-import           Language.ATS.PrettyPrint
+import           Language.ATS
 
 main :: IO ()
 main =

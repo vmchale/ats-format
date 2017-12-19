@@ -8,6 +8,8 @@ a work-in-progress, but it can handle a subset of the language already.
 If you find something that's not listed in `TODO.md` feel free to open
 an issue.
 
+So far the formatter is pleasantly fast - < 20ms to format a 1500 line file.
+
 ## Configuration
 
 `atsfmt` is configured with the `.atsfmt.toml` file. As an example:

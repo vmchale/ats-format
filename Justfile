@@ -6,7 +6,7 @@ polyglot:
     @poly . -e data/
 
 bench:
-    bench "atsfmt test/data/polyglot.dats"
+    bench "atsfmt test/data/polyglot.dats" "atsfmt test/data/filetype.sats"
 
 manpages:
     pandoc man/MANPAGE.md -s -t man -o man/atsfmt.1

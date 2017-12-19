@@ -35,12 +35,13 @@ Flag development {
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Language.ATS.Types
+  exposed-modules:     Language.ATS
+  other-modules:       Language.ATS.Types
                      , Language.ATS.Lexer
                      , Language.ATS.Parser
                      , Language.ATS.PrettyPrint
                      , Language.ATS.Exec
-  other-modules:       Paths_ats_format
+                     , Paths_ats_format
   build-depends:       base >= 4.9 && < 5
                      , array
                      , lens
