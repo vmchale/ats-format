@@ -1,0 +1,7 @@
+.ghc*
+*.c
+_darcs
+.stack-work
+tags
+dist
+dist-newstyle
