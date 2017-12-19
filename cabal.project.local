@@ -8,4 +8,5 @@ haddock-hoogle: True
 haddock-internal: True
 
 program-options
-  happy-options: -g -c
+  happy-options: -gcsa
+  alex-options: -g

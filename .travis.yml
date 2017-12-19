@@ -53,12 +53,12 @@ script:
       yamllint .travis.yml
       yamllint .hlint.yaml
       yamllint .stylish-haskell.yaml
+      curl -sL https://raw.github.com/ndmitchell/hlint/master/misc/travis.sh | sh -s src app test bench
+      curl -sL https://raw.github.com/ndmitchell/weeder/master/misc/travis.sh | sh -s src app test bench
     else
       echo "skipping yaml verification..."
     fi
   - stack build --test --bench --no-run-tests --no-run-benchmarks
-  - curl -sL https://raw.github.com/ndmitchell/hlint/master/misc/travis.sh | sh -s src app test bench
-  - curl -sL https://raw.github.com/ndmitchell/weeder/master/misc/travis.sh | sh -s src app test bench
   - |
     if [ `uname` = "Darwin" ]
     then
