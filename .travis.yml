@@ -1,73 +1,82 @@
+---
 sudo: false
 cache:
   directories:
-  - "$HOME/.stack"
+    - $HOME/.stack
 addons:
   apt:
     packages:
-    - libgmp3-dev
+      - libgmp3-dev
 matrix:
   include:
-  - env: TARGET=x86_64-unkown-linux-gnu
-    language: python
-  - env: TARGET=x86_64-apple-darwin
-    os: osx
-    language: default
+
+    # Linux
+    - env: TARGET=x86_64-unkown-linux-gnu
+      language: python
+
+    # OS X
+    - env: TARGET=x86_64-apple-darwin
+      os: osx
+      language: default
+
 before_install:
-- mkdir -p ~/.local/bin
-- export PATH=$HOME/.local/bin:$PATH
-- |
-  if [ `uname` = "Darwin" ]
-  then
-    curl --insecure -L https://www.stackage.org/stack/osx-x86_64 | tar xz --strip-components=1 --include '*/stack' -C ~/.local/bin
-  else
-    curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
-  fi
-- chmod a+x ~/.local/bin/stack
-- |
-  if [ `uname` = "Linux" ]
-  then
-    pip install yamllint
-  else
-    echo "skipping yaml verification..."
-  fi
+  - mkdir -p ~/.local/bin
+  - export PATH=$HOME/.local/bin:$PATH
+  - |
+    if [ `uname` = "Darwin" ]
+    then
+      curl --insecure -L https://www.stackage.org/stack/osx-x86_64 | tar xz --strip-components=1 --include '*/stack' -C ~/.local/bin
+    else
+      curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+    fi
+  - chmod a+x ~/.local/bin/stack
+  - |
+    if [ `uname` = "Linux" ]
+    then
+      pip install yamllint
+    else
+      echo "skipping yaml verification..."
+    fi
+
 install:
-- stack --no-terminal --install-ghc test --only-dependencies
+  - stack --no-terminal --install-ghc test --only-dependencies
+
 script:
-- stack --no-terminal build --haddock --no-haddock-deps
-- stack test --no-run-tests
-- |
-  if [ `uname` = "Linux" ]
-  then
-    yamllint stack.yaml
-    yamllint appveyor.yml
-    yamllint .travis.yml
-  else
-    echo "skipping yaml verification..."
-  fi
-- stack bench --no-bench
-- curl -sL https://raw.github.com/ndmitchell/hlint/master/misc/travis.sh | sh -s .
-- curl -sL https://raw.github.com/ndmitchell/weeder/master/misc/travis.sh | sh -s
-  .
-- |
-  if [ `uname` = "Darwin" ]
-  then
-    export BINPATH="$(find . -name atsfmt -perm 755 | tail -n1)"
-  else
-    export BINPATH="$(find -name atsfmt -executable | tail -n2 | head -n1)"
-  fi
-- echo $BINPATH
-- mv $BINPATH atsfmt-$TARGET
-- ls atsfmt-$TARGET
+  - stack --no-terminal build --haddock --no-haddock-deps
+  - stack test --no-run-tests
+  - |
+    if [ `uname` = "Linux" ]
+    then
+      yamllint stack.yaml
+      yamllint appveyor.yml
+      yamllint .travis.yml
+    else
+      echo "skipping yaml verification..."
+    fi
+  - stack bench --no-bench
+  - curl -sL https://raw.github.com/ndmitchell/hlint/master/misc/travis.sh | sh -s .
+  - curl -sL https://raw.github.com/ndmitchell/weeder/master/misc/travis.sh | sh -s .
+  - |
+    if [ `uname` = "Darwin" ]
+    then
+      export BINPATH="$(find . -name atsfmt -perm 755 | tail -n1)"
+    else
+      export BINPATH="$(find -name atsfmt -executable | tail -n2 | head -n1)"
+    fi
+  - echo $BINPATH
+  - mv $BINPATH atsfmt-$TARGET
+  - ls atsfmt-$TARGET
+
 deploy:
   api_key:
-    secure: Ud5v7q994U9Nl0osERMA69l0B6KgqN8GYtycoQ2up/bBa/4dWUpztHdZHnO77hs27jyFdivCpgtp6H/xWDSpHDp1oVd0Z7JwEBsGz4f+jw8wH9rjzdgxEpAXQEep4xNgD7DaeHuX8JCWQDaKxvFJ/4i4aS7MJR9FQJ1mR52d8nO0un10/c7PpumlIEW/xBRPlYgVWy334rGG0IkejyF9VbweIGtPVGB0sw9Tn8HRGiDfr0Izct/hlpTN22PBLZ4dZFpfe/UUbxqdY4b7TDqkqgdO7pngv42uCBucXWXY4mZMr89WAiL3r67hmQgiu4Dp2bM3DcKpFn+Sd0hCk/rd3NxIsYwD+gF0eviK+dhDJTscfNXnHIDIAXXy/pFqT7EYfQyhbfXtKKFcfNhCLCm0gSi4RdwZ+gOVyfNEiETcME6HTBUdARZr9PEBSA8dAiD0GZh7ZLKnsdnc/qXV2lCNi2RvNKGVZOhvMMXHv5QrC6h+EDy3RNYPRQCXzSLba25KAHL4coxUrflcp56lDeid5BNUlR7H9EYq1V0ZzQNPy04uhW7tEQOJjfSI+XNgmyPfSih7FWLS6gYBmK4DIwzh/jpJL0J3WlrUjghk7ZyBQXwGStkOrEpvYxQDkORm38xSIk8BffAo+oGka6/kQEZDPxIbD4uMxqhVjMLLVaKT+mc=
+    secure: "bdJVbM9pdNqkeQb9O4mUocyA+zLAHupCLUYMPyi5jZVXF5hDPQeB93C7bMb+G4DzfYdDhDvy/VACYSGWnV2JwbSDObtAi8//wiN4Ir/AjK6aELEF8oVuoPOr4geIOMpjcUbT5JZhqqTF4Ogtd0jW97eg6LnkOZj/Nmirk7NL9FV85r3iw1MEIWBsLdHbpHKgyItOo2YKh0dM3QTZ3tjaeEhEVgd4VQQlEB2SAtueOu/lJhbjT6Y7ztGLW+UXE6ITXuG623ewA8tXt8oyeDx0HES04RVnfkDN7QIDC7Crcx7Q7Kb+yCc1cRe9QQ/9/kaeloCYd0XAKf+Bd1kyH2MIm+/Pnriz5pkM+2z1xEUhTXqXM6Wm1cXHVXRUHJQWayii1TSDp8DhVVoz8N0L3GMEIIJi1rdkO4qA84JcZkQFnH4NhvVK9Bkd/a++h6vh2WOg/nvwnOUBooNLkKik78PrIgpgTapW8yFyXrOlVqtQ9sdCmhrpQGn7Ja1P2z3tNmZgSvIcyhx/SLgHegPae5EJ9roFWRNJ9A/tlgyqNbxBdr5hLWSo3zqyJXj51cqd68tp09lloXLlC9Q2HlAejenfWYQ4KEwT1A8u+cK9lJ7pN+hgmlbQFCz9aYzokD6CCzsdJo01yQMCW2LtlKEeWiUVuA3MrWZ3l+oFQ6/npGQoOQY="
   file: atsfmt-$TARGET
   on:
     tags: true
   provider: releases
   skip_cleanup: true
+
 branches:
   only:
-  - "/\\d+\\.\\d+\\.\\d+\\.\\d+.*$/"
-  - master
+    - /\d+\.\d+\.\d+\.\d+.*$/
+    - master
