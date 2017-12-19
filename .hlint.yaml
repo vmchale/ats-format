@@ -11,6 +11,6 @@
 - error: {lhs: "concat", rhs: "join", name: "Generalize concat"}
 - error: {lhs: "concatMap", rhs: "(=<<)", name: "Generalize concatMap"}
 - error: {lhs: "f >> pure ()", rhs: "void f", name: "Use void"}
-- ignore: {name: Use <$>, within: [ Language.ATS.PrettyPrint ]}
-- ignore: {name: Unused LANGUAGE pragma, within: [ Language.ATS.PrettyPrint ]}
-- ignore: {name: Functor law, within: [ Language.ATS.PrettyPrint ]}
+- ignore: {name: Use <$>, within: [Language.ATS.PrettyPrint]}
+- ignore: {name: Unused LANGUAGE pragma, within: [Language.ATS.PrettyPrint]}
+- ignore: {name: Functor law, within: [Language.ATS.PrettyPrint]}

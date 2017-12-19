@@ -21,6 +21,9 @@ ci:
     cabal new-test
     hlint src app bench test
     tomlcheck --file .atsfmt.toml
+    yamllint .travis.yml
+    yamllint .hlint.yaml
+    yamllint .stylish-haskell.yaml
     stack build --test --bench --no-run-tests --no-run-benchmarks
     weeder
 

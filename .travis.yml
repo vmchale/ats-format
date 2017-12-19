@@ -44,12 +44,15 @@ install:
 script:
   - stack --no-terminal build --haddock --no-haddock-deps
   - stack test --no-run-tests
+  - curl -sL https://raw.githubusercontent.com/vmchale/tomlcheck/master/sh/check | sh -s .atsconfig.toml
   - |
     if [ `uname` = "Linux" ]
     then
       yamllint stack.yaml
       yamllint appveyor.yml
       yamllint .travis.yml
+      yamllint .hlint.yaml
+      yamllint .stylish-haskell.yaml
     else
       echo "skipping yaml verification..."
     fi
