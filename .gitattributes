@@ -1,1 +1,3 @@
 test/data/* linguist-vendored
+*.y linguist-language=Happy
+*.l linguist-language=Alex
