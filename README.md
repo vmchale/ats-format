@@ -1,5 +1,7 @@
 # ats-formatter
 
+[![Build Status](https://travis-ci.org/vmchale/ats-format.svg?branch=master)](https://travis-ci.org/vmchale/ats-format)
+
 This is a code formatter for [ATS](http://www.ats-lang.org/). It is
 a work-in-progress, but it can handle a good chunk of the language already.
 
