@@ -56,7 +56,7 @@ script:
     else
       echo "skipping yaml verification..."
     fi
-  - stack bench --no-bench
+  - stack build --test --bench --no-run-tests --no-run-benchmarks
   - curl -sL https://raw.github.com/ndmitchell/hlint/master/misc/travis.sh | sh -s .
   - curl -sL https://raw.github.com/ndmitchell/weeder/master/misc/travis.sh | sh -s .
   - |
