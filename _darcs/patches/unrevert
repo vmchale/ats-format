@@ -1,0 +1,668 @@
+
+New patches:
+
+[unrevert
+anon**20171208043429
+ Ignore-this: e7fe108d54a485310f63b77430762373
+] hunk ./src/Language/ATS/PrettyPrint.hs 1
+-{-# OPTIONS_GHC -fno-warn-orphans #-}
+-
+-{-# LANGUAGE DeriveAnyClass       #-}
+-{-# LANGUAGE DeriveGeneric        #-}
+-{-# LANGUAGE FlexibleContexts     #-}
+-{-# LANGUAGE FlexibleInstances    #-}
+-{-# LANGUAGE OverloadedStrings    #-}
+-{-# LANGUAGE StandaloneDeriving   #-}
+-{-# LANGUAGE TypeSynonymInstances #-}
+-
+-module Language.ATS.PrettyPrint ( printATS
+-                                , printATSCustom
+-                                , printClang
+-                                ) where
+-
+-import           Control.Arrow                         hiding ((<+>))
+-import           Control.DeepSeq                       (NFData)
+-import           Data.Function                         (on)
+-import           Data.Functor.Foldable                 (cata)
+-import           GHC.Generics                          (Generic)
+-import           Language.ATS.Types
+-import           Prelude                               hiding ((<$>))
+-import           System.Console.ANSI.Types
+-import           System.Process                        (readCreateProcess, shell)
+-import           Text.PrettyPrint.ANSI.Leijen
+-import           Text.PrettyPrint.ANSI.Leijen.Internal
+-
+-deriving instance Generic Underlining
+-deriving instance NFData Underlining
+-deriving instance Generic ConsoleIntensity
+-deriving instance NFData ConsoleIntensity
+-deriving instance Generic Color
+-deriving instance NFData Color
+-deriving instance Generic ColorIntensity
+-deriving instance NFData ColorIntensity
+-deriving instance Generic ConsoleLayer
+-deriving instance NFData ConsoleLayer
+-deriving instance Generic Doc
+-deriving instance NFData Doc
+-
+-instance Eq Doc where
+-    (==) = on (==) show
+-
+-processClang :: String -> IO String
+-processClang ('%':'{':'^':xs) = fmap (('%':) . ('{':) . ('^':)) $ printClang (fst $ takeBlock xs)
+-    where
+-        takeBlock :: String -> (String, String)
+-        takeBlock ('%':'}':xs) = ('%':'}':[], xs)
+-        takeBlock (x:xs)       = first (x:) $ takeBlock xs
+-        takeBlock []           = ([], [])
+-processClang (x:xs) = fmap (x:) $ processClang xs
+-
+-printClang :: String -> IO String
+-printClang = readCreateProcess (shell "clang-format")
+-
+-printATS :: ATS -> String
+-printATS (ATS x) = g mempty
+-    where g = (displayS . renderPretty 0.6 120 . pretty) (ATS $ reverse x)
+-
+-printATSCustom :: Float -> Int -> ATS -> String
+-printATSCustom r i (ATS x) = g mempty
+-    where g = (displayS . renderPretty r i . pretty) (ATS $ reverse x)
+-
+-
+-instance Pretty Name where
+-    pretty (Unqualified n)   = string n
+-    pretty (Qualified _ i n) = "$" <> string n <> "." <> string i
+-
+-instance Pretty LambdaType where
+-    pretty Plain{}    = "=>"
+-    pretty (Full _ v) = "=<" <> string v <> ">"
+-
+-instance Pretty BinOp where
+-    pretty Mult          = "*"
+-    pretty Add           = "+"
+-    pretty Div           = "/"
+-    pretty Sub           = "-"
+-    pretty GreaterThan   = ">"
+-    pretty LessThan      = "<"
+-    pretty Equal         = "="
+-    pretty NotEqual      = "!="
+-    pretty LogicalAnd    = "&&"
+-    pretty LogicalOr     = "||"
+-    pretty LessThanEq    = "<="
+-    pretty GreaterThanEq = ">="
+-
+-splits :: BinOp -> Bool
+-splits Mult       = True
+-splits Add        = True
+-splits Div        = True
+-splits Sub        = True
+-splits LogicalAnd = True
+-splits LogicalOr  = True
+-splits _          = False
+-
+-instance Pretty Addendum where
+-    pretty Plus  = "+"
+-    pretty Minus = "-"
+-    pretty None  = ""
+-
+-instance Pretty Expression where
+-    pretty = cata a where
+-        a (IfF e e' e'')               = "if" <+> e <+> "then" <$> indent 2 e' <$> "else" <$> indent 2 e''
+-        a (LetF _ e e')                = "let" <$> indent 2 (pretty ((\(ATS x) -> ATS $ reverse x) e)) <$> "in" <$> indent 2 e' <$> "end" -- TODO soft linebreak?
+-        a (BoolLitF True)              = "true"
+-        a (BoolLitF False)             = "false"
+-        a (IntLitF i)                  = pretty i
+-        a (LambdaF _ lt [a'] e)        = "lam" <+> pretty a' <+> pretty lt <+> e
+-        a (LambdaF _ lt as e)          = "lam" <+> prettyArgs as <+> pretty lt <+> e
+-        a (LinearLambdaF _ lt [a'] e)  = "llam" <+> pretty a' <+> pretty lt <+> e
+-        a (LinearLambdaF _ lt as e)    = "llam" <+> prettyArgs as <+> pretty lt <+> e
+-        a (FloatLitF f)                = pretty f
+-        a (StringLitF s)               = dquotes (string s)
+-        a (BinaryF op e e')
+-            | splits op = e </> pretty op <+> e'
+-            | otherwise = e <+> pretty op <+> e'
+-        a (IndexF _ n e)               = pretty n <> "[" <> e <> "]"
+-        a (UnaryF Negate e)            = "~" <> e
+-        a (NamedValF name)             = pretty name
+-        a (CallF name [] [])           = pretty name <> "()"
+-        a (CallF name [] xs)           = pretty name <> prettyArgsG xs
+-        a (CallF name ys [])           = pretty name <> "<" <> prettyArgsG ys <> ">"
+-        a (CallF name ys xs)           = pretty name <> "<" <> prettyArgsG ys <> ">" <> prettyArgsG xs
+-        a (CaseF _ add e cs)           = "case" <> pretty add <+> e <+> "of" <$> indent 2 (prettyCases cs)
+-        a (VoidLiteralF _)             = "()"
+-        a (RecordValueF _ es Nothing)  = prettyRecord es
+-        a (RecordValueF _ es (Just x)) = prettyRecord es <+> ":" <+> pretty x
+-        a (BeginF e)                   = "begin" <$> indent 2 (pretty e) <$> "end"
+-        a (PrecedeF e e')              = parens (e <+> ";" </> e')
+-        a (FieldMutateF _ o f v)       = pretty o <> "->" <> string f <+> ":=" <+> v
+-        a (DerefF _ e)                 = "!" <> e
+-        a (AccessF _ e n)
+-            | noParens e = e <> "." <> pretty n
+-            | otherwise = parens e <> "." <> pretty n
+-        a (CharLitF c)                 = "'" <> char c <> "'"
+-        a (RefF _ t e)                 = "ref<" <> pretty t <> ">" <> parens e
+-        a (AtF _ e e')                 = e <> "@" <> e'
+-        a LocalF{}                     = "FIXME"
+-        prettyCases []           = mempty
+-        prettyCases [(s, t)]     = "|" <+> pretty s <+> "=>" <+> t
+-        prettyCases ((s, t): xs) = prettyCases xs $$ "|" <+> pretty s <+> "=>" <+> t
+-
+-noParens :: Doc -> Bool
+-noParens = all (`notElem` ("()" :: String)) . show
+-
+-instance Pretty Pattern where
+-    pretty = cata a where
+-        a (WildcardF _)    = "_"
+-        a (PSumF s x)      = string s <+> x
+-        a (PLiteralF e)    = pretty e
+-        a (PNameF s [])    = string s
+-        a (PNameF s [x])   = string s <> parens x
+-        a (PNameF s ps)    = string s <> parens (mconcat (punctuate ", " (reverse ps)))
+-        a (FreeF p)        = "~" <> p
+-        a (GuardedF _ e p) = p <+> "when" <+> pretty e
+-        a (ProofF _ p p')  = parens (p <+> "|" <+> p')
+-        a NullPatternF{}   = "()"
+-
+-instance Pretty Arg where
+-    pretty (Arg s Implicit) = pretty s
+-    pretty (Arg s t)        = pretty s <> colon <+> pretty t
+-
+-instance Pretty Type where
+-    pretty = cata a where
+-        a IntF              = "int"
+-        a StringF           = "string"
+-        a BoolF             = "bool"
+-        a VoidF             = "void"
+-        a NatF              = "nat"
+-        a CharF             = "char"
+-        a (NamedF n)        = string n
+-        a (ExF e t)         = pretty e <+> t
+-        a (DependentIntF e) = "int(" <> pretty e <> ")"
+-        a (DepStringF e)    = "string(" <> pretty e <> ")"
+-        a (DependentF n ts) = pretty n <> parens (mconcat (punctuate ", " (reverse ts)))
+-        a DoubleF           = "double"
+-        a FloatF            = "float"
+-        a ImplicitF         = mempty
+-        a (ForAF u t)       = pretty u <+> t
+-        a (UnconsumedF t)   = "!" <> t
+-        a (AsProofF t t')   = t <+> ">>" <+> t'
+-        a (FromVTF t)       = t <> "?!"
+-        a (MaybeValF t)     = t <> "?"
+-        a (T0pF ad)         = "t@ype" <> pretty ad
+-        a (Vt0pF ad)        = "vt@ype" <> pretty ad
+-
+-instance Pretty Existential where
+-    pretty (Existential bs Nothing)  = lbracket <+> mconcat (punctuate ", " (fmap pretty bs)) <+> rbracket
+-    pretty (Existential bs (Just e)) = lbracket <+> mconcat (punctuate ", " (fmap go bs)) <+> "|" <+> pretty e <+> rbracket
+-        where go (Arg s Implicit) = pretty s
+-              go (Arg s t)        = pretty s <+> colon <+> pretty t
+-
+-instance Pretty Universal where
+-    pretty (Universal bs Nothing) = lbrace <+> mconcat (punctuate ", " (fmap pretty bs)) <+> rbrace
+-    pretty (Universal bs (Just e)) = lbrace <+> mconcat (punctuate ", " (fmap go bs)) <+> "|" <+> pretty e <+> rbrace
+-        where go (Arg s Implicit) = pretty s
+-              go (Arg s t)        = pretty s <+> colon <+> pretty t
+-
+-instance Pretty ATS where
+-    pretty (ATS xs) = concatSame xs
+-
+-instance Pretty Implementation where
+-    pretty (Implement _ _ n [] e) = "implement" <+> pretty n <+> "() =" <$> indent 2 (pretty e)
+-    pretty (Implement _ _ n ias e) = "implement" <+> pretty n <+> prettyArgs ias <+> "=" <$> indent 2 (pretty e)
+-
+-glue :: Declaration -> Declaration -> Bool
+-glue Staload{} Staload{}       = True
+-glue Include{} Include{}       = True
+-glue (Func Fnx{}) (Func And{}) = True
+-glue _ _                       = False
+-
+-{-# INLINE glue #-}
+-
+-concatSame :: [Declaration] -> Doc
+-concatSame []  = mempty
+-concatSame [x] = pretty x
+-concatSame (x:x':xs)
+-    | glue x x' = pretty x <> concatSame (x':xs)
+-    | otherwise = pretty x <$> concatSame (x':xs)
+-
+--- TODO - soft break
+-($$) :: Doc -> Doc -> Doc
+-x $$ y = align (x <$> y)
+-
+-prettyRecord :: (Pretty a) => [(String, a)] -> Doc
+-prettyRecord es = group (flatAlt (prettyRecordF True es) (prettyRecordS True es))
+-
+-prettyRecordS :: (Pretty a) => Bool -> [(String, a)] -> Doc
+-prettyRecordS _ [] = mempty
+-prettyRecordS True [(s, t)] = "@{" <+> string s <+> "=" <+> pretty t <+> "}"
+-prettyRecordS _ [(s, t)] = "@{" <+> string s <+> "=" <+> pretty t
+-prettyRecordS True ((s, t):xs) = prettyRecordS False xs <> ("," <+> string s <+> "=" <+> pretty t <+> "}")
+-prettyRecordS x ((s, t):xs) = prettyRecordS x xs <> ("," <+> string s <+> "=" <+> pretty t)
+-
+-prettyRecordF :: (Pretty a) => Bool -> [(String, a)] -> Doc
+-prettyRecordF _ [] = mempty
+-prettyRecordF True [(s, t)] = "@{" <+> string s <+> "=" <+> pretty t <+> "}"
+-prettyRecordF _ [(s, t)] = "@{" <+> string s <+> "=" <+> pretty t
+-prettyRecordF True ((s, t):xs) = prettyRecordF False xs $$ indent 1 ("," <+> string s <+> "=" <+> pretty t <$> "}")
+-prettyRecordF x ((s, t):xs) = prettyRecordF x xs $$ indent 1 ("," <+> string s <+> "=" <+> pretty t)
+-
+-prettyLeaf :: [(String, Maybe Type)] -> Doc
+-prettyLeaf []                = mempty
+-prettyLeaf [(s, Nothing)]    = indent 2 ("|" <+> string s)
+-prettyLeaf [(s, Just e)]     = indent 2 ("|" <+> string s <+> "of" <+> pretty e)
+-prettyLeaf ((s, Nothing):xs) = prettyLeaf xs $$ indent 2 ("|" <+> string s)
+-prettyLeaf ((s, Just e):xs)  = prettyLeaf xs $$ indent 2 ("|" <+> string s <+> "of" <+> pretty e)
+-
+-prettyArgsG :: [Doc] -> Doc
+-prettyArgsG = ("(" <>) . align . indent (-1) . cat . (<> pure ")") . go . reverse -- TODO when it's only one arg, don't split ( off
+-    where go :: [Doc] -> [Doc]
+-          go [x]    = [x]
+-          go (x:xs) = flatAlt (" " <> x) x : fmap (", " <>) xs
+-          go x      = x
+-
+-prettyArgs :: (Pretty a) => [a] -> Doc
+-prettyArgs = prettyArgsG . fmap pretty
+-
+-instance Pretty Declaration where
+-    pretty (RecordType s rs)    = "typedef" <+> string s <+> "=" <+> prettyRecord rs <> line
+-    pretty (SumViewType s ls)   = "datavtype" <+> string s <+> "=" <$> prettyLeaf ls
+-    pretty (SumType s ls)       = "datatype" <+> string s <+> "=" <$> prettyLeaf ls
+-    pretty (Impl i)             = pretty i
+-    pretty (PrVal p e)          = "prval" <+> pretty p <+> "=" <+> pretty e
+-    pretty (Val Nothing p e)    = "val" <+> pretty p <+> "=" <+> pretty e
+-    pretty (Val (Just t) p e)   = "val" <+> pretty p <> ":" <+> pretty t <+> "=" <+> pretty e
+-    pretty (Var Nothing p e)    = "var" <+> pretty p <+> "=" <+> pretty e
+-    pretty (Var (Just t) p e)   = "var" <+> pretty p <> ":" <+> pretty t <+> "=" <+> pretty e
+-    pretty (Include s)          = "#include" <+> pretty s <> line
+-    pretty (Staload Nothing s)  = "staload" <+> pretty s <> line
+-    pretty (Staload (Just q) s) = "staload" <+> pretty q <+> "=" <+> pretty s <> line
+-    pretty (CBlock s)           = string s <> line
+-    pretty (Func (Fnx i [] as rt Nothing (Just e))) = "fnx" <+> pretty i <> prettyArgs as <+> ":" <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+-    pretty (Func (Fun i [] as rt Nothing (Just e))) = "fun" <+> pretty i <> prettyArgs as <+> ":" <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+-    pretty (Func (And i [] as rt Nothing (Just e))) = "and" <+> pretty i <> prettyArgs as <+> ":" <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+-    pretty (Func (Fnx i [] as rt (Just t) (Just e))) = "fnx" <+> pretty i <+> ".<" <> pretty t <> ">." <+> prettyArgs as <+> ":" <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+-    pretty (Func (Fun i [] as rt (Just t) (Just e))) = "fun" <+> pretty i <+> ".<" <> pretty t <> ">." <+> prettyArgs as <+> ":" <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+-    pretty (Func (And i [] as rt (Just t) (Just e))) = "and" <+> pretty i <+> ".<" <> pretty t <> ">." <+> prettyArgs as <+> ":" <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+-    pretty (Func (Fun i us as rt Nothing (Just e))) = "fun" <+> pretty i </> foldMap pretty (reverse us) </> prettyArgs as <+> ":" <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+-    pretty (Func (And i us as rt Nothing (Just e))) = "and" <+> pretty i </> foldMap pretty (reverse us) </> prettyArgs as <+> ":" <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+-    pretty (Func (Fnx i us as rt Nothing (Just e))) = "fnx" <+> pretty i </> foldMap pretty (reverse us) </> prettyArgs as <+> ":" <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+-    pretty (Func (Fnx i us as rt (Just t) (Just e))) = "fnx" <+> pretty i </> foldMap pretty (reverse us) </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+-    pretty (Func (Fun i us as rt (Just t) (Just e))) = "fun" <+> pretty i </> foldMap pretty (reverse us) </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+-    pretty (Func (And i us as rt (Just t) (Just e))) = "and" <+> pretty i </> foldMap pretty (reverse us) </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+-    pretty (Comment s)         = string s
+-    pretty (OverloadOp _ o n)  = "overload" <+> pretty o <+> "with" <+> pretty n <> linebreak
+-
+-    pretty _                   = mempty
+
+Context:
+
+[pp
+vanessa.mchale@reconfigure.io**20171208042956
+ Ignore-this: 6cea705cd3bb4dc3e10754e5a1671ae7
+] 
+[dumb
+vanessa.mchale@reconfigure.io**20171208042530
+ Ignore-this: 42658457f1c32c12a5630be50013af7b
+] 
+[lots of ergonomics and whatnot
+vanessa.mchale@reconfigure.io**20171208035023
+ Ignore-this: bead8768d3d6b233b3707aeba32bb14a
+] 
+[ats-format
+vanessa.mchale@reconfigure.io**20171208033533
+ Ignore-this: f23005f9adcb998d5b17eee23963b1a3
+] 
+[add .atsfmt.toml tentatively
+vanessa.mchale@reconfigure.io**20171208031217
+ Ignore-this: 7fbb443c935de6f0eba60e1209f669a6
+] 
+[more elegant in one place
+vanessa.mchale@reconfigure.io**20171208023100
+ Ignore-this: 90ce404a7babe13c26021ef8be90cbc2
+] 
+[small fixes
+vanessa.mchale@reconfigure.io**20171208022748
+ Ignore-this: 5d946fac48abb029edacd314b6682b71
+] 
+[small fixes
+vanessa.mchale@reconfigure.io**20171208022735
+ Ignore-this: c15a94ead56a98f7bd8c8de2158954c
+] 
+[more fancy stuff
+vanessa.mchale@reconfigure.io**20171208014401
+ Ignore-this: 7a82c9992b4745f5708a4aa280705ce3
+] 
+[speed?
+vanessa.mchale@reconfigure.io**20171208003634
+ Ignore-this: bbec8ad64f61fc478abbdbbeb72b9cd5
+] 
+[more nice fancy errors
+vanessa.mchale@reconfigure.io**20171208001954
+ Ignore-this: 4df6ccdc2e44ec9d8bfe1463a61fa699
+] 
+[more progress
+vanessa.mchale@reconfigure.io**20171208001327
+ Ignore-this: ba9f9e57d7d056501cd3353d45d2958f
+] 
+[more monads
+vanessa.mchale@reconfigure.io**20171208000808
+ Ignore-this: 31b23c33c974f9e57dfb273745525eec
+] 
+[monadic parser improved a fair bit
+vanessa.mchale@reconfigure.io**20171208000635
+ Ignore-this: a936e0ee88de0d8963331851788757c
+] 
+[monadic error handling
+vanessa.mchale@reconfigure.io**20171207235649
+ Ignore-this: 374b892bfa8b3b0c9213b1c1bf3b90f6
+] 
+[documentation effort
+vanessa.mchale@reconfigure.io**20171207195635
+ Ignore-this: 4e10c5bdae8d55f40d49673f250cd49d
+] 
+[minor pretty-printer tweaks
+vanessa.mchale@reconfigure.io**20171207103134
+ Ignore-this: cabaa6eafede8cc8700861d17b56900c
+] 
+[prettier
+vanessa.mchale@reconfigure.io**20171207041021
+ Ignore-this: db853963450966d1427b1b4140ae229a
+] 
+[prettier
+vanessa.mchale@reconfigure.io**20171207040925
+ Ignore-this: 2acce0add2ea0afbec8a360db0eec931
+] 
+[speed improvements
+vanessa.mchale@reconfigure.io**20171207035700
+ Ignore-this: b97534788d537b83c5e888f5a1ee17aa
+] 
+[speed improvements
+vanessa.mchale@reconfigure.io**20171207035444
+ Ignore-this: 1939dbe155c394a70e4489108743e879
+] 
+[speed improvements
+vanessa.mchale@reconfigure.io**20171207035327
+ Ignore-this: 669c7a063444a34966c0da1b3516d3d8
+] 
+[speed improvements
+vanessa.mchale@reconfigure.io**20171207035250
+ Ignore-this: c33575dee63e1bdaaa00705778d1185
+] 
+[nice fixes
+vanessa.mchale@reconfigure.io**20171207032112
+ Ignore-this: 1161ee4ca590debf390efb565de86a03
+] 
+[produces always valid code; not always pretty.
+vanessa.mchale@reconfigure.io**20171207031453
+ Ignore-this: c7ff6d22245aca43d0932b8fa5134637
+] 
+[testing emendations
+vanessa.mchale@reconfigure.io**20171207002611
+ Ignore-this: b68f28e18590c49281797da3563ad73f
+] 
+[small fixes to readme etc.
+vanessa.mchale@reconfigure.io**20171207001438
+ Ignore-this: a75d8832b2188fc2beb7d3e63419e9c9
+] 
+[pretty-printer looking slightly nicer
+vanessa.mchale@reconfigure.io**20171207001101
+ Ignore-this: 4692812eb2694969b16bc794cff5be65
+] 
+[better parser for some things
+vanessa.mchale@reconfigure.io**20171206202535
+ Ignore-this: bb23cebd9b1ec05b2aa9c129141983fb
+] 
+[multiline comments etc.
+vanessa.mchale@reconfigure.io**20171206202313
+ Ignore-this: 3d401e134eace3dd2b851d5ba2f768f1
+] 
+[functioning nicely
+vanessa.mchale@reconfigure.io**20171206185140
+ Ignore-this: 80d82613d1a7adb2f06a94da5832ce25
+] 
+[sort of working?
+vanessa.mchale@reconfigure.io**20171206184812
+ Ignore-this: c9ea2e489923b98e7b0be99f2a6a29fb
+] 
+[darcs
+vanessa.mchale@reconfigure.io**20171206183244
+ Ignore-this: 302ee2967a1afbce02c365cefd386aeb
+] 
+[fix some bugs
+vanessa.mchale@reconfigure.io**20171206175237
+ Ignore-this: 2cb637433430fc96195a161ed40d807
+] 
+[todo etc.
+vanessa.mchale@reconfigure.io**20171206154451
+ Ignore-this: f9855c8a594d5fe56b121256ec27ce2
+] 
+[ats
+vanessa.mchale@reconfigure.io**20171206045734
+ Ignore-this: 4d20b0953e9ecb9a4d900280cc12fe39
+] 
+[fuck around a bit but faster :)
+vanessa.mchale@reconfigure.io**20171206045418
+ Ignore-this: 65b1869926543c905d906d05cd1c87e9
+] 
+[remove junk
+vanessa.mchale@reconfigure.io**20171206011015
+ Ignore-this: 707e2ba26bd181402decb32e1ff1ce4e
+] 
+[updated w/ alpha screenshot.
+vanessa.mchale@reconfigure.io**20171206010211
+ Ignore-this: fa13a36844fcde70aa8b59cb2c7fe83a
+] 
+[stack etc.
+vanessa.mchale@reconfigure.io**20171206005954
+ Ignore-this: 90c09acf26fb333089562b4915ef34bb
+] 
+[case statements are no longer an abomination
+vanessa.mchale@reconfigure.io**20171206003618
+ Ignore-this: 3bbf0e2cd9e9d0269d9c4286620c32d8
+] 
+[closer to printing polyglot :)
+vanessa.mchale@reconfigure.io**20171206002052
+ Ignore-this: 9886c4264de4760d9b1e9362ce9ef4f0
+] 
+[pretty-printer improvements
+vanessa.mchale@reconfigure.io**20171206001512
+ Ignore-this: 5182796d6bca53edb05c6dcb8a581fe
+] 
+[got polyglot parsing! halleloo!
+vanessa.mchale@reconfigure.io**20171206000526
+ Ignore-this: c0664706cd4daa287a896e9ebdc7ecc3
+] 
+[ATS
+vanessa.mchale@reconfigure.io**20171205235051
+ Ignore-this: ed2c8d3baecde831e3254cc4199d10f4
+] 
+[dumb keyboard/vim stuff
+vanessa.mchale@reconfigure.io**20171205233311
+ Ignore-this: 459b6aac0f9553830f2494cb45edcdc
+] 
+[mostly working?
+vanessa.mchale@reconfigure.io**20171205232818
+ Ignore-this: 724ba8356718a894a61aedaab8b6b61
+] 
+[refactor mostly worked.
+vanessa.mchale@reconfigure.io**20171205231950
+ Ignore-this: dd4d225874024956bd414816843dfdf5
+] 
+[more fancy stuff; no linear lambdas yet
+vanessa.mchale@reconfigure.io**20171205225037
+ Ignore-this: cc77eb95c84ca18c41b4dd89ce26235f
+] 
+[various bugfixes & simplifications in the parser.
+vanessa.mchale@reconfigure.io**20171205221656
+ Ignore-this: 47eb733c02d29c6604999e2b7a95028e
+] 
+[solidify lexer of several grounds
+vanessa.mchale@reconfigure.io**20171205204515
+ Ignore-this: 75ef796114c6e739fa1614bdd9940f1f
+] 
+[todo
+vanessa.mchale@reconfigure.io**20171205201400
+ Ignore-this: 6cd476a072aaad4e73c24f34b3e8420e
+] 
+[readme
+vanessa.mchale@reconfigure.io**20171205200733
+ Ignore-this: 1d21d91a180f8a844a83f7750508dcad
+] 
+[fancy catamorphism
+vanessa.mchale@reconfigure.io**20171205200401
+ Ignore-this: 2596ba96ea5a62352ec626ba1a9f8ab2
+] 
+[screenshot/preview
+vanessa.mchale@reconfigure.io**20171205194545
+ Ignore-this: 19f4600867ea7c93c5f3f766e8e3dd6b
+] 
+[nice data types printer
+vanessa.mchale@reconfigure.io**20171205154440
+ Ignore-this: bc25141b7e6b9740432feb85d529c92b
+] 
+[removes comments but eh for the time being :o
+vanessa.mchale@reconfigure.io**20171205153013
+ Ignore-this: fcf39f19fd645ae2c208277f2a570ad
+] 
+[new example added
+vanessa.mchale@reconfigure.io**20171205152633
+ Ignore-this: 74c0edd9226e03c3ad2f095546c25c95
+] 
+[new example added
+vanessa.mchale@reconfigure.io**20171205152628
+ Ignore-this: 43afc58326dd80bdafb26e05e84b2db5
+] 
+[parsing but not yet printing :)
+vanessa.mchale@reconfigure.io**20171205144718
+ Ignore-this: e37e4b27a3c57f4142c0fe1fe544515
+] 
+[nice-ish progress.
+vanessa.mchale@reconfigure.io**20171205130103
+ Ignore-this: 3647c028e42f37706e169a8823f519d2
+] 
+[slightly nontrivial file now working
+vanessa.mchale@reconfigure.io**20171205104633
+ Ignore-this: a4c0a08d6ca09d1884294bfc9fdc6b28
+] 
+[sort of ready idk.
+vanessa.mchale@reconfigure.io**20171205101651
+ Ignore-this: 60afd8501ff5f757703b4646779d1696
+] 
+[more stupid hacks lol.
+vanessa.mchale@reconfigure.io**20171205100156
+ Ignore-this: 58cb6150ee1c69e7ecfdbf3cb9761067
+] 
+[stupid solution but eh.
+vanessa.mchale@reconfigure.io**20171205100118
+ Ignore-this: 7663cb9c1dba165f7c0263d77fd41755
+] 
+[verbessern
+vanessa.mchale@reconfigure.io**20171205095646
+ Ignore-this: cb1cca5aa627ca75666f440903691466
+] 
+[almost passing file example
+vanessa.mchale@reconfigure.io**20171205094640
+ Ignore-this: da4c4a6ac05eb7c25755615a723c06e5
+] 
+[nicer example
+vanessa.mchale@reconfigure.io**20171205093350
+ Ignore-this: 76e31b76e256254d5887ffd148f2e753
+] 
+[whip up
+vanessa.mchale@reconfigure.io**20171205093146
+ Ignore-this: 75dfea3110d6b00e3de0c0ede79c8e52
+] 
+[fixed pernicious bug
+vanessa.mchale@reconfigure.io**20171205090848
+ Ignore-this: 503e9d8c315a696dcb58a3f733995c05
+] 
+[whip up
+vanessa.mchale@reconfigure.io**20171205090514
+ Ignore-this: 2e087c9d21381bcbf8ba55394a8c9678
+] 
+[working a bit better.
+vanessa.mchale@reconfigure.io**20171205085620
+ Ignore-this: 4f7ed7537e12d6377f730404ba506d6
+] 
+[a bit better
+vanessa.mchale@reconfigure.io**20171205081433
+ Ignore-this: 9baf76389d845804e73f8c1d206dbbf8
+] 
+[darcs
+vanessa.mchale@reconfigure.io**20171205074626
+ Ignore-this: ce93ce06d0bd021be74835281dc60d31
+] 
+[updated
+vanessa.mchale@reconfigure.io**20171205073911
+ Ignore-this: a242ee6f1f643d1c29c26fb7bff30e12
+] 
+[CLI parser added.
+vanessa.mchale@reconfigure.io**20171205072508
+ Ignore-this: 815af4467b35f9ab6594d4347e4c994b
+] 
+[CLI parser added.
+vanessa.mchale@reconfigure.io**20171205070417
+ Ignore-this: 26985e96659b50971d46a38812c5be98
+] 
+[for hackage when it's closer to ready
+vanessa.mchale@reconfigure.io**20171205065244
+ Ignore-this: 57c6d3ad22213ccac4485fd58793b359
+] 
+[various bits of testings
+vanessa.mchale@reconfigure.io**20171205065141
+ Ignore-this: 5934c01efe4a84dbe1f10bd398ae62d8
+] 
+[various bits of testings
+vanessa.mchale@reconfigure.io**20171205065121
+ Ignore-this: 45bae9a97c00def80c8dfe5706b0d470
+] 
+[nice stuff
+vanessa.mchale@reconfigure.io**20171205062941
+ Ignore-this: 21c1b2b0ddd741baa9b67f3d9ad62617
+] 
+[stylish-haskell
+vanessa.mchale@reconfigure.io**20171205062247
+ Ignore-this: 32fbffc4bfc6899e665fbd5623333e6f
+] 
+[hlint
+vanessa.mchale@reconfigure.io**20171205062234
+ Ignore-this: f349398341b53a58a0f232e8375de478
+] 
+[pretty-printer is workable now... time for everything else?
+vanessa.mchale@reconfigure.io**20171205062111
+ Ignore-this: fcc3d46c92dbad3c64fcd9863d6f3260
+] 
+[add some more test data
+vanessa.mchale@reconfigure.io**20171205052858
+ Ignore-this: 9d1c1f392ab408937995e3e7307f8fa
+] 
+[first attempt at pretty printer
+vanessa.mchale@reconfigure.io**20171205052407
+ Ignore-this: d26703a92002a69b8811b169772a21a8
+] 
+[ready
+vanessa.mchale@reconfigure.io**20171205045250
+ Ignore-this: 37ce54d1cafe5a926e5480a7a66ba2d1
+] 
+[benchmarks in place :)
+vanessa.mchale@reconfigure.io**20171205044230
+ Ignore-this: dd8a1e894af2794bf63bdb350cd7201c
+] 
+[works on fib.dats :)
+vanessa.mchale@reconfigure.io**20171205043622
+ Ignore-this: 465e4ffc2218a0f506ee5b9eb63ee328
+] 
+[parser looking a lot nicer; still need a pretty-printer and a test suite of course.
+vanessa.mchale@reconfigure.io**20171205033008
+ Ignore-this: bb53d6a16bc75865234bf823571ad3dc
+] 
+[added lexer
+vanessa.mchale@reconfigure.io**20171205021757
+ Ignore-this: 6a343831cce386d16bab7a4e1c4ecedf
+] 
+[types sketch
+vanessa.mchale@reconfigure.io**20171205014619
+ Ignore-this: db5b0bf16fdaaf6f2f936afd2ba9e958
+] 
+Patch bundle hash:
+24d2a50fdaed7427eef3727525f7d3538f7745ec

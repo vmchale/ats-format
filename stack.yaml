@@ -1,0 +1,12 @@
+---
+resolver: nightly-2017-12-07
+packages:
+  - '.'
+extra-deps:
+  - ansi-wl-pprint-0.6.8.1
+  - htoml-megaparsec-1.0.1.11
+  - composition-prelude-0.1.1.1
+flags:
+  ats-format:
+    development: false
+extra-package-dbs: []

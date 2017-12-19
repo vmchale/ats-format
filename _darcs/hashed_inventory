@@ -1,0 +1,686 @@
+pristine:d246ba55ebdefaa293c0dfdbf00a19e19306db2d39ff5d5e12b24a6bbbe872f5
+[types sketch
+vanessa.mchale@reconfigure.io**20171205014619
+ Ignore-this: db5b0bf16fdaaf6f2f936afd2ba9e958
+] 
+hash: 0000012557-43f50ac8c028b5082a63c529788148c39449df56c21bc2a776552644a8eb9fa8
+[added lexer
+vanessa.mchale@reconfigure.io**20171205021757
+ Ignore-this: 6a343831cce386d16bab7a4e1c4ecedf
+] 
+hash: 0000002371-a1c732e9472de575ad342d61fa36166e7310cdd9f4005482a81813338ec5a270
+[parser looking a lot nicer; still need a pretty-printer and a test suite of course.
+vanessa.mchale@reconfigure.io**20171205033008
+ Ignore-this: bb53d6a16bc75865234bf823571ad3dc
+] 
+hash: 0000008293-5c6eed4d96e2ad3c913eb0f88b7d8fe3cc41fc28acb967ab2c8852d659b753e1
+[works on fib.dats :)
+vanessa.mchale@reconfigure.io**20171205043622
+ Ignore-this: 465e4ffc2218a0f506ee5b9eb63ee328
+] 
+hash: 0000006764-f39b259764bab6c19b9ae6c1cc25b3676efbbb621f90672272dfd679c426a0e9
+[benchmarks in place :)
+vanessa.mchale@reconfigure.io**20171205044230
+ Ignore-this: dd8a1e894af2794bf63bdb350cd7201c
+] 
+hash: 0000002547-b9562aef5acb8bd2d733c9e12321cc189d269d0ddadc3b6691053bb6187f299a
+[ready
+vanessa.mchale@reconfigure.io**20171205045250
+ Ignore-this: 37ce54d1cafe5a926e5480a7a66ba2d1
+] 
+hash: 0000000511-7e9b7e8652db56b7484b558afa855c3063cc629b1df902bc9592544cde197e62
+[first attempt at pretty printer
+vanessa.mchale@reconfigure.io**20171205052407
+ Ignore-this: d26703a92002a69b8811b169772a21a8
+] 
+hash: 0000004878-5a37d42419d8c2dc8169a4796cff6aece856bbf1c738427d96aa1c55deb723a5
+[add some more test data
+vanessa.mchale@reconfigure.io**20171205052858
+ Ignore-this: 9d1c1f392ab408937995e3e7307f8fa
+] 
+hash: 0000000605-10f53610061f3b73d1128f96e042604137e692c9a8484189291ff35a927383a3
+[pretty-printer is workable now... time for everything else?
+vanessa.mchale@reconfigure.io**20171205062111
+ Ignore-this: fcc3d46c92dbad3c64fcd9863d6f3260
+] 
+hash: 0000003827-fc6294495bc1bd6dbf72ff9d66515f183b6e2250c549325ac96ae8b388edbb21
+[hlint
+vanessa.mchale@reconfigure.io**20171205062234
+ Ignore-this: f349398341b53a58a0f232e8375de478
+] 
+hash: 0000002667-3039493f2fd3a3d1259a1bf65ef7c58ebb32dfba8759a5a55cb78b74d7ce20e7
+[stylish-haskell
+vanessa.mchale@reconfigure.io**20171205062247
+ Ignore-this: 32fbffc4bfc6899e665fbd5623333e6f
+] 
+hash: 0000000147-bf402cb5c58c907421c99559e41f9365b35499846cac84e587880bf0913d5eb3
+[nice stuff
+vanessa.mchale@reconfigure.io**20171205062941
+ Ignore-this: 21c1b2b0ddd741baa9b67f3d9ad62617
+] 
+hash: 0000002928-ca81d8fe55f0cc2250a0a7e3a488d2b599ff71c8fb88556327c32f2b81e03602
+[various bits of testings
+vanessa.mchale@reconfigure.io**20171205065121
+ Ignore-this: 45bae9a97c00def80c8dfe5706b0d470
+] 
+hash: 0000002477-0ebbb41d3ddfee9db65a7fc9bc0f3cffe25fc1780571c0c44643e6663e3e1aeb
+[various bits of testings
+vanessa.mchale@reconfigure.io**20171205065141
+ Ignore-this: 5934c01efe4a84dbe1f10bd398ae62d8
+] 
+hash: 0000000203-935b84040e37e21b855c212032d60689ce1a4d9e0f863a4ef100d31c36ff2654
+[for hackage when it's closer to ready
+vanessa.mchale@reconfigure.io**20171205065244
+ Ignore-this: 57c6d3ad22213ccac4485fd58793b359
+] 
+hash: 0000000249-be38bc1885d58d2901e8254bab63dcc35b84cbd1b501ae7e53d9ddb43fbed3f5
+[CLI parser added.
+vanessa.mchale@reconfigure.io**20171205070417
+ Ignore-this: 26985e96659b50971d46a38812c5be98
+] 
+hash: 0000000262-66627860ee71574a05c17be2bcd3ca9f46314d860981c54e143c57470f544457
+[CLI parser added.
+vanessa.mchale@reconfigure.io**20171205072508
+ Ignore-this: 815af4467b35f9ab6594d4347e4c994b
+] 
+hash: 0000002072-d47b573a0158832869f8c2fa7b6a440e9b3010643ccf4641f20b671c8afa0154
+[updated
+vanessa.mchale@reconfigure.io**20171205073911
+ Ignore-this: a242ee6f1f643d1c29c26fb7bff30e12
+] 
+hash: 0000006969-438b93f67291f0aaa5ecd1758fbf86cb3bf665ce188079397c1b46d6e97b16db
+[darcs
+vanessa.mchale@reconfigure.io**20171205074626
+ Ignore-this: ce93ce06d0bd021be74835281dc60d31
+] 
+hash: 0000001066-84de1c02b97ca75c3294b1250afe93d4831c42446c4e7f4bee0ebc1c424e83c3
+[a bit better
+vanessa.mchale@reconfigure.io**20171205081433
+ Ignore-this: 9baf76389d845804e73f8c1d206dbbf8
+] 
+hash: 0000003996-52b8bb1129fca482454ce4881e154c3aac3b827458ee59ff5552fc859859adbd
+[working a bit better.
+vanessa.mchale@reconfigure.io**20171205085620
+ Ignore-this: 4f7ed7537e12d6377f730404ba506d6
+] 
+hash: 0000003839-9cfc43c8f2aa96657074baf2c669d9ed387eb2dbd010c5d43e722625a5f74150
+[whip up
+vanessa.mchale@reconfigure.io**20171205090514
+ Ignore-this: 2e087c9d21381bcbf8ba55394a8c9678
+] 
+hash: 0000001437-c546294882a2ece64569a31a6c4eab24e2a806fe4bb5c541c8fbd7c44462abf6
+[fixed pernicious bug
+vanessa.mchale@reconfigure.io**20171205090848
+ Ignore-this: 503e9d8c315a696dcb58a3f733995c05
+] 
+hash: 0000000358-a1cfc3fe2bc4e7f2f6a736501aa50c450b34e4e1688a36e771e9e04a573cc6d7
+[whip up
+vanessa.mchale@reconfigure.io**20171205093146
+ Ignore-this: 75dfea3110d6b00e3de0c0ede79c8e52
+] 
+hash: 0000006051-dac0991634c574caa873b3127cabeaa96cc7fc4159f3ce4515fcd713f0f4d726
+[nicer example
+vanessa.mchale@reconfigure.io**20171205093350
+ Ignore-this: 76e31b76e256254d5887ffd148f2e753
+] 
+hash: 0000000599-57c10a7a057404f04afabe4ff1271798e7973322cb48dd04d831cd0e57fa0b28
+[almost passing file example
+vanessa.mchale@reconfigure.io**20171205094640
+ Ignore-this: da4c4a6ac05eb7c25755615a723c06e5
+] 
+hash: 0000002777-beb53d589106566324a3fedbbc5776f6b75c2ac4eb3bd74c0b1691ddb60fcf49
+[verbessern
+vanessa.mchale@reconfigure.io**20171205095646
+ Ignore-this: cb1cca5aa627ca75666f440903691466
+] 
+hash: 0000001156-896fb19532d26dc2da09ed49d4d13c7013e438a80dfffef322ca023ab63acd4a
+[stupid solution but eh.
+vanessa.mchale@reconfigure.io**20171205100118
+ Ignore-this: 7663cb9c1dba165f7c0263d77fd41755
+] 
+hash: 0000000618-1242bfcc140e2ee28c8eb285b691e5be709edf9b0a6fc67cb997ef2cdeced732
+[more stupid hacks lol.
+vanessa.mchale@reconfigure.io**20171205100156
+ Ignore-this: 58cb6150ee1c69e7ecfdbf3cb9761067
+] 
+hash: 0000000380-3f83d8fabe167b9304ecf88322c6772512edbaed584b8ba28909468e04bcb215
+[sort of ready idk.
+vanessa.mchale@reconfigure.io**20171205101651
+ Ignore-this: 60afd8501ff5f757703b4646779d1696
+] 
+hash: 0000004550-e8f60eee3103e58e2438583f1ad6af8700b1530a062681f51d8c2c6f98b90d75
+[slightly nontrivial file now working
+vanessa.mchale@reconfigure.io**20171205104633
+ Ignore-this: a4c0a08d6ca09d1884294bfc9fdc6b28
+] 
+hash: 0000002692-7552513607d5efc3c3bb621b3b1668fecea8be7211c7a5b2547a090eecd8a6c7
+[nice-ish progress.
+vanessa.mchale@reconfigure.io**20171205130103
+ Ignore-this: 3647c028e42f37706e169a8823f519d2
+] 
+hash: 0000004460-d2b85139cbf0bc3b61a4236bc70d22f75641c121802f873aaab7dd17d831b681
+[parsing but not yet printing :)
+vanessa.mchale@reconfigure.io**20171205144718
+ Ignore-this: e37e4b27a3c57f4142c0fe1fe544515
+] 
+hash: 0000003296-0cb0e75a34602810dccefe1e71a5380e7da6af502f94eb1249b3e71cb6127dee
+[new example added
+vanessa.mchale@reconfigure.io**20171205152628
+ Ignore-this: 43afc58326dd80bdafb26e05e84b2db5
+] 
+hash: 0000002495-175f54e0ea95158546c2260a6fe81fbcf414d51999c8f64aea9a7a1ea270ac3a
+[new example added
+vanessa.mchale@reconfigure.io**20171205152633
+ Ignore-this: 74c0edd9226e03c3ad2f095546c25c95
+] 
+hash: 0000010934-b6744a76d23dc5f035775c20e7b62f747b08aa6e12ac3ee20f2367a763a1e904
+[removes comments but eh for the time being :o
+vanessa.mchale@reconfigure.io**20171205153013
+ Ignore-this: fcf39f19fd645ae2c208277f2a570ad
+] 
+hash: 0000000682-6ce069ec16e88b200fd20cedf467d47b0508a6310ffe748e7db463d3aeb68e95
+[nice data types printer
+vanessa.mchale@reconfigure.io**20171205154440
+ Ignore-this: bc25141b7e6b9740432feb85d529c92b
+] 
+hash: 0000003501-72cffe759480d22f080d64322cb62da6d79e7cd78bb8998b0137057e29fc27a3
+[screenshot/preview
+vanessa.mchale@reconfigure.io**20171205194545
+ Ignore-this: 19f4600867ea7c93c5f3f766e8e3dd6b
+] 
+hash: 0000154524-56ccc437b91dcc3282c36c29fe41e3281066a1331869d0fc42f6dc53ede76ca0
+[fancy catamorphism
+vanessa.mchale@reconfigure.io**20171205200401
+ Ignore-this: 2596ba96ea5a62352ec626ba1a9f8ab2
+] 
+hash: 0000001252-8d0ff115a9a2eaeb436503f862808500f079dfba6e5622e3a8b82bb0de61d1b1
+[readme
+vanessa.mchale@reconfigure.io**20171205200733
+ Ignore-this: 1d21d91a180f8a844a83f7750508dcad
+] 
+hash: 0000000216-c7809575eee0bc2297b50c396abe61670d9eaf17695b1e5063bd50bf94b36cdf
+[todo
+vanessa.mchale@reconfigure.io**20171205201400
+ Ignore-this: 6cd476a072aaad4e73c24f34b3e8420e
+] 
+hash: 0000000452-f69c947990a04a320b264fa4743184d136becc2b2eeeb7de7bf2e6eebf8680b4
+[solidify lexer of several grounds
+vanessa.mchale@reconfigure.io**20171205204515
+ Ignore-this: 75ef796114c6e739fa1614bdd9940f1f
+] 
+hash: 0000000453-6e7abfa77ca5ee6cd5cd176a26453fbc115a0cf0561350f26256df1b96fbaf77
+[various bugfixes & simplifications in the parser.
+vanessa.mchale@reconfigure.io**20171205221656
+ Ignore-this: 47eb733c02d29c6604999e2b7a95028e
+] 
+hash: 0000007584-a383a56a2d31ae5fd3bf38f61e8e10cdc6ca58f93f2da8706322308618f59293
+[more fancy stuff; no linear lambdas yet
+vanessa.mchale@reconfigure.io**20171205225037
+ Ignore-this: cc77eb95c84ca18c41b4dd89ce26235f
+] 
+hash: 0000003429-85be44dfbaaa0e712891562ad4dc47401329dd8cf3747771ed5da99cae76c62b
+[refactor mostly worked.
+vanessa.mchale@reconfigure.io**20171205231950
+ Ignore-this: dd4d225874024956bd414816843dfdf5
+] 
+hash: 0000004348-726f57665d16e78e8e2c9e7a6e1bee635b1ee27a5f9d0e1d62377074082279b2
+[mostly working?
+vanessa.mchale@reconfigure.io**20171205232818
+ Ignore-this: 724ba8356718a894a61aedaab8b6b61
+] 
+hash: 0000002982-5f659b524d6c8e21341ee680b6c87c21a827e29cedce5498fd6a78af4b05fb04
+[dumb keyboard/vim stuff
+vanessa.mchale@reconfigure.io**20171205233311
+ Ignore-this: 459b6aac0f9553830f2494cb45edcdc
+] 
+hash: 0000000736-9f9c761445a4231016feb0a51ad7d92bdc3e3249774315e13e235941e540043c
+[ATS
+vanessa.mchale@reconfigure.io**20171205235051
+ Ignore-this: ed2c8d3baecde831e3254cc4199d10f4
+] 
+hash: 0000001320-48ce2df048fee498b726e03bea0c1de084f5ca5e726151187178690487495f85
+[got polyglot parsing! halleloo!
+vanessa.mchale@reconfigure.io**20171206000526
+ Ignore-this: c0664706cd4daa287a896e9ebdc7ecc3
+] 
+hash: 0000001710-5045993642d066f01081072c586eea16b5a7894955f8216e3b6883c88bf327ff
+[pretty-printer improvements
+vanessa.mchale@reconfigure.io**20171206001512
+ Ignore-this: 5182796d6bca53edb05c6dcb8a581fe
+] 
+hash: 0000001203-36128645ba6e8f1d545d73a6178a8f712be3df23a9321ec53cf7e30bab2afeb5
+[closer to printing polyglot :)
+vanessa.mchale@reconfigure.io**20171206002052
+ Ignore-this: 9886c4264de4760d9b1e9362ce9ef4f0
+] 
+hash: 0000000709-11c679b3f06855a02c6c71605d684a13905935487178fe591a5cff37cd2daae4
+[case statements are no longer an abomination
+vanessa.mchale@reconfigure.io**20171206003618
+ Ignore-this: 3bbf0e2cd9e9d0269d9c4286620c32d8
+] 
+hash: 0000001886-80cf677ddf6127bef728f6c79b66d8bdf73b585de8fb663af4aa01d15642e33d
+[stack etc.
+vanessa.mchale@reconfigure.io**20171206005954
+ Ignore-this: 90c09acf26fb333089562b4915ef34bb
+] 
+hash: 0000002789-e27eee895091439218c0280396ee0bb0b08c058f58df54fbf4de5cb3358e55d0
+[updated w/ alpha screenshot.
+vanessa.mchale@reconfigure.io**20171206010211
+ Ignore-this: fa13a36844fcde70aa8b59cb2c7fe83a
+] 
+hash: 0000371795-617ce6b930b93cea047637299a7948238ad145be020b2efb7962f5f5d42a0f9c
+[remove junk
+vanessa.mchale@reconfigure.io**20171206011015
+ Ignore-this: 707e2ba26bd181402decb32e1ff1ce4e
+] 
+hash: 0000370633-43488347845d55b045a73db627f948deb47d6c1dddd2fcfd7d32aadadc721caf
+[fuck around a bit but faster :)
+vanessa.mchale@reconfigure.io**20171206045418
+ Ignore-this: 65b1869926543c905d906d05cd1c87e9
+] 
+hash: 0000012026-28da40e72024035caf2f6f648f44f13cbb0abb65dffe367802b57d1e205a63f0
+[ats
+vanessa.mchale@reconfigure.io**20171206045734
+ Ignore-this: 4d20b0953e9ecb9a4d900280cc12fe39
+] 
+hash: 0000000468-e51f634e9619473bfe125a84778d32cb44a51c8216498bb6e3d4ac5e0e18967f
+[todo etc.
+vanessa.mchale@reconfigure.io**20171206154451
+ Ignore-this: f9855c8a594d5fe56b121256ec27ce2
+] 
+hash: 0000001000-2bd514f9d3489db052ba9855a67d8e0b2cb761641cfb9b8b46c8a003b773b288
+[fix some bugs
+vanessa.mchale@reconfigure.io**20171206175237
+ Ignore-this: 2cb637433430fc96195a161ed40d807
+] 
+hash: 0000002483-4505415d475f0bbbc23ee7509e0af5b9d3f7f4d02d9eb610bf9548f55378ebb8
+[darcs
+vanessa.mchale@reconfigure.io**20171206183244
+ Ignore-this: 302ee2967a1afbce02c365cefd386aeb
+] 
+hash: 0000004301-169f5ed7cda1675516681e49564829c1d5dc6523ec013bcfd495502f01f8aa52
+[sort of working?
+vanessa.mchale@reconfigure.io**20171206184812
+ Ignore-this: c9ea2e489923b98e7b0be99f2a6a29fb
+] 
+hash: 0000001365-81d5e210b64ef0d5e8d3a7f76566de41b597078a7aa9812149cf1261de0fabfa
+[functioning nicely
+vanessa.mchale@reconfigure.io**20171206185140
+ Ignore-this: 80d82613d1a7adb2f06a94da5832ce25
+] 
+hash: 0000000990-666798e8552cc5df1d635d04ea8f17381551420c107391c32d5a75e39ef543c2
+[multiline comments etc.
+vanessa.mchale@reconfigure.io**20171206202313
+ Ignore-this: 3d401e134eace3dd2b851d5ba2f768f1
+] 
+hash: 0000001497-d930ae46bc41e15c1f2ba617166be259dce4d8355eb3e6cdb3e5b2d335349e1f
+[better parser for some things
+vanessa.mchale@reconfigure.io**20171206202535
+ Ignore-this: bb23cebd9b1ec05b2aa9c129141983fb
+] 
+hash: 0000000283-7c55117d6c6bb51a94cc5e2489dacf598c8909d884746481c34236c37f0fd96c
+[pretty-printer looking slightly nicer
+vanessa.mchale@reconfigure.io**20171207001101
+ Ignore-this: 4692812eb2694969b16bc794cff5be65
+] 
+hash: 0000110591-0237b574f5dff9aa173ccb4c29a49804b1df2468eba5b83f9843e3129d237d9c
+[small fixes to readme etc.
+vanessa.mchale@reconfigure.io**20171207001438
+ Ignore-this: a75d8832b2188fc2beb7d3e63419e9c9
+] 
+hash: 0000000835-ea2cbe3c603410ef1088118630b12b40bd8a6ba116c9799ed5e9fc0541dd7f0e
+[testing emendations
+vanessa.mchale@reconfigure.io**20171207002611
+ Ignore-this: b68f28e18590c49281797da3563ad73f
+] 
+hash: 0000000789-c5f7fcc1230dee609eb6f2f2ca8ce3eaf18a4b53e65e6b6175a7383fee23d579
+[produces always valid code; not always pretty.
+vanessa.mchale@reconfigure.io**20171207031453
+ Ignore-this: c7ff6d22245aca43d0932b8fa5134637
+] 
+hash: 0000011511-56996de84d57d7309b7a493eab55f08abf65ea6e190d0e6bd3afd2d93d8abe17
+[nice fixes
+vanessa.mchale@reconfigure.io**20171207032112
+ Ignore-this: 1161ee4ca590debf390efb565de86a03
+] 
+hash: 0000001463-c6020fe66a57b0513a1aa8486cf38dcdde37106650274ba3fed972f81988bc1d
+[speed improvements
+vanessa.mchale@reconfigure.io**20171207035250
+ Ignore-this: c33575dee63e1bdaaa00705778d1185
+] 
+hash: 0000000316-c0cc2327261ef1e23d33b60e7b31894183b306b5a75578992f47625cf40c6ce6
+[speed improvements
+vanessa.mchale@reconfigure.io**20171207035327
+ Ignore-this: 669c7a063444a34966c0da1b3516d3d8
+] 
+hash: 0000000245-e69b4d4055a8b0170c5d49dd63c4fba5c68dbdd63f400832dcccf231c8952f73
+[speed improvements
+vanessa.mchale@reconfigure.io**20171207035444
+ Ignore-this: 1939dbe155c394a70e4489108743e879
+] 
+hash: 0000000181-3f3f08684847430ca05fb35bf984d924d724ac7fe3cfd25613e8b37aa792d411
+[speed improvements
+vanessa.mchale@reconfigure.io**20171207035700
+ Ignore-this: b97534788d537b83c5e888f5a1ee17aa
+] 
+hash: 0000000399-82add10a39990b0de390cd541a652929b75b1b935c97fddafe2aa8266cd3793c
+[prettier
+vanessa.mchale@reconfigure.io**20171207040925
+ Ignore-this: 2acce0add2ea0afbec8a360db0eec931
+] 
+hash: 0000000501-32b285453b59bdbd9fa19c3024ca4a2368f40367c285f2e60e2bc30f86b202c4
+[prettier
+vanessa.mchale@reconfigure.io**20171207041021
+ Ignore-this: db853963450966d1427b1b4140ae229a
+] 
+hash: 0000000252-c8730b6591d53cd5d003bd4a7d37696ff6f93404efdd6737b931b110ea664eb1
+[minor pretty-printer tweaks
+vanessa.mchale@reconfigure.io**20171207103134
+ Ignore-this: cabaa6eafede8cc8700861d17b56900c
+] 
+hash: 0000000840-69234b4d67b877e785b0a27477a707c07a5e5192780eb33b4d8074934899984a
+[documentation effort
+vanessa.mchale@reconfigure.io**20171207195635
+ Ignore-this: 4e10c5bdae8d55f40d49673f250cd49d
+] 
+hash: 0000004472-2f00f747887bf2763cc13b6c61354a060e37ec4a265d7be48305fb1148fdaf97
+[monadic error handling
+vanessa.mchale@reconfigure.io**20171207235649
+ Ignore-this: 374b892bfa8b3b0c9213b1c1bf3b90f6
+] 
+hash: 0000004768-d8a9f1f9f2f54c1902e59e919eb34a908b3d5b430d0a9c45b80a3e7cab76a5f6
+[monadic parser improved a fair bit
+vanessa.mchale@reconfigure.io**20171208000635
+ Ignore-this: a936e0ee88de0d8963331851788757c
+] 
+hash: 0000000918-4ed1709801ff057d0299a5d4016872ce527cced5a3f01b3f86f4dc4312bec0da
+[more monads
+vanessa.mchale@reconfigure.io**20171208000808
+ Ignore-this: 31b23c33c974f9e57dfb273745525eec
+] 
+hash: 0000000283-c143f3912bd6f45d48afdfbe5825ecb6ec81e5d7ca60a39b456891dd56df5b86
+[more progress
+vanessa.mchale@reconfigure.io**20171208001327
+ Ignore-this: ba9f9e57d7d056501cd3353d45d2958f
+] 
+hash: 0000000553-27f29ab560392a8d5c376b57531e0cbd130bb406e84ac09ce9cc871b28fb209e
+[more nice fancy errors
+vanessa.mchale@reconfigure.io**20171208001954
+ Ignore-this: 4df6ccdc2e44ec9d8bfe1463a61fa699
+] 
+hash: 0000001044-6e5936a4f5877bd38beba49233a108d677b23227da0a294f49b9e5666e7fc4c8
+[speed?
+vanessa.mchale@reconfigure.io**20171208003634
+ Ignore-this: bbec8ad64f61fc478abbdbbeb72b9cd5
+] 
+hash: 0000001124-39c424e13a0b91be746bd0645f6c7025366a0f710b265fc94b862deb56cd4ef6
+[more fancy stuff
+vanessa.mchale@reconfigure.io**20171208014401
+ Ignore-this: 7a82c9992b4745f5708a4aa280705ce3
+] 
+hash: 0000005792-8022047e8e4831acf314f5519e482e98f50c0e01bcaff6c8626810a21e6037f6
+[small fixes
+vanessa.mchale@reconfigure.io**20171208022735
+ Ignore-this: c15a94ead56a98f7bd8c8de2158954c
+] 
+hash: 0000004716-2378c4a12aa3ece6752406a8dde4e27a919c26b11d53b2dbc84baa4e89aefa9f
+[small fixes
+vanessa.mchale@reconfigure.io**20171208022748
+ Ignore-this: 5d946fac48abb029edacd314b6682b71
+] 
+hash: 0000000620-8e1edd189c0b367f35f2f70eac5902a2962a3cb3ae3ca815f60f4104065c4c0a
+[more elegant in one place
+vanessa.mchale@reconfigure.io**20171208023100
+ Ignore-this: 90ce404a7babe13c26021ef8be90cbc2
+] 
+hash: 0000000491-05578c83af7593ab9864de2fa815bddada3988ed899c81344e56170acb3e6a3c
+[add .atsfmt.toml tentatively
+vanessa.mchale@reconfigure.io**20171208031217
+ Ignore-this: 7fbb443c935de6f0eba60e1209f669a6
+] 
+hash: 0000002984-4ee53fcd8069cebfb6ae91a6acdd48caf90f9de4a70be27ca95df23ae386f65e
+[ats-format
+vanessa.mchale@reconfigure.io**20171208033533
+ Ignore-this: f23005f9adcb998d5b17eee23963b1a3
+] 
+hash: 0000003416-fd412b36c85ff9297fe86b59ef1e4d127f7c982fe5318099214d3171f31b5655
+[lots of ergonomics and whatnot
+vanessa.mchale@reconfigure.io**20171208035023
+ Ignore-this: bead8768d3d6b233b3707aeba32bb14a
+] 
+hash: 0000000757-9335aa24947cce28bc295a4b80ef8fa0a5eaa22756fd38913d5b385d24817e5e
+[dumb
+vanessa.mchale@reconfigure.io**20171208042530
+ Ignore-this: 42658457f1c32c12a5630be50013af7b
+] 
+hash: 0000001542-a8a6eba910a4aebc27195bb30772fae2f12d1baaac780f2917d66654468af2b1
+[pp
+vanessa.mchale@reconfigure.io**20171208042956
+ Ignore-this: 6cea705cd3bb4dc3e10754e5a1671ae7
+] 
+hash: 0000000556-4ba1535df6f4fc7bceba5d350b962e118f28e43f381829a6813fe1d6f54fe351
+[clang & whatnot
+vanessa.mchale@reconfigure.io**20171208045332
+ Ignore-this: b22a778d566e25a6e4825292fe64f13b
+] 
+hash: 0000001756-00834202a98796459bf3bae37f8595344d9dbc075b91c6ce5638d1b426dc8f55
+[more fancy stuff
+vanessa.mchale@reconfigure.io**20171208050834
+ Ignore-this: 2918f0617653ec0b195da26e6115bbc2
+] 
+hash: 0000000779-da642aeb879d614503932a2b3402e7e6c2a0b6467c34d1c75e2100d8ac01ad5d
+[more stuff related to manpages
+vanessa.mchale@reconfigure.io**20171208051035
+ Ignore-this: b55ae3c0c51acc766ceb55af441731f9
+] 
+hash: 0000001223-83ce0b1d18a749596f15705f27bb887ff33bd5362abdb064f0a28f0276628659
+[more stuff related to manpages
+vanessa.mchale@reconfigure.io**20171208051042
+ Ignore-this: 267c5be1d1812ffbedd14b5f011db716
+] 
+hash: 0000001473-dc74a69d2a55c0277bdfcc7787d333567a1530cd4c9928865434e83773329359
+[readme
+vanessa.mchale@reconfigure.io**20171208051415
+ Ignore-this: 71bdb53c9592ff278265899253994fe7
+] 
+hash: 0000000712-9bbeb229032871c10a4606bb6d8302b0e09ff305bff991cf617262166832d805
+[bugs
+vanessa.mchale@reconfigure.io**20171208064313
+ Ignore-this: 4c0b74895c51cf65f6e0c9e78f0fbbb2
+] 
+hash: 0000004430-7b0a623b06f4c980e091969c558e12b20dda25be495a77c2f4292e9893babe32
+[png
+vanessa.mchale@reconfigure.io**20171208064348
+ Ignore-this: c56bc2537b3701604740a240fa5f73fe
+] 
+hash: 0000296504-9704d699b5e00330744ff8134da6a721715e53a25f03381fe9cf231da7e07abf
+[adding more features
+vanessa.mchale@reconfigure.io**20171208072754
+ Ignore-this: 8b5c6766aa995ae5c736d0e2fb3c98ba
+] 
+hash: 0000002101-b1872e112767908611f42855633fad70e502b34c5b3d9fe36cbc5112ec33a273
+[darcs
+vanessa.mchale@reconfigure.io**20171208075845
+ Ignore-this: d8ebcb7003865e38669fa239cf9475e5
+] 
+hash: 0000001042-36bb98e117cb050c734c9cdf73daf9fed488f9abf9ff18ca8502b232b02f719b
+[ats
+vanessa.mchale@reconfigure.io**20171208155542
+ Ignore-this: 8b9622a08a546f726f534ce29a70bc35
+] 
+hash: 0000006605-d27053172b50f88581b1a2311d612efbb10ffed28740f5ef1da7a030723d22e8
+[small stuff
+vanessa.mchale@reconfigure.io**20171212015746
+ Ignore-this: 34f71dbe8cef3b89ef5c4f3e5ab60520
+] 
+hash: 0000000834-c8bb9b28d233e44b2b9ef17b4641f90bce1afcac488d3e692eb6179a80cea233
+[benchmarks etc.
+vanessa.mchale@reconfigure.io**20171214033532
+ Ignore-this: bd65c5a3c12852f1a66612271cbabecf
+] 
+hash: 0000001299-2230dc0d047098d5174be822fc4141935d284fe70dc8ddf00fddbae00a1c9336
+[exec made a little nicer
+vanessa.mchale@reconfigure.io**20171218135258
+ Ignore-this: bc93ed79cdc4bbeb2677144fee476b8c
+] 
+hash: 0000002955-f6422bf2c5615848472d9af33fae92ba1bb489fac9896d055cd176566398a538
+[small improvements
+vanessa.mchale@reconfigure.io**20171218192907
+ Ignore-this: 660b0694edbbec136e1c4f442f5aa0f5
+] 
+hash: 0000016702-9741c6ae3bc8db9d455782b83ccd6dbc8538600db59c1d656045d1692cc55e93
+[minor upgrades
+vanessa.mchale@reconfigure.io**20171218200409
+ Ignore-this: 31a470c0bcc8a00823662be9c14f9caf
+] 
+hash: 0000002885-77e52bbd472c5367cb9f3274efb64a9a5e0e460ebaf819fda58f10141309ee52
+[minor upgrades
+vanessa.mchale@reconfigure.io**20171218200425
+ Ignore-this: c185f81dd2607ab385fcee856e1d2cc2
+] 
+hash: 0000000262-03589dffc4a8290791088eb0cb747d527d3e9b4a4880a472aab236d778bbd537
+[various bits & pieces of progress
+vanessa.mchale@reconfigure.io**20171218224147
+ Ignore-this: 86f0e175a5455f0551ab38d64770da06
+] 
+hash: 0000011272-70074fb892879034b29b4f1fc4e8332ef35fbe0e41f55a6f2f3d47b44df0c8cf
+[a few more annoying fixes
+vanessa.mchale@reconfigure.io**20171218225833
+ Ignore-this: 82f9783f00cb043f50a01579215b99f
+] 
+hash: 0000001152-5cd6a6549bea186afc2a7640e60eea07237629b04dfb0ab32ce276fe76442bf1
+[in-place modifications working again
+vanessa.mchale@reconfigure.io**20171218232503
+ Ignore-this: ae47280a621dbf4e0281c4bfad79eca4
+] 
+hash: 0000001420-f538e5e411dff11087903d57cc13fc59c7f38ed35f1be0481f4e3b465a46d78c
+[approaching usable
+vanessa.mchale@reconfigure.io**20171218234836
+ Ignore-this: c6c6c34b259942678f3d93fd2360c1c2
+] 
+hash: 0000001131-51af9788f338284a45c0de4a7de533d8da09e2e72f281e7ae6395fefbd8df805
+[a whole bunch o' shit
+vanessa.mchale@reconfigure.io**20171219002210
+ Ignore-this: abea95a8cb8dada6a3b15ea65e16e845
+] 
+hash: 0000001968-0f3ab4435c99b7d5808c14c9493ac5dfd8404bfe39e677c5361f68329ddaf17b
+[flinging more shit around
+vanessa.mchale@reconfigure.io**20171219010055
+ Ignore-this: 2ea65da36bcbd6c402b2f3a87c0831b9
+] 
+hash: 0000005246-18d55eedae42eed0042bd724076b4b3a21439859e4e05e38092e5c3e6af65c5d
+[idkkk
+vanessa.mchale@reconfigure.io**20171219010359
+ Ignore-this: da442dfeb4921ac57a3d6bffb134a596
+] 
+hash: 0000006201-f2f70bcdc05b0cacce357e91ebd25bcdaee9fb360a8f94c7b5eceb93e29c9390
+[2/10 tire fire now which I guesss is an improvement??
+vanessa.mchale@reconfigure.io**20171219010809
+ Ignore-this: a0369d44a0ed871b6080b9de0ab58641
+] 
+hash: 0000081473-d8fbb850fa0603d4fb32c00f0cf6d33406fd0b3c62df9eb249c3ed14e047d5a9
+[eh
+vanessa.mchale@reconfigure.io**20171219011234
+ Ignore-this: 5ef1a922719faf9ec4f1c322c09dc0bd
+] 
+hash: 0000005196-1872433d47d09ba2ec93c32756db752064de4ac2d1e3cc65f68a3ceb260ac2f4
+[still awful & stupid but it works idk
+vanessa.mchale@reconfigure.io**20171219012501
+ Ignore-this: 83faee82694d5fad6ef2b86d9e361b8c
+] 
+hash: 0000000378-ec6c97f0e2975f47915ebc7d86125d014deefebb48311114567ac5619911f664
+[actual checkpoint
+vanessa.mchale@reconfigure.io**20171219012845
+ Ignore-this: 867dc81351502999da1146a30e67caac
+] 
+hash: 0000000288-b5e9672a14bb24a49bacc2479d34489d8ffefb56c806961f6f39c11b1d63da9a
+[refactoring worked!!
+vanessa.mchale@reconfigure.io**20171219013536
+ Ignore-this: c46278fbb6b5a94ae5531048ac7cb7c6
+] 
+hash: 0000007430-01de317fef49332e0ab93e137ff4e8e1e79d4a68d2ae19c5f3d10715702f8af1
+[slightly more robust w/ few reduce/reduce conflicts
+vanessa.mchale@reconfigure.io**20171219014535
+ Ignore-this: bf5246448cb0403788fb82a351c3e1b0
+] 
+hash: 0000001026-745ac77a9b9fb4975e74484fc0ff6719650cdcadb978f626b44bbbd6f576b5ee
+[throw more stuff around.
+vanessa.mchale@reconfigure.io**20171219020158
+ Ignore-this: 61592bdc9236fbf31382e12f633f6e8f
+] 
+hash: 0000001643-84e676be881f8e6023a1022a6fb1d07cf09eb31ab3bc5661be1e7f36c8543489
+[darcs
+vanessa.mchale@reconfigure.io**20171219022043
+ Ignore-this: 34167509ceb6025e3ff46db417df4d74
+] 
+hash: 0000000737-f3c54d0137e08fef6a266d31aca1ee2898d0d33967d36aeb0fca98758517d0d9
+[idk
+vanessa.mchale@reconfigure.io**20171219024525
+ Ignore-this: 25489a2618c540f76210a285692f59bd
+] 
+hash: 0000000761-713b0f8a22e7ca5b44976e06a8eee328bed403de09f676358dd9e89b1765feb5
+[stuff
+vanessa.mchale@reconfigure.io**20171219031353
+ Ignore-this: c61cb299486347839a6bf97ce1f50c68
+] 
+hash: 0000001912-d58b91119bfef0fdf4a9e99c9e81c6a750e47f1844acb53ffd3d8bb9be9c3e7b
+[try
+vanessa.mchale@reconfigure.io**20171219031538
+ Ignore-this: a3c8b991ea2ce251438ecaccd767c7d
+] 
+hash: 0000000234-1014986058394c088f21c5a2cfdddc53adb68481a2ffb6fbc4d375b2318f36fc
+[try
+vanessa.mchale@reconfigure.io**20171219031709
+ Ignore-this: e83e62c712e7d6a7403b6b0adeb2b9c2
+] 
+hash: 0000000235-4950d12732f43699e4e8710ba64dc6f5e30b62b26d895bb1dfa5142c3f248d03
+[here
+vanessa.mchale@reconfigure.io**20171219034439
+ Ignore-this: b0482487842c6388fac5b7a3b3280885
+] 
+hash: 0000171406-3f176c46165b786e35b188795d0a891a76aab4af60ccae2e9a1f2755a7551c17
+[ATS is fucking crazy??
+vanessa.mchale@reconfigure.io**20171219041543
+ Ignore-this: 157663e6bdc2cdfe365213f0c958b3a2
+] 
+hash: 0000003044-911bd527836e799991693534982ce697df2cb738a086d1aed6904f7b8c7fb99a
+[more vaguely insane shit.
+vanessa.mchale@reconfigure.io**20171219043028
+ Ignore-this: 80b87209b4d53b27bae36e5bc7660338
+] 
+hash: 0000001490-08ce3ecaf0f9abaadd42b1cedbf412b63697a861583e20489a481e293c5aa97c
+[darcs
+vanessa.mchale@reconfigure.io**20171219043427
+ Ignore-this: 770dfd827afe998621891eca952ee317
+] 
+hash: 0000001048-bcd9e45412e8bab61915172730246b5018402f51a870be2dc007a567ce5d99db
+[dramatically less stupid.
+vanessa.mchale@reconfigure.io**20171219044531
+ Ignore-this: ff9d882d110d63359e122d6ec6e0c9ff
+] 
+hash: 0000001020-0c0bb524af4b9307fe63cc75cffec3e7b2b9bbab3ffa42ef0467ec285a7e6f14
+[better test data
+vanessa.mchale@reconfigure.io**20171219045311
+ Ignore-this: 534713bda2682cd790dc9b10504e6c2c
+] 
+hash: 0000185738-956a552d71dd99e571e744aafe4a7d80999df379e7fb2227a412d6c8e6a821db
+[stuff
+vanessa.mchale@reconfigure.io**20171219045336
+ Ignore-this: 29c039ee7b9240f8da9e0d5f8097ca90
+] 
+hash: 0000000857-b8ad7fb04d2887f0e6ac7f4bbcd74d5aa06c43940ad47e53b1503f7b73658019
+[various insane things
+vanessa.mchale@reconfigure.io**20171219051117
+ Ignore-this: d4787acd0b4e6164b6b0ab7a016c2758
+] 
+hash: 0000002344-8a4dea8f520e36d215531f9e0271f98c55b060fb2155c5a761df734b435af010
+[more fancy stuff idk
+vanessa.mchale@reconfigure.io**20171219051903
+ Ignore-this: 7c70c248b42ccc5907065d8adae50b5
+] 
+hash: 0000001002-5d30586fda3325538f4279d5812e51a9b59a2d77108ccd634fe8482a1b698cd2
+[nicer
+vanessa.mchale@reconfigure.io**20171219052357
+ Ignore-this: 1c1b172af203982f540052bb1a036bfd
+] 
+hash: 0000000426-0c6006736305561c51a1d2fcc430f1ab16234e360c007f927e58a79155831b32
