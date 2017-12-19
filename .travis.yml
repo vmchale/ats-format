@@ -50,6 +50,7 @@ script:
     then
       yamllint stack.yaml
       yamllint appveyor.yml
+      yamllint .yamllint
       yamllint .travis.yml
       yamllint .hlint.yaml
       yamllint .stylish-haskell.yaml
