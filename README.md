@@ -20,6 +20,13 @@ clang-format = false # call clang-format on inline code
 
 ## Installation
 
+### Binary Releases
+
+The [releases](https://github.com/vmchale/ats-format/releases) page has binary
+releases for common platforms.
+
+### Compilation from Source
+
 To install, first install [GHC](https://www.haskell.org/ghc/download.html), then
 [cabal](https://www.haskell.org/cabal/download.html). Then
 
