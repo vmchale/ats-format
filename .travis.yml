@@ -60,7 +60,10 @@ script:
       echo "skipping yaml verification..."
     fi
   - stack build --test --bench --no-run-tests --no-run-benchmarks
-  - find -name atsfmt -executable
+  - |
+    if [ `uname` = "Darwin" ]
+      find . -name atsfmt -perm 755
+    fi
   - |
     if [ `uname` = "Darwin" ]
     then
