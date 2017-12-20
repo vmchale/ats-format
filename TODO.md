@@ -2,6 +2,7 @@
 - [ ] vim plugin
 - [ ] don't rewrite `absvtype` to `absviewtype`?
 - [ ] don't rewrite empty braces?
+- [ ] align comments w/ nearest block
 # Performance
 - [ ] consider bytestring lexer
 - [ ] Consider a different pretty-printer

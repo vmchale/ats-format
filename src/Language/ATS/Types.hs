@@ -69,6 +69,7 @@ data Declaration = Func AlexPosn Function
                  | SortDef AlexPosn String Type
                  | AndD Declaration Declaration
                  | Local AlexPosn [Declaration] [Declaration]
+                 | LineComment String -- FIXME this should be in the ATS type instead?
                  deriving (Show, Eq, Generic, NFData)
 
 data DataPropLeaf = DataPropLeaf [Universal] Expression

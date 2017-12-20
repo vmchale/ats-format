@@ -142,6 +142,7 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     cblock { CBlockLex _ $$ }
     ref { RefTok $$ }
     define { MacroBlock _ $$ }
+    lineComment { CommentLex _ $$ }
 
 %%
 
@@ -418,7 +419,7 @@ Declaration : include string { Include $2 }
             | abstype identifier openParen FullArgs closeParen eq Type { AbsType $1 $2 $4 $7 }
             | datatype identifier eq Leaves { SumType $2 $4 }
             | dataprop identifier openParen FullArgs closeParen eq DataPropLeaves { DataProp $1 $2 $4 $7 }
-            -- | tkindef FunName eq string { TKind $1 $2 $4 }
+            | lineComment { LineComment $1 }
             | define { Define $1 }
             | cblock { CBlock $1 }
             | lambda {% Left $ Expected $1 "Declaration" "lam" }

@@ -89,6 +89,7 @@ $esc_char = \27
 tokens :-
 
     $white+                  ;
+    ^ "//".*                 { tok (\p s -> CommentLex p s) }
     "//".*                   ;
     @block_comment           ;
     "#define".*              { tok (\p s -> MacroBlock p s) }      
