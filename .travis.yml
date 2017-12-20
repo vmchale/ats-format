@@ -66,6 +66,8 @@ script:
   - |
     if [ `uname` = "Darwin" ]
       find .stack-work -name atsfmt -perm 755
+    else
+      echo 'nothing'
     fi
   - |
     if [ `uname` = "Darwin" ]

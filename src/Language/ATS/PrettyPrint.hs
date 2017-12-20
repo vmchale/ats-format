@@ -118,8 +118,11 @@ instance Pretty Expression where
         a (LinearLambdaF _ lt p e)      = "llam" <+> pretty p <+> pretty lt <+> e
         a (FloatLitF f)                 = pretty f
         a (StringLitF s)                = string s
+        a (BinListF op es)
+            | splits op = encloseSep (head es) (" " <> pretty op <> " ") (last es) (init $ tail es)
+            | otherwise = "error state"
         a (BinaryF op e e')
-            | splits op = e </> pretty op <+> e' -- TODO if one operator splits, the rest should.
+            | splits op = e </> pretty op <+> e'
             | otherwise = e <+> pretty op <+> e'
         a (IndexF _ n e)                = pretty n <> "[" <> e <> "]"
         a (UnaryF Negate e)             = "~" <> e
@@ -318,15 +321,15 @@ fancyU :: [Universal] -> Doc
 fancyU = foldMap pretty . reverse
 
 instance Pretty PreFunction where
-    pretty (PreF i si [] [] as rt Nothing (Just e)) = pretty i <> prettyArgs as <+> ":" <> string si </> group (pretty rt) <+> "=" <$> indent 2 (pretty e) <> line
-    pretty (PreF i si [] [] as rt (Just t) (Just e)) = pretty i </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si </> group (pretty rt) <+> "=" <$> indent 2 (pretty e) <> line
-    pretty (PreF i si [] us as rt (Just t) (Just e)) = pretty i </> fancyU us </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si </> group (pretty rt) <+> "=" <$> indent 2 (pretty e) <> line
-    pretty (PreF i si [] us as rt Nothing (Just e)) = pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si </> group (pretty rt) <+> "=" <$> indent 2 (pretty e) <> line
-    pretty (PreF i si pus [] as rt Nothing (Just e)) = fancyU pus </> pretty i <> prettyArgs as <+> ":" <> string si </> group (pretty rt) <+> "=" <$> indent 2 (pretty e) <> line
-    pretty (PreF i si pus [] as rt (Just t) (Just e)) = fancyU pus </> pretty i <+> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si </> group (pretty rt) <+> "=" <$> indent 2 (pretty e) <> line
-    pretty (PreF i si pus us as rt (Just t) (Just e)) = fancyU pus </> pretty i </> fancyU us </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si </> group (pretty rt) <+> "=" <$> indent 2 (pretty e) <> line
-    pretty (PreF i si pus us as rt Nothing (Just e)) = fancyU pus </> pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si </> group (pretty rt) <+> "=" <$> indent 2 (pretty e) <> line
-    pretty (PreF i si pus us as rt Nothing Nothing) = fancyU pus </> pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si </> group (pretty rt)
+    pretty (PreF i si [] [] as rt Nothing (Just e)) = pretty i <> prettyArgs as <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+    pretty (PreF i si [] [] as rt (Just t) (Just e)) = pretty i </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+    pretty (PreF i si [] us as rt (Just t) (Just e)) = pretty i </> fancyU us </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+    pretty (PreF i si [] us as rt Nothing (Just e)) = pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+    pretty (PreF i si pus [] as rt Nothing (Just e)) = fancyU pus </> pretty i <> prettyArgs as <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+    pretty (PreF i si pus [] as rt (Just t) (Just e)) = fancyU pus </> pretty i <+> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+    pretty (PreF i si pus us as rt (Just t) (Just e)) = fancyU pus </> pretty i </> fancyU us </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+    pretty (PreF i si pus us as rt Nothing (Just e)) = fancyU pus </> pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
+    pretty (PreF i si pus us as rt Nothing Nothing) = fancyU pus </> pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si </> pretty rt
     pretty _ = "FIXME"
 
 instance Pretty DataPropLeaf where

@@ -23,7 +23,7 @@ configuration with
 ### Vim
 
 I have the following in my `.vimrc` to automatically format ATS source files
-with `<F3>`:
+on write:
 
 ```vim
 function! AtsFormat()
@@ -31,7 +31,9 @@ function! AtsFormat()
     exec 'e'
 endfunction
 
-au BufNewFile,BufRead *.ats,*.dats,*.sats,*.cats nnoremap <F3> :call AtsFormat()<CR>
+augroup ats
+    autocmd BufWritePost *.ats,*.dats,*.sats,*.cats call AtsFormat()
+augroup END
 ```
 
 ## Installation

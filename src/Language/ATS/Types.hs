@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveFunctor     #-}
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeFamilies      #-}
 
@@ -30,9 +31,12 @@ module Language.ATS.Types
     , Addendum (..)
     , DataPropLeaf (..)
     , PreFunction (..)
+    -- remove
+    , binList
     ) where
 
 import           Control.DeepSeq          (NFData)
+import           Control.Lens.Plated
 import           Data.Functor.Foldable.TH (makeBaseFunctor)
 import           GHC.Generics             (Generic)
 import           Language.ATS.Lexer       (Addendum (..), AlexPosn)
@@ -188,6 +192,7 @@ data Expression = Let AlexPosn ATS (Maybe Expression)
                 | CharLit Char
                 | AtExpr Expression Expression
                 | Binary BinOp Expression Expression
+                | BinList { _op :: BinOp, _exprs :: [Expression] }
                 | Unary UnOp Expression
                 | Case { posE :: AlexPosn
                        , kind :: Addendum
@@ -213,6 +218,16 @@ data Expression = Let AlexPosn ATS (Maybe Expression)
                 | TKind AlexPosn Name String
                 | ViewExpr AlexPosn Type -- TODO separate type for proof values?
                 deriving (Show, Eq, Generic, NFData)
+
+instance Plated Expression where
+    plate f (Binary Add e e') = Binary Add <$> f e <*> f e'
+    plate _ x                 = pure x
+
+binList :: Expression -> Expression
+binList = transform $ \case
+    (Binary Add e e'@Binary{})  -> BinList Add [e, e'] -- FIXME both have to be 'Add'
+    (Binary Add e@BinList{} e') -> BinList Add (e' : _exprs e)
+    a                          -> a
 
 -- | An 'implement' declaration
 data Implementation = Implement { pos            :: AlexPosn

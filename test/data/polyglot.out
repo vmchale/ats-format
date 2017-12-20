@@ -91,9 +91,8 @@ fnx right_pad { k : int | k >= 0 }{ m : int | m <= k } .<k>.
     | true when n > 0 => right_pad(s, n - 1) + " "
     | _ => s
 
-fnx left_pad { k : int | k >= 0 } .<k>. ( s : string
-                                        , n : int(k)
-                                        ) : string =
+fnx left_pad { k : int | k >= 0 } .<k>. (s : string, n : int(k)) :
+string =
   case+ length(s) < n of
     | true when n > 0 => " " + left_pad(s, n - 1)
     | _ => s
@@ -419,9 +418,8 @@ fun make_output(isc : source_contents) : string =
                                                                                                    )
                                                                                      )
 
-fun add_contents( x : source_contents
-                , y : source_contents
-                ) : source_contents =
+fun add_contents(x : source_contents, y : source_contents) :
+source_contents =
   let
     var next = @{ rust = x.rust + y.rust, haskell = x.haskell
     + y.haskell, ats = x.ats + y.ats, python = x.python
@@ -467,9 +465,8 @@ fun add_contents( x : source_contents
     next
   end
 
-fun adjust_contents( prev : source_contents
-                   , scf : pl_type
-                   ) : source_contents =
+fun adjust_contents(prev : source_contents, scf : pl_type) :
+source_contents =
   let
     val sc_r = ref<source_contents>(prev)
     val _ = case+ scf of
@@ -1107,10 +1104,8 @@ fun process_excludes(s : string, acc : command_line) : command_line =
     !acc_r
   end
 
-fun process( s : string
-           , acc : command_line
-           , is_first : bool
-           ) : command_line =
+fun process(s : string, acc : command_line, is_first : bool) :
+command_line =
   let
     val acc_r = ref<command_line>(acc)
     val () = if is_flag(s) then
@@ -1236,8 +1231,8 @@ return sysconf(_SC_NPROCESSORS_ONLN);
 %}
 
 #define NCPU 4
-fun apportion(includes : List0(string)
-             ) : (List0(string), List0(string)) =
+fun apportion(includes : List0(string)) :
+(List0(string), List0(string)) =
   let
     var n = length(includes) / 2
     val (p, q) = list_split_at(includes, n)
@@ -1245,9 +1240,8 @@ fun apportion(includes : List0(string)
     (list_vt2t(p), q)
   end
 
-fun threads( includes : List0(string)
-           , excludes : List0(string)
-           ) : source_contents =
+fun threads(includes : List0(string), excludes : List0(string)) :
+source_contents =
   let
     val chan = channel_make<source_contents>(2)
     val chan2 = channel_ref(chan)
