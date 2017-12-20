@@ -412,9 +412,10 @@ Declaration : include string { Include $2 }
             | sortdef identifier eq Type { SortDef $1 $2 $4 }
             | typedef identifier eq at lbrace Records rbrace { RecordType $2 $6 }
             | typedef identifier eq Type { TypeDef $1 $2 [] $4 }
-            | vtypedef identifier eq Type { ViewTypeDef $1 $2 [] $4 }
             | vtypedef identifier openParen FullArgs closeParen eq Type { ViewTypeDef $1 $2 $4 $7 }
-            | datavtype identifier eq Leaves { SumViewType $2 $4 }
+            | vtypedef identifier eq Type { ViewTypeDef $1 $2 [] $4 }
+            | datavtype identifier eq Leaves { SumViewType $2 [] $4 }
+            | datavtype identifier openParen Args closeParen eq Leaves { SumViewType $2 $4 $7 }
             | absvtype identifier openParen FullArgs closeParen eq Type { AbsViewType $1 $2 $4 $7 }
             | abstype identifier openParen FullArgs closeParen eq Type { AbsType $1 $2 $4 $7 }
             | datatype identifier eq Leaves { SumType $2 $4 }

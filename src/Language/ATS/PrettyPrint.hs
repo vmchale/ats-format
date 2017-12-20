@@ -318,15 +318,15 @@ fancyU :: [Universal] -> Doc
 fancyU = foldMap pretty . reverse
 
 instance Pretty PreFunction where
-    pretty (PreF i si [] [] as rt Nothing (Just e)) = pretty i <> prettyArgs as <+> ":" <> string si <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
-    pretty (PreF i si [] [] as rt (Just t) (Just e)) = pretty i </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
-    pretty (PreF i si [] us as rt (Just t) (Just e)) = pretty i </> fancyU us </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
-    pretty (PreF i si [] us as rt Nothing (Just e)) = pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
-    pretty (PreF i si pus [] as rt Nothing (Just e)) = fancyU pus </> pretty i <> prettyArgs as <+> ":" <> string si <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
-    pretty (PreF i si pus [] as rt (Just t) (Just e)) = fancyU pus </> pretty i <+> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
-    pretty (PreF i si pus us as rt (Just t) (Just e)) = fancyU pus </> pretty i </> fancyU us </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
-    pretty (PreF i si pus us as rt Nothing (Just e)) = fancyU pus </> pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si <+> pretty rt <+> "=" <$> indent 2 (pretty e) <> line
-    pretty (PreF i si pus us as rt Nothing Nothing) = fancyU pus </> pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si <+> pretty rt
+    pretty (PreF i si [] [] as rt Nothing (Just e)) = pretty i <> prettyArgs as <+> ":" <> string si </> group (pretty rt) <+> "=" <$> indent 2 (pretty e) <> line
+    pretty (PreF i si [] [] as rt (Just t) (Just e)) = pretty i </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si </> group (pretty rt) <+> "=" <$> indent 2 (pretty e) <> line
+    pretty (PreF i si [] us as rt (Just t) (Just e)) = pretty i </> fancyU us </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si </> group (pretty rt) <+> "=" <$> indent 2 (pretty e) <> line
+    pretty (PreF i si [] us as rt Nothing (Just e)) = pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si </> group (pretty rt) <+> "=" <$> indent 2 (pretty e) <> line
+    pretty (PreF i si pus [] as rt Nothing (Just e)) = fancyU pus </> pretty i <> prettyArgs as <+> ":" <> string si </> group (pretty rt) <+> "=" <$> indent 2 (pretty e) <> line
+    pretty (PreF i si pus [] as rt (Just t) (Just e)) = fancyU pus </> pretty i <+> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si </> group (pretty rt) <+> "=" <$> indent 2 (pretty e) <> line
+    pretty (PreF i si pus us as rt (Just t) (Just e)) = fancyU pus </> pretty i </> fancyU us </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si </> group (pretty rt) <+> "=" <$> indent 2 (pretty e) <> line
+    pretty (PreF i si pus us as rt Nothing (Just e)) = fancyU pus </> pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si </> group (pretty rt) <+> "=" <$> indent 2 (pretty e) <> line
+    pretty (PreF i si pus us as rt Nothing Nothing) = fancyU pus </> pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si </> group (pretty rt)
     pretty _ = "FIXME"
 
 instance Pretty DataPropLeaf where
@@ -334,7 +334,8 @@ instance Pretty DataPropLeaf where
 
 instance Pretty Declaration where
     pretty (RecordType s rs)     = "typedef" <+> string s <+> "=" <+> prettyRecord rs <> line
-    pretty (SumViewType s ls)    = "datavtype" <+> string s <+> "=" <$> prettyLeaf ls <> linebreak
+    pretty (SumViewType s [] ls) = "datavtype" <+> string s <+> "=" <$> prettyLeaf ls <> linebreak
+    pretty (SumViewType s as ls) = "datavtype" <+> string s <> prettyArgs as <+> "=" <$> prettyLeaf ls <> linebreak
     pretty (SumType s ls)        = "datatype" <+> string s <+> "=" <$> prettyLeaf ls
     pretty (Impl [] i)           = pretty i
     pretty Impl{}                = "FIXME"

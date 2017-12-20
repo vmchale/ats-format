@@ -57,8 +57,8 @@ data Declaration = Func AlexPosn Function
                  | RecordViewType String [(String, Type)]
                  | TypeDef AlexPosn String [Arg] Type
                  | ViewTypeDef AlexPosn String [Arg] Type
-                 | SumType String [(String, Maybe Type)]
-                 | SumViewType String [(String, Maybe Type)]
+                 | SumType String [(String, Maybe Type)] -- TODO [Arg] for here
+                 | SumViewType String [Arg] [(String, Maybe Type)]
                  | AbsType AlexPosn String [Arg] Type
                  | AbsViewType AlexPosn String [Arg] Type
                  | OverloadOp AlexPosn BinOp Name

@@ -12,6 +12,7 @@
 # Design
 - [ ] align `=` in records?
 - [ ] figure out error handling in `happy`
+- [ ] `Control.Lens.Plated` to rewrite nested binary operations?
 - [ ] handle location information in a commonad?
 # Bugs
 - [ ] `Arg` should include proofs, e.g. `ptr_get0<a> (pf1 | p1)`.
