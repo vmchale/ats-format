@@ -2,7 +2,6 @@
 {-# LANGUAGE TemplateHaskell   #-}
 
 module Language.ATS.Exec ( exec
-                         , defaultConfig
                          ) where
 
 import           Control.Monad                (unless, (<=<))
@@ -26,7 +25,7 @@ import           Text.PrettyPrint.ANSI.Leijen (pretty)
 import           Text.Toml
 import           Text.Toml.Types              hiding (Parser)
 
-data Program = Program { _path :: Maybe FilePath, _inplace :: Bool, _noConfig :: Bool }
+data Program = Program { _path :: Maybe FilePath, _inplace :: Bool, _noConfig :: Bool, _defaultConfig :: Bool }
 
 file :: Parser Program
 file = Program
@@ -40,6 +39,9 @@ file = Program
     <*> switch
         (long "no-config"
         <> short 'o'
+        <> help "Ignore configuration file")
+    <*> switch
+        (long "default-config"
         <> help "Ignore configuration file")
 
 versionInfo :: Parser (a -> a)
@@ -113,6 +115,7 @@ fancyError :: Either (ATSError String) ATS -> IO ATS
 fancyError = either (printFail . show . pretty) pure
 
 pick :: Program -> IO ()
-pick (Program (Just p) False nc) = (genErr nc . parseATS . lexATS) =<< readFile p
-pick (Program Nothing _ nc)      = (genErr nc . parseATS . lexATS) =<< getContents
-pick (Program (Just p) True _)   = inplace p (fmap printATS . fancyError . parseATS . lexATS)
+pick (Program (Just p) False nc _) = (genErr nc . parseATS . lexATS) =<< readFile p
+pick (Program Nothing _ nc False)  = (genErr nc . parseATS . lexATS) =<< getContents
+pick (Program Nothing _ _ True)    = defaultConfig ".atsfmt.toml"
+pick (Program (Just p) True _ _)   = inplace p (fmap printATS . fancyError . parseATS . lexATS)

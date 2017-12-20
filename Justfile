@@ -6,10 +6,15 @@ polyglot:
     @poly . -e data/
 
 bench:
-    bench "atsfmt test/data/polyglot.dats" "atsfmt test/data/filetype.sats"
+    bench "atsfmt test/data/polyglot.dats" "atsfmt test/data/left-pad.dats"
 
 manpages:
     pandoc man/MANPAGE.md -s -t man -o man/atsfmt.1
+
+profile:
+    @cabal new-build -p
+    @cp $(fd 'atsfmt$' -IH dist-newstyle | tail -n1) ~/.local/bin
+    @cp man/atsfmt.1 ~/.local/share/man/man1
 
 install:
     @cabal new-build

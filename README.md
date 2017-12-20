@@ -4,20 +4,20 @@
 
 This is a code formatter for [ATS](http://www.ats-lang.org/). It is
 a work-in-progress, but it can handle a subset of the language already.
+Currently it is only tested with ATS 0.3.8.
 
 If you find something that's not listed in `TODO.md` feel free to open
 an issue.
 
-So far the formatter is pleasantly fast - < 20ms to format a 1500 line file.
+The formatter is pleasantly fast, formatting a 1500 line file in <20ms.
 
 ## Configuration
 
-`atsfmt` is configured with the `.atsfmt.toml` file. As an example:
+`atsfmt` is configured with the `.atsfmt.toml` file. You can generate a default
+configuration with
 
-```toml
-ribbon = 0.6 # maximum ribbon fraction
-width = 120 # maximum width
-clang-format = false # call clang-format on inline code
+```bash
+ $ atsfmt --default-config
 ```
 
 ## Installation

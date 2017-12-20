@@ -89,6 +89,7 @@ typedef source_contents = @{ rust = file
                            , automake = file
                            }
 
+vtypedef source_contents_r = ref(source_contents)
 
 datavtype pl_type =
   | unknown
@@ -172,3 +173,4 @@ datavtype pl_type =
   | m4 of int
   | objective_c of int
   | automake of int
+

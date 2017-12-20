@@ -43,26 +43,32 @@ newtype ATS = ATS { unATS :: [Declaration] }
 
 -- | Declare something in a scope (a function, value, action, etc.)
 data Declaration = Func AlexPosn Function
-                 | Impl Implementation
-                 | ProofImpl Implementation -- primplmnt
-                 | Val Addendum (Maybe Type) Pattern Expression
+                 | Impl [Arg] Implementation
+                 | ProofImpl Implementation -- primplmnt -- TODO add args
+                 | Val Addendum (Maybe Type) Pattern Expression -- TODO expression should be optional?
                  | PrVal Pattern Expression
-                 | Var (Maybe Type) Pattern Expression -- TODO can a `var` really appear anywhere in top-level declarations
+                 | Var (Maybe Type) Pattern (Maybe Expression) -- TODO AlexPosn
                  | AndDecl (Maybe Type) Pattern Expression
                  | Include String
                  | Staload (Maybe String) String
                  | Stadef String Name
                  | CBlock String
                  | RecordType String [(String, Type)]
-                 | RecordViewType String Type
+                 | RecordViewType String [(String, Type)]
+                 | TypeDef AlexPosn String [Arg] Type
+                 | ViewTypeDef AlexPosn String [Arg] Type
                  | SumType String [(String, Maybe Type)]
                  | SumViewType String [(String, Maybe Type)]
+                 | AbsType AlexPosn String [Arg] Type
                  | AbsViewType AlexPosn String [Arg] Type
                  | OverloadOp AlexPosn BinOp Name
                  | Comment String
                  | DataProp AlexPosn String [Arg] [DataPropLeaf]
                  | Extern AlexPosn Declaration
                  | Define String
+                 | SortDef AlexPosn String Type
+                 | AndD Declaration Declaration
+                 | Local AlexPosn [Declaration] [Declaration]
                  deriving (Show, Eq, Generic, NFData)
 
 data DataPropLeaf = DataPropLeaf [Universal] Expression
@@ -96,6 +102,8 @@ data Type = Bool
           | ConcreteType Expression
           | RefType Type
           | AbsProp AlexPosn String [Arg]
+          | ViewType AlexPosn Type
+          | FunctionType String Type Type
           deriving (Show, Eq, Generic, NFData)
 
 -- | A type for the various lambda arrows (`=>`, `=<cloref1>`, etc.)
@@ -106,6 +114,8 @@ data LambdaType = Plain AlexPosn
 -- | A name can be qualified (`$UN.unsafefn`) or not
 data Name = Unqualified String
           | Qualified AlexPosn String String
+          | SpecialName AlexPosn String
+          | Functorial String String
           deriving (Show, Eq, Generic, NFData)
 
 -- | A data type for patterns.
@@ -122,6 +132,7 @@ data Pattern = Wildcard AlexPosn
 
 -- | An argument to a function.
 data Arg = Arg String (Maybe Type)
+         | PrfArg Arg [Arg]
     deriving (Show, Eq, Generic, NFData)
 
 -- | Wrapper for universal quantifiers (refinement types)
@@ -152,28 +163,30 @@ data BinOp = Add
            deriving (Show, Eq, Generic, NFData)
 
 -- | A (possibly effectful) expression.
-data Expression = Let AlexPosn ATS Expression
+data Expression = Let AlexPosn ATS (Maybe Expression)
                 | Begin ATS
-                | Local ATS
                 | VoidLiteral -- The '()' literal representing inaction.
                     AlexPosn
-                | Call Name [Expression] [Type] [Expression]
+                -- The first list is implicit arguments such as `<a>`, the second is implicits such as `{list_vt(string)}`, the third is an optional proof, and the last is the actual arguments
+                | Call Name [Expression] [Type] (Maybe Expression) [Expression]
                 | NamedVal Name
                 | If { cond     :: Expression -- ^ Expression evaluating to a boolean value
                      , whenTrue :: Expression -- ^ Expression to be returned when true
-                     , elseExpr :: Expression -- ^ Expression to be returned when false
+                     , elseExpr :: Maybe Expression -- ^ Expression to be returned when false
                      }
-                | Sif { cond :: Expression, whenTrue :: Expression, elseExpr :: Expression }
+                | Sif { cond :: Expression, whenTrue :: Expression, selseExpr :: Expression } -- Static if (for proofs)
                 | BoolLit Bool
                 | TimeLit String
                 | FloatLit Float
                 | IntLit Int
+                | UnderscoreLit AlexPosn
                 | Lambda AlexPosn LambdaType Pattern Expression
                 | LinearLambda AlexPosn LambdaType Pattern Expression
                 | Index AlexPosn Name Expression
                 | Access AlexPosn Expression Name
                 | StringLit String
                 | CharLit Char
+                | AtExpr Expression Expression
                 | Binary BinOp Expression Expression
                 | Unary UnOp Expression
                 | Case { posE :: AlexPosn
@@ -188,14 +201,17 @@ data Expression = Let AlexPosn ATS Expression
                               , field :: String -- ^ Field being modified
                               , new   :: Expression -- ^ New value of the field
                               }
+                | Mutate Expression Expression
                 | Deref AlexPosn Expression
                 | Ref AlexPosn Type Expression
                 | ProofExpr AlexPosn Expression Expression
                 | TypeSignature Expression Type
-                | WhereExp Expression Declaration
+                | WhereExp Expression [Declaration]
                 | TupleEx AlexPosn [Expression]
                 | While AlexPosn Expression Expression
                 | Actions ATS
+                | TKind AlexPosn Name String
+                | ViewExpr AlexPosn Type -- TODO separate type for proof values?
                 deriving (Show, Eq, Generic, NFData)
 
 -- | An 'implement' declaration
@@ -218,7 +234,8 @@ data Function = Fun PreFunction
               | Praxi PreFunction
               deriving (Show, Eq, Generic, NFData)
 
-data PreFunction = PreF { fname         :: String -- ^ Function name
+data PreFunction = PreF { fname         :: Name -- ^ Function name
+                        , sig           :: String -- ^ e.g. <> or <!wrt>
                         , preUniversals :: [Universal] -- ^ Universal quantifiers making a function generic
                         , universals    :: [Universal] -- ^ Universal quantifiers/refinement type
                         , args          :: [Arg] -- ^ Actual function arguments

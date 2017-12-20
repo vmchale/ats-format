@@ -69,8 +69,8 @@ script:
       export BINPATH="$(find -name atsfmt -executable | tail -n1 | head -n1)"
     fi
   - echo $BINPATH
-  # - mv $BINPATH atsfmt-$TARGET
-  # - ls atsfmt-$TARGET
+  - mv $BINPATH atsfmt-$TARGET
+  - ls atsfmt-$TARGET
 
 deploy:
   api_key:

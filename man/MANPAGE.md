@@ -15,6 +15,8 @@ atsfmt - a source code formatter for ATS
 
   ac file.dats | atsfmt
 
+  atsfmt --default-config
+
 # DESCRIPTION
 
 **atsfmt** is an opinionated formatter for that ATS2 language.
@@ -32,6 +34,9 @@ atsfmt - a source code formatter for ATS
 
 **-i**
 :   Modify a file in-place.
+
+**-\-default-config**
+:   Generate a default configuration file in the current directory
 
 # CONFIGURATION
 
