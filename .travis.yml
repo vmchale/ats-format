@@ -66,8 +66,7 @@ script:
     then
       export BINPATH="$(find . -name atsfmt -perm 755 | tail -n1)"
     else
-      rm -rf .stack-work
-      export BINPATH="$(find -name atsfmt -executable | tail -n1 | head -n1)"
+      export BINPATH="$(find -name atsfmt -executable | tail -n1)"
     fi
   - echo $BINPATH
   - mv $BINPATH atsfmt-$TARGET
