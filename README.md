@@ -20,6 +20,20 @@ configuration with
  $ atsfmt --default-config
 ```
 
+### Vim
+
+I have the following in my `.vimrc` to automatically format ATS source files
+with `<F3>`:
+
+```vim
+function! AtsFormat()
+    exec 'silent !atsfmt -i ' . expand('%')
+    exec 'e'
+endfunction
+
+au BufNewFile,BufRead *.ats,*.dats,*.sats,*.cats nnoremap <F3> :call AtsFormat()<CR>
+```
+
 ## Installation
 
 ### Binary Releases
