@@ -65,12 +65,6 @@ script:
   - stack build --test --bench --no-run-tests --no-run-benchmarks
   - |
     if [ `uname` = "Darwin" ]
-      find .stack-work -name atsfmt -perm 755
-    else
-      echo 'nothing'
-    fi
-  - |
-    if [ `uname` = "Darwin" ]
     then
       export BINPATH="$(find .stack-work -name atsfmt -perm 755 | tail -n1)"
     else
