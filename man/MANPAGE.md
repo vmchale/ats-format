@@ -54,6 +54,17 @@ your .atsfmt.toml
 clang-format = true
 ```
 
+You can also set ribbon width and line width in the file, viz.
+
+```
+ribbon = 0.6
+width = 120
+```
+
+Ribbon width is the width of a line excluding indentation.
+In this example, the maximum column number will be 120 and the maximum ribbon
+width will be 0.6 * 120 = 72 characters.
+
 # EDITOR INTEGRATION
 
 Editor integration is available with the ATS vim plugin at:

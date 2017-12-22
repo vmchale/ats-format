@@ -178,4 +178,3 @@ datavtype pl_type =
   | m4 of int
   | objective_c of int
   | automake of int
-

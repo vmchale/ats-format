@@ -32,9 +32,9 @@ $special = [\+\-\&\|\[\]\{\}\(\)\_\=\!\%\^\$\@\;\~\,\.\\\#]
 $alpha = [a-zA-Z]
 $terminal = $printable # $white
 $esc_char = \27
-@escape_ch = \\ (n | t | \')
-@escape_str = \\ (n | t | \")
-@char = ($terminal # $special) | @escape_ch | $esc_char
+@escape_ch = \\ [nt\'\\]
+@escape_str = \\ [nt\"\\]
+@char = ($terminal # [\\\']) | " " | @escape_ch | $esc_char
 @bool = (true | false)
 
 @char_lit = \' @char \'
@@ -69,9 +69,9 @@ $esc_char = \27
 @ref_call = @identifier "<" ($alpha | $digit | "(" | ")" | _)+ ">"
 
 @not_close_c = \% [^\}]
-@c_block = \%\{ ([^\%] | @not_close_c | \n)* \%\}
+@c_block = \%\{ ([^\%] | @not_close_c | \n)* \%\} -- TODO include %{# and %{$
 
-@lambda = "=>" | "=<cloref1>" | "=<cloptr1>" | "=>>"
+@lambda = "=>" | "=<cloref1>" | "=<cloptr1>" | "=>>" | "=<lincloptr1>"
 
 -- FIXME whatever the fuck this is: -<cloptr,fe>
 @func_type = "-<fun>" | "-<cloptr1>" | "-<lincloptr1>" | "-<lin,cloptr1>" | "-<lin,prf>" | "-<>" | "-<prf>" -- FIXME allow spaces after comma?
@@ -120,8 +120,8 @@ tokens :-
     case"-"                  { tok (\p s -> Keyword p (KwCase Minus)) }
     case                     { tok (\p s -> Keyword p (KwCase None)) }
     castfn                   { tok (\p s -> Keyword p KwCastfn) }
-    val"+"                   { tok (\p s -> Keyword p (KwVal Plus)) }
-    val"-"                   { tok (\p s -> Keyword p (KwVal Minus)) }
+    val"+"                   { tok (\p s -> Keyword p (KwVal Plus)) } -- TODO also val@ ?
+    val"-"                   { tok (\p s -> Keyword p (KwVal Minus)) } 
     val                      { tok (\p s -> Keyword p (KwVal None)) }
     var                      { tok (\p s -> Keyword p KwVar) }
     int                      { tok (\p s -> Keyword p KwInt) }
@@ -166,7 +166,7 @@ tokens :-
     @double_parens           { tok (\p s -> DoubleParenTok p) }
     @double_braces           { tok (\p s -> DoubleBracesTok p) }
     @double_brackets         { tok (\p s -> DoubleBracketTok p) }
-    @char_lit                { tok (\p s -> CharTok p (s !! 1)) }
+    @char_lit                { tok (\p s -> CharTok p (toChar s)) }
     @lambda                  { tok (\p s -> Arrow p s) }
     @func_type               { tok (\p s -> FuncType p s) }
     @bool                    { tok (\p s -> BoolTok p (read (over _head toUpper s)))}
@@ -297,6 +297,12 @@ token_posn (SignatureTok p _) = p
 token_posn (DoubleParenTok p) = p
 token_posn (DoubleBracesTok p) = p
 token_posn (DoubleBracketTok p) = p
+
+toChar :: String -> Char
+toChar "'\\n'" = '\n'
+toChar "'\\t'" = '\t'
+toChar "'\\\\'" = '\\'
+toChar x = x !! 1
 
 -- | This function turns a string into a stream of tokens for the parser.
 lexATS :: String -> [Token]

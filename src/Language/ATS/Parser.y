@@ -84,6 +84,7 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     view { Keyword $$ KwView }
     raise { Keyword $$ KwRaise }
     tkindef { Keyword $$ KwTKind }
+    assume { Keyword $$ KwAssume }
     boolLit { BoolTok _ $$ }
     timeLit { TimeTok _ $$ }
     intLit { IntTok _ $$ }
@@ -91,6 +92,7 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     effmaskWrt { Identifier $$ "effmask_wrt" }
     effmaskAll { Identifier $$ "effmask_all" }
     extfcall { Identifier $$ "extfcall" }
+    ldelay { Identifier $$ "ldelay" }
     -- TODO token? raise { Identifier $$ "raise" }
     identifier { Identifier _ $$ }
     closeParen { Special $$ ")" }
@@ -115,6 +117,7 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     plainArrow { Arrow $$ "=>" }
     cloref1Arrow { Arrow $$ "=<cloref1>" }
     cloptr1Arrow { Arrow $$ "=<cloptr1>" }
+    lincloptr1Arrow { Arrow $$ "=<lincloptr1>" }
     spear { Arrow $$ "=>>" }
     lsqbracket { Special $$ "[" }
     rsqbracket { Special $$ "]" }
@@ -173,10 +176,10 @@ Type : Name openParen TypeInExpr closeParen { Dependent $1 $3 }
      | t0pCo { T0p Plus }
      | vt0pPlain { Vt0p None }
      | vt0pCo { Vt0p Plus }
-     | stringType openParen Expression closeParen { DepString $3 }
-     | stringType Expression { DepString $2 }
-     | int openParen Expression closeParen { DependentInt $3 }
-     | bool openParen Expression closeParen { DependentBool $3 }
+     | stringType openParen PreExpression closeParen { DepString $3 }
+     | stringType PreExpression { DepString $2 }
+     | int openParen PreExpression closeParen { DependentInt $3 }
+     | bool openParen PreExpression closeParen { DependentBool $3 }
      | identifier { Named $1 }
      | int Expression { DependentInt $2 }
      | exclamation Type { Unconsumed $2 }
@@ -193,7 +196,6 @@ Type : Name openParen TypeInExpr closeParen { Dependent $1 $3 }
      | openParen Type vbar Type closeParen { ProofType $1 $2 $4 }
      | Name identifier { Dependent $1 [Named $2] }
      | openParen TypeIn closeParen { Tuple $1 $2 }
-     | absprop identifier openParen FullArgs closeParen { AbsProp $1 $2 [] }
      | openParen Type closeParen { $2 }
 
 FullArgs : Args { $1 }
@@ -245,18 +247,18 @@ PrfExpr : view at Type { ViewExpr $1 $3 }
 ExpressionIn : Expression { [$1] }
              | ExpressionIn comma Expression { $3 : $1 }
 
-TupleExpression : PreExpression comma PreExpression { [$3, $1] }
-                | TupleExpression comma PreExpression { $3 : $1 }
+Tuple : PreExpression comma PreExpression { [$3, $1] }
+      | Tuple comma PreExpression { $3 : $1 }
 
 LambdaArrow : plainArrow { Plain $1 }
             | cloref1Arrow { Full $1 "cloref1" } -- TODO do this more efficiently.
             | cloptr1Arrow { Full $1 "cloptr1" }
+            | lincloptr1Arrow { Full $1 "lincloptr1" }
             | spear { Full $1 ">" }
 
 Expression : PreExpression { $1 }
            | raise PreExpression { Call (SpecialName $1 "raise") [] [] Nothing [$2] }
            | Name PreExpression { Call $1 [] [] Nothing [$2] }
-           | openParen TupleExpression closeParen { TupleEx $1 $2 }
 
 -- FIXME should these be types??
 TypeArgs : lbrace Expression rbrace { [$2] }
@@ -284,7 +286,7 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | let ATS in end { Let $1 $2 Nothing }
               | lambda Pattern LambdaArrow PreExpression { Lambda $1 $3 $2 $4 }
               | llambda Pattern LambdaArrow PreExpression { LinearLambda $1 $3 $2 $4 }
-              | begin PreExpression end { $2 }
+              | begin PreExpression end { Begin $1 $2 }
               | at lbrace RecordVal rbrace { RecordValue $1 $3 Nothing }
               | at lbrace RecordVal rbrace signature Type { RecordValue $1 $3 (Just $6) }
               | PreExpression semicolon PreExpression { Precede $1 $3 }
@@ -295,6 +297,7 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | ref Type rbracket PreExpression { Ref $1 $2 $4 }
               | PreExpression where lbrace Declarations rbrace { WhereExp $1 $4 }
               | PreExpression signature Type { TypeSignature $1 $3 }
+              | openParen Tuple closeParen { TupleEx $1 $2 }
               | Name { NamedVal $1 }
               | lbrace ATS rbrace { Actions $2 }
               | underscore { UnderscoreLit $1 }
@@ -334,6 +337,7 @@ Name : FunName { $1 }
      | dollar identifier dot identifier { Qualified $1 $4 $2 }
      | dollar effmaskWrt { SpecialName $1 "effmask_wrt" }
      | dollar effmaskAll { SpecialName $1 "effmask_all" } -- FIXME there is probably a better/more efficient way of doing this
+     | dollar ldelay { SpecialName $1 "ldelay" } -- FIXME there is probably a better/more efficient way of doing this
 
 RecordVal : identifier eq Expression { [($1, $3)] }
           | RecordVal comma identifier eq Expression { ($3, $5) : $1 }
@@ -410,25 +414,29 @@ Declaration : include string { Include $2 }
             | overload BinOp with Name { OverloadOp $1 $2 $4 }
             | stadef identifier eq Name { Stadef $2 $4 }
             | sortdef identifier eq Type { SortDef $1 $2 $4 }
-            | typedef identifier eq at lbrace Records rbrace { RecordType $2 $6 }
+            | typedef identifier eq at lbrace Records rbrace { RecordType $2 [] $6 }
+            | vtypedef identifier eq at lbrace Records rbrace { RecordViewType $2 [] $6 }
             | typedef identifier eq Type { TypeDef $1 $2 [] $4 }
+            | typedef identifier openParen FullArgs closeParen eq at lbrace Records rbrace { RecordType $2 $4 $9 }
+            | vtypedef identifier openParen FullArgs closeParen eq at lbrace Records rbrace { RecordViewType $2 $4 $9 }
+            | typedef identifier openParen FullArgs closeParen eq Type { TypeDef $1 $2 $4 $7 }
             | vtypedef identifier openParen FullArgs closeParen eq Type { ViewTypeDef $1 $2 $4 $7 }
             | vtypedef identifier eq Type { ViewTypeDef $1 $2 [] $4 }
             | datavtype identifier eq Leaves { SumViewType $2 [] $4 }
             | datavtype identifier openParen Args closeParen eq Leaves { SumViewType $2 $4 $7 }
             | absvtype identifier openParen FullArgs closeParen eq Type { AbsViewType $1 $2 $4 $7 }
             | abstype identifier openParen FullArgs closeParen eq Type { AbsType $1 $2 $4 $7 }
-            | datatype identifier eq Leaves { SumType $2 $4 }
+            | datatype identifier eq Leaves { SumType $2 [] $4 }
+            | datatype identifier openParen Args closeParen eq Leaves { SumType $2 $4 $7 }
             | dataprop identifier openParen FullArgs closeParen eq DataPropLeaves { DataProp $1 $2 $4 $7 }
+            | assume Name openParen Args closeParen eq Expression { Assume $2 $4 $7 }
             | lineComment { Comment $1 }
+            | absprop identifier openParen FullArgs closeParen { AbsProp $1 $2 [] }
             | define { Define $1 }
             | cblock { CBlock $1 }
             | lambda {% Left $ Expected $1 "Declaration" "lam" }
             | llambda {% Left $ Expected $1 "Declaration" "llam" }
             | ref {% Left $ Expected $1 "Declaration" "ref" }
-
--- existentials
--- 
 
 {
 

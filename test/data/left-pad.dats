@@ -66,7 +66,8 @@ implement main0(argc, argv) =
       then (
         let
           val c = '0'
-          val s = g1ofg0(args[1]) : [n:nat] string n
+          val s = g1ofg0(args[1]) : [n:nat] string
+//n
           val pad = g1ofg0(g0string2int(args[2]))
         in
           if length(s) > 0 && pad > 0

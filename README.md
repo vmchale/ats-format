@@ -7,7 +7,8 @@ a work-in-progress, but it can handle a subset of the language already.
 Currently it is only tested with ATS 0.3.8.
 
 If you find something that's not listed in `TODO.md` feel free to open
-an issue.
+an issue. The pretty-printer is a bit anemic, so you're welcome to submit code
+samples where it produces bad output.
 
 The formatter is pleasantly fast, formatting a 1500 line file in <20ms.
 
@@ -18,22 +19,6 @@ configuration with
 
 ```bash
  $ atsfmt --default-config
-```
-
-### Vim
-
-I have the following in my `.vimrc` to automatically format ATS source files
-on write:
-
-```vim
-function! AtsFormat()
-    exec 'silent !atsfmt -i ' . expand('%')
-    exec 'e'
-endfunction
-
-augroup ats
-    autocmd BufWritePost *.ats,*.dats,*.sats,*.cats call AtsFormat()
-augroup END
 ```
 
 ## Installation
@@ -55,4 +40,4 @@ To install, first install [GHC](https://www.haskell.org/ghc/download.html), then
 
 ## License
 
-All code except `test/data/left-pad.dats` is license under the BSD3 license.
+All code except `test/data/left-pad.dats` is licensed under the BSD3 license.

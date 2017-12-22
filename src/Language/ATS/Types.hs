@@ -57,11 +57,11 @@ data Declaration = Func AlexPosn Function
                  | Staload (Maybe String) String
                  | Stadef String Name
                  | CBlock String
-                 | RecordType String [(String, Type)]
-                 | RecordViewType String [(String, Type)]
+                 | RecordType String [Arg] [(String, Type)]
+                 | RecordViewType String [Arg] [(String, Type)]
                  | TypeDef AlexPosn String [Arg] Type
                  | ViewTypeDef AlexPosn String [Arg] Type
-                 | SumType String [(String, Maybe Type)] -- TODO [Arg] for here
+                 | SumType String [Arg] [(String, Maybe Type)] -- TODO [Arg] for here
                  | SumViewType String [Arg] [(String, Maybe Type)]
                  | AbsType AlexPosn String [Arg] Type
                  | AbsViewType AlexPosn String [Arg] Type
@@ -73,6 +73,8 @@ data Declaration = Func AlexPosn Function
                  | SortDef AlexPosn String Type
                  | AndD Declaration Declaration
                  | Local AlexPosn [Declaration] [Declaration]
+                 | AbsProp AlexPosn String [Arg]
+                 | Assume Name [Arg] Expression
                  deriving (Show, Eq, Generic, NFData)
 
 data DataPropLeaf = DataPropLeaf [Universal] Expression
@@ -105,7 +107,6 @@ data Type = Bool
           | ProofType AlexPosn Type Type -- Aka (prf | val)
           | ConcreteType Expression
           | RefType Type
-          | AbsProp AlexPosn String [Arg]
           | ViewType AlexPosn Type
           | FunctionType String Type Type
           deriving (Show, Eq, Generic, NFData)
@@ -168,7 +169,6 @@ data BinOp = Add
 
 -- | A (possibly effectful) expression.
 data Expression = Let AlexPosn ATS (Maybe Expression)
-                | Begin ATS
                 | VoidLiteral -- The '()' literal representing inaction.
                     AlexPosn
                 -- The first list is implicit arguments such as `<a>`, the second is implicits such as `{list_vt(string)}`, the third is an optional proof, and the last is the actual arguments
@@ -217,6 +217,7 @@ data Expression = Let AlexPosn ATS (Maybe Expression)
                 | Actions ATS
                 | TKind AlexPosn Name String
                 | ViewExpr AlexPosn Type -- TODO separate type for proof values?
+                | Begin AlexPosn Expression
                 deriving (Show, Eq, Generic, NFData)
 
 instance Plated Expression where

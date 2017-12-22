@@ -3,6 +3,7 @@
 - [ ] don't rewrite `absvtype` to `absviewtype`?
 - [ ] don't rewrite empty braces?
 - [ ] align comments w/ nearest block
+- [ ] rewrite (a; b; c;) using begin.. end blocks
 # Performance
 - [ ] consider bytestring lexer
 - [ ] Consider a different pretty-printer
@@ -15,6 +16,7 @@
 - [ ] `Control.Lens.Plated` to rewrite nested binary operations?
 - [ ] handle location information in a commonad?
 # Bugs
+- [ ] spurious line in `fib.out`
 - [ ] `Arg` should include proofs, e.g. `ptr_get0<a> (pf1 | p1)`.
 - [ ] ATS parses `if` statements differently than we do (else clause isn't
   necessary)

@@ -799,6 +799,7 @@ fun match_filename(s : string) : pl_type =
   let
     val (prf | str) = filename_get_base(s)
     val match = $UN.strptr2string(str)
+    
     prval () = prf(str)
   in
     case+ match of
@@ -820,6 +821,7 @@ fun prune_extension(s : string, file_proper : string) : pl_type =
       $UN.strptr2string(str)
     else
       ""
+    
     prval () = prf(str)
   in
     case+ match of
@@ -1219,7 +1221,6 @@ fun work( excludes : List0(string)
       | ~Some_vt (snd) => queue_free<List0(string)>(snd)
   }
 
-
 extern
 fun  ncpu  () : int
 
@@ -1231,6 +1232,7 @@ return sysconf(_SC_NPROCESSORS_ONLN);
 %}
 
 #define NCPU 4
+
 fun apportion(includes : List0(string)) :
 (List0(string), List0(string)) =
   let
