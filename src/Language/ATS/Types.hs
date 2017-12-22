@@ -31,7 +31,7 @@ module Language.ATS.Types
     , Addendum (..)
     , DataPropLeaf (..)
     , PreFunction (..)
-    -- remove
+    , rewriteATS
     , binList
     ) where
 
@@ -109,6 +109,7 @@ data Type = Bool
           | RefType Type
           | ViewType AlexPosn Type
           | FunctionType String Type Type
+          | NoneType AlexPosn
           deriving (Show, Eq, Generic, NFData)
 
 -- | A type for the various lambda arrows (`=>`, `=<cloref1>`, etc.)
@@ -192,7 +193,6 @@ data Expression = Let AlexPosn ATS (Maybe Expression)
                 | CharLit Char
                 | AtExpr Expression Expression
                 | Binary BinOp Expression Expression
-                | BinList { _op :: BinOp, _exprs :: [Expression] }
                 | Unary UnOp Expression
                 | Case { posE :: AlexPosn
                        , kind :: Addendum
@@ -218,11 +218,23 @@ data Expression = Let AlexPosn ATS (Maybe Expression)
                 | TKind AlexPosn Name String
                 | ViewExpr AlexPosn Type -- TODO separate type for proof values?
                 | Begin AlexPosn Expression
+                | BinList { _op :: BinOp, _exprs :: [Expression] }
+                | PrecedeList { _exprs :: [Expression] }
                 deriving (Show, Eq, Generic, NFData)
 
 instance Plated Expression where
-    plate f (Binary Add e e') = Binary Add <$> f e <*> f e'
-    plate _ x                 = pure x
+    plate f (Binary op e e') = Binary op <$> f e <*> f e'
+    plate f (Precede e e')   = Precede <$> f e <*> f e'
+    plate _ x                = pure x
+
+rewriteATS :: Expression -> Expression
+rewriteATS = precedeList
+
+precedeList :: Expression -> Expression
+precedeList = transform $ \case
+    (Precede e@PrecedeList{} e') -> PrecedeList (e' : _exprs e)
+    (Precede e e') -> PrecedeList [e, e']
+    a -> a
 
 binList :: Expression -> Expression
 binList = transform $ \case

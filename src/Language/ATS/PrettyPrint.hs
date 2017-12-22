@@ -45,16 +45,21 @@ deriving instance NFData Doc
 instance Eq Doc where
     (==) = on (==) show
 
--- FIXME account for %{, %{$, and %{#
+takeBlock :: String -> (String, String)
+takeBlock ('%':'}':ys) = ("", ('%':) . ('}':) $ ys)
+takeBlock (y:ys)       = first (y:) $ takeBlock ys
+takeBlock []           = ([], [])
+
+rest :: String -> IO String
+rest xs = fmap (<> (snd $ takeBlock xs)) $ printClang (fst $ takeBlock xs)
+
 processClang :: String -> IO String
-processClang ('%':'{':'^':xs) = fmap (('%':) . ('{':) . ('^':)) $ fmap (<> (snd $ takeBlock xs)) $ printClang (fst $ takeBlock xs)
-    where
-        takeBlock :: String -> (String, String)
-        takeBlock ('%':'}':ys) = ("", ('%':) . ('}':) $ ys)
-        takeBlock (y:ys)       = first (y:) $ takeBlock ys
-        takeBlock []           = ([], [])
-processClang (x:xs) = fmap (x:) $ processClang xs
-processClang [] = pure []
+processClang ('%':'{':'^':xs) = fmap (('%':) . ('{':) . ('^':)) $ rest xs
+processClang ('%':'{':'#':xs) = fmap (('%':) . ('{':) . ('#':)) $ rest xs
+processClang ('%':'{':'$':xs) = fmap (('%':) . ('{':) . ('$':)) $ rest xs
+processClang ('%':'{':xs)     = fmap (('%':) . ('{':)) $ rest xs
+processClang (x:xs)           = fmap (x:) $ processClang xs
+processClang []               = pure []
 
 printClang :: String -> IO String
 printClang = readCreateProcess (shell "clang-format")
@@ -101,18 +106,13 @@ splits LogicalAnd = True
 splits LogicalOr  = True
 splits _          = False
 
-instance Pretty Addendum where
-    pretty Plus  = "+"
-    pretty Minus = "-"
-    pretty None  = ""
-
 startsParens :: Doc -> Bool
 startsParens d = f (show d) where
     f ('(':_) = True
     f _       = False
 
 instance Pretty Expression where
-    pretty = cata a where
+    pretty = cata a . rewriteATS where
         a (IfF e e' (Just e''))         = "if" <+> e <+> "then" <$> indent 2 e' <$> "else" <$> indent 2 e''
         a (IfF e e' Nothing)            = "if" <+> e <+> "then" <$> indent 2 e'
         a (SifF e e' e'')               = "sif" <+> e <+> "then" <$> indent 2 e' <$> "else" <$> indent 2 e''
@@ -152,7 +152,8 @@ instance Pretty Expression where
         a (VoidLiteralF _)              = "()"
         a (RecordValueF _ es Nothing)   = prettyRecord es
         a (RecordValueF _ es (Just x))  = prettyRecord es <+> ":" <+> pretty x
-        a (PrecedeF e e')               = parens (e <+> ";" </> e')
+        a (PrecedeF e e')               = parens (e <+> ";" </> e') -- TODO use plated + write this like arguments with commas
+        a (PrecedeListF es)             = prettyArgsG' ";" "(" ")" es
         a (FieldMutateF _ o f v)        = pretty o <> "->" <> string f <+> ":=" <+> v
         a (MutateF e e')                = e <+> ":=" <+> e'
         a (DerefF _ e)                  = "!" <> e
@@ -234,6 +235,7 @@ instance Pretty Type where
         a (RefTypeF t)        = "&" <> t
         a (ViewTypeF _ t)     = "view@" <> parens t
         a (FunctionTypeF s t t') = t <+> string s <+> t'
+        a NoneTypeF{} = "()"
 
 gan :: Maybe Type -> Doc
 gan (Just t) = " : " <> pretty t <> " "
@@ -319,18 +321,21 @@ prettyLeaf [(s, Just e)]     = indent 2 ("|" <+> string s <+> "of" <+> pretty e)
 prettyLeaf ((s, Nothing):xs) = prettyLeaf xs $$ indent 2 ("|" <+> string s)
 prettyLeaf ((s, Just e):xs)  = prettyLeaf xs $$ indent 2 ("|" <+> string s <+> "of" <+> pretty e)
 
-prettyArgsG :: Doc -> Doc -> [Doc] -> Doc
-prettyArgsG c1 c2 = (c1 <>) . align . indent (-1) . cat . (<> pure c2) . go . reverse -- TODO when it's only one arg, don't split ( off
+prettyArgsG' :: Doc -> Doc -> Doc -> [Doc] -> Doc
+prettyArgsG' c3 c1 c2 = (c1 <>) . align . indent (-1) . cat . (<> pure c2) . go . reverse -- TODO when it's only one arg, don't split ( off
     where go :: [Doc] -> [Doc]
           go [x]    = [x]
-          go (x:xs) = flatAlt (" " <> x) x : fmap (", " <>) xs
+          go (x:xs) = flatAlt (" " <> x) x : fmap (c3 <>) xs
           go x      = x
 
-prettyArgs' :: (Pretty a) => Doc -> Doc -> [a] -> Doc
-prettyArgs' = fmap pretty -.** prettyArgsG
+prettyArgsG :: Doc -> Doc -> [Doc] -> Doc
+prettyArgsG = prettyArgsG' ", "
+
+prettyArgs' :: (Pretty a) => Doc -> Doc -> Doc -> [a] -> Doc
+prettyArgs' = fmap pretty -.*** prettyArgsG'
 
 prettyArgs :: (Pretty a) => [a] -> Doc
-prettyArgs = prettyArgs' "(" ")"
+prettyArgs = prettyArgs' ", " "(" ")"
 
 fancyU :: [Universal] -> Doc
 fancyU = foldMap pretty . reverse
@@ -385,4 +390,4 @@ instance Pretty Declaration where
     pretty (TypeDef _ s as t)    = "typedef" <+> string s <> prettyArgs as <+> "=" <+> pretty t
     pretty (AbsProp _ n as)      = "absprop" <+> string n <+> prettyArgs as
     pretty (Assume n as e)       = "assume" </> pretty n <> prettyArgs as <+> "=" </> pretty e
-    pretty _                     = mempty
+    pretty _                     = "FIXME"

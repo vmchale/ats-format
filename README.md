@@ -2,6 +2,9 @@
 
 [![Build Status](https://travis-ci.org/vmchale/ats-format.svg?branch=master)](https://travis-ci.org/vmchale/ats-format)
 
+<img alt="Screenshot of sample results" src=https://github.com/vmchale/ats-format/raw/master/atsfmt.png>
+<img alt="Screenshot of sample results" src=https://github.com/vmchale/ats-format/raw/master/atsfmt2.png>
+
 This is a code formatter for [ATS](http://www.ats-lang.org/). It is
 a work-in-progress, but it can handle a subset of the language already.
 Currently it is only tested with ATS 0.3.8.

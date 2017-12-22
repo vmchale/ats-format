@@ -12,9 +12,9 @@
   - [ ] use monadic lexer
 # Design
 - [ ] align `=` in records?
-- [ ] figure out error handling in `happy`
+- [ ] monadic parser for error handling?
 - [ ] `Control.Lens.Plated` to rewrite nested binary operations?
-- [ ] handle location information in a commonad?
+- [ ] handle location information in a comonad?
 # Bugs
 - [ ] spurious line in `fib.out`
 - [ ] `Arg` should include proofs, e.g. `ptr_get0<a> (pf1 | p1)`.
@@ -33,6 +33,8 @@
 - [ ] `prfn`
 - [ ] `tkindef` / `typekindef`?
 - [ ] `prfun`
+- [ ] `propdef`
+- [ ] `stacst`
 - [ ] `primplmnt'
 - [ ] `implmnt`
 - [ ] `infixr`

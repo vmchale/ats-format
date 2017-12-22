@@ -4,6 +4,7 @@
     {-# LANGUAGE DeriveGeneric #-}
     {-# LANGUAGE DeriveAnyClass #-}
     {-# LANGUAGE StandaloneDeriving #-}
+    {-# LANGUAGE OverloadedStrings #-}
 
     -- | Module exporting the lexer itself as well as several data types for
     -- working with tokens.
@@ -15,10 +16,11 @@
                               , token_posn
                               ) where
 
-import Data.Char (toUpper)
+import Data.Char (toUpper, toLower)
 import Control.Lens (over, _head)
 import Control.DeepSeq (NFData)
 import GHC.Generics (Generic)
+import Text.PrettyPrint.ANSI.Leijen hiding (line, column, (<$>))
 
 }
 
@@ -69,18 +71,18 @@ $esc_char = \27
 @ref_call = @identifier "<" ($alpha | $digit | "(" | ")" | _)+ ">"
 
 @not_close_c = \% [^\}]
-@c_block = \%\{ ([^\%] | @not_close_c | \n)* \%\} -- TODO include %{# and %{$
+@c_block = \%\{ ("#" | "$" | "^" | "") ([^\%] | @not_close_c | \n)* \%\} -- TODO include %{# and %{$
 
 @lambda = "=>" | "=<cloref1>" | "=<cloptr1>" | "=>>" | "=<lincloptr1>"
 
 -- FIXME whatever the fuck this is: -<cloptr,fe>
-@func_type = "-<fun>" | "-<cloptr1>" | "-<lincloptr1>" | "-<lin,cloptr1>" | "-<lin,prf>" | "-<>" | "-<prf>" -- FIXME allow spaces after comma?
+@func_type = "-<fun>" | "-<cloptr1>" | "-<lincloptr1>" | "-<lin,cloptr1>" | "-<fun0>" | "-<lin,prf>" | "-<>" | "-<prf>" -- FIXME allow spaces after comma?
 
-@operator = "+" | "-" | "*" | "/" | "!=" | ">=" | "<=" | "=" | "~" | "&&" | "||" | ">" | "<" | "->" | ":=" | ".<" | ">." | ">>" | "?" | "?!" | "#[" -- TODO context so tilde doesn't follow |
+@operator = "+" | "-" | "*" | "/" | "!=" | ">=" | "<=" | "=" | "~" | "&&" | "||" | "->" | ":=" | ".<" | ">." | "<" | ">" | ">>" | "?" | "?!" | "#[" -- TODO context so tilde doesn't follow |
 
-@double_parens = "(" (@block_comment | "") ")"
-@double_braces = "{" (@block_comment | "") "}"
-@double_brackets = "<" (@block_comment | "") ">"
+@double_parens = "(" @block_comment ")" | "()"
+@double_braces = "{" @block_comment "}" | "{}"
+@double_brackets = "<" @block_comment ">" | "<>"
 
 @view = v | view
 
@@ -198,7 +200,6 @@ data Keyword = KwFun
              | KwAnd
              | KwDatatype
              | KwDatavtype
-             | KwDataviewtype
              | KwAssume
              | KwTypedef
              | KwVtypedef
@@ -276,6 +277,94 @@ data Token = Identifier AlexPosn String
            | DoubleBracesTok AlexPosn
            | DoubleBracketTok AlexPosn
            deriving (Eq, Show, Generic, NFData)
+
+instance Pretty Addendum where
+    pretty Plus = "+"
+    pretty Minus = "-"
+    pretty None = ""
+
+instance Pretty Keyword where
+    pretty KwFun = "fun"
+    pretty KwAnd = "and"
+    pretty KwDatatype = "datatype"
+    pretty KwDatavtype = "datavtype" -- FIXME this wrongly squashes dataviewtype
+    pretty KwFnx = "fnx"
+    pretty KwAssume = "assume"
+    pretty KwTypedef = "typedef"
+    pretty KwVtypedef = "vtypedef"
+    pretty KwStaload = "stload"
+    pretty KwLet = "let"
+    pretty KwWhere = "where"
+    pretty KwLocal = "local"
+    pretty KwEnd = "end"
+    pretty KwBegin = "begin"
+    pretty KwIn = "in"
+    pretty KwImplement = "implement"
+    pretty (KwCase c) = "case" <> pretty c
+    pretty KwIf = "if"
+    pretty KwSif = "sif"
+    pretty KwThen = "then"
+    pretty KwElse = "else"
+    pretty KwString = "string"
+    pretty KwBool = "bool"
+    pretty KwInt = "int"
+    pretty KwVoid = "void"
+    pretty KwNat = "nat"
+    pretty (KwVal c) = "val" <> pretty c
+    pretty KwVar = "var"
+    pretty KwLambda = "lam"
+    pretty KwLinearLambda = "llam"
+    pretty KwInclude = "include"
+    pretty KwWhen = "when"
+    pretty KwOf = "of"
+    pretty KwAbsprop = "absprop"
+    pretty KwPrval = "prval"
+    pretty KwStadef = "stadef"
+    pretty KwPraxi = "praxi"
+    pretty KwWhile = "while"
+    pretty KwOverload = "overload"
+    pretty KwWith = "with"
+    pretty KwChar = "char"
+    pretty KwDataview = "dataview"
+    pretty KwDataprop = "dataprop"
+    pretty KwView = "view"
+    pretty KwAbstype = "abstype"
+    pretty KwAbsvtype = "absvtype"
+    pretty KwType = "type"
+    pretty (KwAbst0p c) = "abst@ype" <> pretty c
+    pretty (KwT0p c) = "t@ype" <> pretty c
+    pretty (KwVt0p c) = "vt@ype" <> pretty c
+    pretty KwPrfun = "prfun"
+    pretty KwPrfn = "prfn"
+    pretty KwCastfn = "castfn"
+    pretty KwExtern = "extern"
+    pretty KwRaise = "$raise"
+    pretty KwProofImplement = "primplmnt"
+    pretty KwSortdef = "sortdef"
+    pretty KwPropdef = "propdef"
+    pretty KwTKind = "tkind"
+
+instance Pretty Token where
+    pretty (Identifier _ s) = string s
+    pretty (Keyword _ kw) = pretty kw
+    pretty (BoolTok _ b) = string $ over _head toLower (show b)
+    pretty (IntTok _ i) = pretty i
+    pretty (FloatTok _ x) = pretty x
+    pretty (CharTok _ c) = squotes (pretty c)
+    pretty (StringTok _ s) = dquotes (string s)
+    pretty (Special _ s) = string s
+    pretty CBlockLex{} = "%{"
+    pretty (Arrow _ s) = string s
+    pretty RefTok{} = "ref"
+    pretty (CommentLex _ s) = string $ take 2 s
+    pretty (FuncType _ s) = string s
+    pretty (TimeTok _ s) = string s
+    pretty (SignatureTok _ s) = string s
+    pretty (Operator _ s) = string s
+    pretty (MacroBlock _ s) = "#"
+    pretty DoubleParenTok{} = "()"
+    pretty DoubleBracesTok{} = "{}"
+    pretty DoubleBracketTok{} = "<>"
 
 token_posn (Identifier p _) = p
 token_posn (Keyword p _) = p
