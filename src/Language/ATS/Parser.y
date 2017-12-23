@@ -94,6 +94,7 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     effmaskAll { Identifier $$ "effmask_all" }
     extfcall { Identifier $$ "extfcall" }
     ldelay { Identifier $$ "ldelay" }
+    listVT { Identifier $$ "list_vt" }
     -- TODO token? raise { Identifier $$ "raise" }
     identifier { Identifier _ $$ }
     closeParen { Special $$ ")" }
@@ -136,6 +137,8 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     dollar { Special $$ "$" }
     semicolon { Special $$ ";" }
     andOp { Operator $$ "&&" }
+    doubleEq { Operator $$ "==" }
+    doubleDot { Operator $$ ".." }
     doubleParens { DoubleParenTok $$ }
     doubleBraces { DoubleBracesTok $$ }
     prfTransform { Operator $$ ">>" } -- For types like &a >> a?!
@@ -152,18 +155,22 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
 
 ATS : Declarations { ATS $1 }
 
+-- | Parse declarations in a list
 Declarations : { [] } 
              | Declarations Declaration { $2 : $1 }
              | Declarations FunDecl { $2 ++ $1 }
              | Declarations local Declarations in Declarations end { Local $2 $3 $5 : $1 }
 
+-- | Several comma-separated types
 TypeIn : Type { [$1] }
        | TypeIn comma Type { $3 : $1 }
 
+-- | Several comma-separated types or static expressions
 TypeInExpr : TypeIn { $1 }
            | Expression { [ConcreteType $1] }
-           | TypeInExpr comma PreExpression { ConcreteType $3 : $1 }
+           | TypeInExpr comma Expression { ConcreteType $3 : $1 }
 
+-- | Parse a type
 Type : Name openParen TypeInExpr closeParen { Dependent $1 $3 }
      | bool { Bool }
      | int { Int }
@@ -201,97 +208,111 @@ Type : Name openParen TypeInExpr closeParen { Dependent $1 $3 }
      | dollar {% Left $ Expected $1 "Type" "$" }
 
 FullArgs : Args { $1 }
-         | Arg vbar Args { [ PrfArg $1 $3 ] }
-         | Arg vbar { [ PrfArg $1 [] ] }
 
--- TODO {i:nat;j:int}
-
+-- | A comma-separated list of arguments
 Args : Arg { [$1] }
      | Args comma Arg { $3 : $1 }
+     | Arg vbar Arg { [ PrfArg $1 $3 ] }
+     | FullArgs comma Arg vbar Arg { PrfArg $3 $5 : $1 }
 
-Arg : identifier { Arg $1 Nothing }
-    | identifier signature Type { Arg $1 (Just $3) }
-    | underscore { Arg "_" Nothing }
-    | Type { Arg "" (Just $1) } -- FIXME take a maybe here
+Arg : identifier { Arg (First $1) }
+    | identifier signature Type { Arg (Both $1 $3) }
+    | underscore { Arg (First "_") }
+    | Type { Arg (Second $1) }
+    | Expression { Arg (Second (ConcreteType $1)) }
 
+-- | Parse a literal
 Literal : boolLit { BoolLit $1 }
         | timeLit { TimeLit $1 }
         | intLit { IntLit $1 }
         | floatLit { FloatLit $1 }
         | string { StringLit $1 }
         | charLit { CharLit $1 }
+        | doubleParens { VoidLiteral $1 }
 
+-- | Parse a list of comma-separated patterns
 PatternIn : Pattern { [$1] }
           | PatternIn comma Pattern { $3 : $1 }
 
-Pattern : doubleParens { NullPattern $1 }
-        | identifier { PName $1 [] }
+-- | Parse a pattern match
+Pattern : identifier { PName $1 [] }
         | underscore { Wildcard $1 }
         | identifier doubleParens { PName ($1 ++ "()") [] }
         | tilde Pattern { Free $2 }
         | identifier openParen PatternIn closeParen { PName $1 $3 }
         | identifier Pattern { PSum $1 $2 }
-        | openParen Pattern vbar Pattern closeParen { Proof $1 $2 $4 }
+        | openParen PatternIn vbar PatternIn closeParen { Proof $1 $2 $4 }
         | openParen PatternIn closeParen { TuplePattern $2 }
         | Literal { PLiteral $1 }
         | Pattern when Expression { Guarded $2 $3 $1 }
         | minus {% Left $ Expected $1 "Pattern" "-" }
+        | plus {% Left $ Expected $1 "Pattern" "+" }
 
-Case : vbar Pattern LambdaArrow Expression { [($2, $4)] }
-     | Pattern LambdaArrow Expression { [($1, $3)] }
-     | Case vbar Pattern LambdaArrow Expression { ($3, $5) : $1 }
+-- | Parse a case expression
+Case : vbar Pattern CaseArrow Expression { [($2, $4)] }
+     | Pattern CaseArrow Expression { [($1, $3)] }
+     | Case vbar Pattern CaseArrow Expression { ($3, $5) : $1 }
 
 ExpressionPrf : ExpressionIn { (Nothing, $1) }
-              | PreExpression vbar ExpressionIn { (Just $1, $3) }
-              | PrfExpr vbar ExpressionIn { (Just $1, $3) }
+              | Expression vbar ExpressionIn { (Just $1, $3) } -- FIXME only passes one proof?
 
-PrfExpr : view at Type { ViewExpr $1 $3 }
-
+-- | A list of comma-separated expressions
 ExpressionIn : Expression { [$1] }
              | ExpressionIn comma Expression { $3 : $1 }
 
 Tuple : PreExpression comma PreExpression { [$3, $1] }
       | Tuple comma PreExpression { $3 : $1 }
 
+-- | Parse an arrow in a case statement
+CaseArrow : plainArrow { Plain $1 }
+          | spear { Spear $1 }
+          | minus {% Left $ Expected $1 "Arrow" "-" }
+          | eq {% Left $ Expected $1 "Arrow" "=" }
+
 LambdaArrow : plainArrow { Plain $1 }
             | cloref1Arrow { Full $1 "cloref1" } -- TODO do this more efficiently.
             | cloptr1Arrow { Full $1 "cloptr1" }
             | lincloptr1Arrow { Full $1 "lincloptr1" }
-            | spear { Full $1 ">" }
             | minus {% Left $ Expected $1 "Arrow" "-" }
             | openParen {% Left $ Expected $1 "Arrow" "(" }
             | closeParen {% Left $ Expected $1 "Arrow" ")" }
 
+-- | Expression or named call to an expression
 Expression : PreExpression { $1 }
+           | openParen Tuple closeParen { TupleEx $1 $2 }
            | Name PreExpression { Call $1 [] [] Nothing [$2] }
+           | begin Expression end { Begin $1 $2 }
 
--- FIXME should these be types??
-TypeArgs : lbrace Expression rbrace { [$2] }
-         | lbrace ExpressionIn rbrace { $2 } -- TODO how much of this should be preserved?
-         | TypeArgs lbrace Expression rbrace { $3 : $1 }
-         | TypeArgs lbrace ExpressionIn rbrace { $3 ++ $1 }
+TypeArgs : lbrace Type rbrace { [$2] }
+         | lbrace TypeIn rbrace { $2 }
+         | TypeArgs lbrace Type rbrace { $3 : $1 }
+         | lbrace doubleDot rbrace { [ ImplicitType $2 ] } -- FIXME only valid on function calls
+         | TypeArgs lbrace TypeIn rbrace { $3 ++ $1 }
+
+BracketedArgs : lbracket Type rbracket { [$2] }
+              | lbracket TypeIn rbrace { $2 }
+
+Call : Name doubleParens { Call $1 [] [] Nothing [] }
+     | Name openParen ExpressionPrf closeParen { Call $1 [] [] (fst $3) (snd $3) }
+     | Name TypeArgs openParen ExpressionPrf closeParen { Call $1 [] $2 (fst $4) (snd $4) }
+     | Name TypeArgs { Call $1 [] $2 Nothing [] }
+     | dollar raise PreExpression { Call (SpecialName $1 "raise") [] [] Nothing [$3] } -- we do this because a $raise can have at most one argument
 
 PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqualified $1) $3 }
               | Literal { $1 }
-              | doubleParens { VoidLiteral $1 }
-              | Name doubleParens { Call $1 [] [] Nothing [] }
-              | Name openParen ExpressionPrf closeParen { Call $1 [] [] (fst $3) (snd $3) }
-              | Name TypeArgs { Call $1 $2 [] Nothing [] }
-              | Name TypeArgs openParen ExpressionPrf closeParen { Call $1 $2 [] (fst $4) (snd $4) }
+              | Call { $1 }
               | openParen PreExpression vbar PreExpression closeParen { ProofExpr $1 $2 $4 }
               | case PreExpression of Case { Case $3 $1 $2 $4 }
               | PreExpression BinOp PreExpression { Binary $2 $1 $3 }
-              | UnOp PreExpression { Unary $1 $2 }
+              | UnOp PreExpression { Unary $1 $2 } -- FIXME throw error when we try to negate a string literal/time
               | PreExpression dot Name { Access $2 $1 $3 }
               | openParen PreExpression closeParen { $2 }
-              | sif PreExpression then Expression else Expression { Sif $2 $4 $6 }
               | if PreExpression then Expression { If $2 $4 Nothing}
               | if PreExpression then Expression else Expression { If $2 $4 (Just $6) }
-              | let ATS in Expression end { Let $1 $2 (Just $4) }
               | let ATS in end { Let $1 $2 Nothing }
+              | let ATS in Expression end { Let $1 $2 (Just $4) }
               | lambda Pattern LambdaArrow Expression { Lambda $1 $3 $2 $4 }
               | llambda Pattern LambdaArrow Expression { LinearLambda $1 $3 $2 $4 }
-              | begin PreExpression end { Begin $1 $2 }
               | at lbrace RecordVal rbrace { RecordValue $1 $3 Nothing }
               | at lbrace RecordVal rbrace signature Type { RecordValue $1 $3 (Just $6) }
               | PreExpression semicolon PreExpression { Precede $1 $3 }
@@ -302,11 +323,10 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | ref Type rbracket PreExpression { Ref $1 $2 $4 }
               | PreExpression where lbrace Declarations rbrace { WhereExp $1 $4 }
               | PreExpression signature Type { TypeSignature $1 $3 }
-              | openParen Tuple closeParen { TupleEx $1 $2 }
               | Name { NamedVal $1 }
               | lbrace ATS rbrace { Actions $2 }
               | while openParen PreExpression closeParen PreExpression { While $1 $3 $5 }
-              | raise PreExpression { Call (SpecialName $1 "raise") [] [] Nothing [$2] }
+              | sif PreExpression then Expression else Expression { Sif $2 $4 $6 } -- TODO separate type for static expressions
               | include {% Left $ Expected $1 "Expression" "include" }
               | staload {% Left $ Expected $1 "Expression" "staload" }
               | overload {% Left $ Expected $1 "Expression" "overload" }
@@ -317,10 +337,12 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | prfTransform {% Left $ Expected $1 "Expression" ">>" }
               | maybeProof {% Left $ Expected $1 "Expression" "?" }
 
+-- | Parse a termetric
 Termetric : openTermetric Expression closeTermetric { ($1, $2) }
           | underscore {% Left $ Expected $1 "_" "Name" }
           | dollar {% Left $ Expected $1 "$" "Name" }
 
+-- | Parse an existential quantier on a type
 Existential : lsqbracket Args vbar Expression rsqbracket { Existential $2 Nothing (Just $4) }
             | lsqbracket Args rsqbracket { Existential $2 Nothing Nothing }
             | openExistential Args rsqbracket { Existential $2 Nothing Nothing }
@@ -328,38 +350,47 @@ Existential : lsqbracket Args vbar Expression rsqbracket { Existential $2 Nothin
             | lsqbracket Args signature Type rsqbracket { Existential $2 (Just $4) Nothing } -- FIXME arguments should include more than just ':'
             | lsqbracket Expression rsqbracket { Existential [] Nothing (Just $2) }
             
-
+-- | Parse a universal quantifier on a type
 Universal : lbrace Args vbar PreExpression rbrace { Universal $2 Nothing (Just $4) }
           | lbrace Args rbrace { Universal $2 Nothing Nothing }
           | lbrace Args signature Type vbar Expression rbrace { Universal $2 (Just $4) (Just $6) }
           | lbrace Args signature Type { Universal $2 (Just $4) Nothing }
 
+-- | Parse the details of an implementation
 Implementation : FunName doubleParens eq Expression { Implement $2 [] [] $1 [] $4 }
                | FunName openParen FullArgs closeParen eq Expression { Implement $2 [] [] $1 $3 $6 }
                | FunName Universals openParen FullArgs closeParen eq Expression { Implement $3 [] $2 $1 $4 $7 }
                | Universals FunName openParen FullArgs closeParen eq Expression { Implement $3 $1 [] $2 $4 $7 }
                | Universals FunName Universals openParen FullArgs closeParen eq Expression { Implement $4 $1 $3 $2 $5 $8 }
 
+-- | Parse a function name
 FunName : identifier { Unqualified $1 }
         | identifier dollar identifier { Functorial $1 $3 }
 
-Name : FunName { $1 }
+-- | Parse a general name
+Name : identifier { Unqualified $1 }
+     | listVT { Unqualified "list_vt" }
      | dollar identifier dot identifier { Qualified $1 $4 $2 }
      | dollar effmaskWrt { SpecialName $1 "effmask_wrt" }
      | dollar effmaskAll { SpecialName $1 "effmask_all" }
+     | dollar listVT { SpecialName $1 "list_vt" }
      | dollar ldelay { SpecialName $1 "ldelay" } -- FIXME there is probably a better/more efficient way of doing this
      | underscore {% Left $ Expected $1 "_" "Name" }
      | dollar {% Left $ Expected $1 "$" "Name" }
 
+-- | Parse a list of values in a record
 RecordVal : identifier eq Expression { [($1, $3)] }
           | RecordVal comma identifier eq Expression { ($3, $5) : $1 }
 
+-- | Parse a list of types in a record
 Records : identifier eq Type { [($1, $3)] }
         | Records comma identifier eq Type { ($3, $5) : $1 }
 
+-- | Parse a constructor for a sum type
 SumLeaf : vbar identifier { ($2, Nothing) }
         | vbar identifier of Type { ($2, Just $4) }
 
+-- | Parse all constructors of a sum type
 Leaves : SumLeaf { [$1] }
        | Leaves SumLeaf { $2 : $1 }
        | identifier of Type { [($1, Just $3)] }
@@ -367,14 +398,17 @@ Leaves : SumLeaf { [$1] }
        | dollar {% Left $ Expected $1 "$" "|" }
 
 Universals : { [] }
-           | doubleBraces { [] } -- TODO this gets rid of information
+           | doubleBraces { [] }
            | Universals Universal { $2 : $1 }
 
+-- | Optionally parse a termetric
 OptTermetric : { Nothing }
              | Termetric { Just (snd $1) }
 
+-- | Parse a unary operator
 UnOp : tilde { Negate }
 
+-- | Parse a binary operator
 BinOp : plus { Add }
       | minus { Sub }
       | div { Div }
@@ -383,16 +417,20 @@ BinOp : plus { Add }
       | leq { LessThanEq }
       | lbracket { LessThan }
       | rbracket { GreaterThan }
-      | eq { Equal }
       | neq { NotEqual }
       | andOp { LogicalAnd }
       | or { LogicalOr }
+      | doubleEq { StaticEq }
+      | eq { Equal }
 
+-- | Optionally parse a function body
 OptExpression : { Nothing }
-              | eq Expression { Just $2 }
+              | eq Expression { Just $2 } -- FIXME only let this happen for external declarations
 
+-- | Parse a constructor for a 'dataprop'
 DataPropLeaf : vbar Universals Expression { DataPropLeaf $2 $3 }
 
+-- | Parse several constructors for a 'dataprop'
 DataPropLeaves : DataPropLeaf { [$1] }
                | DataPropLeaves DataPropLeaf { $2 : $1 }
                | prval {% Left $ Expected $1 "Constructor" "prval" }
@@ -406,28 +444,57 @@ DataPropLeaves : DataPropLeaf { [$1] }
                | prfTransform {% Left $ Expected $1 "Constructor" ">>" }
                | maybeProof {% Left $ Expected $1 "Constructor" "?" }
 
+-- | Parse a type signature and optional function body
 PreFunction : FunName openParen FullArgs closeParen signature Type OptExpression { (PreF $1 $5 [] [] $3 $6 Nothing $7) }
             | FunName Universals OptTermetric signature Type OptExpression { PreF $1 $4 [] $2 [] $5 $3 $6 }
             | FunName Universals OptTermetric doubleParens signature Type OptExpression { PreF $1 $5 [] $2 [] $6 $3 $7 }
             | FunName Universals OptTermetric openParen FullArgs closeParen signature Type OptExpression { PreF $1 $7 [] $2 $5 $8 $3 $9 }
             | Universals FunName Universals OptTermetric openParen FullArgs closeParen signature Type OptExpression { PreF $2 $8 $1 $3 $6 $9 $4 $10 }
+            | prval {% Left $ Expected $1 "Function signature" "prval" }
+            | var {% Left $ Expected $1 "Function signature" "var" }
+            | lambda {% Left $ Expected $1 "Function signature" "lam" }
+            | llambda {% Left $ Expected $1 "Function signature" "llam" }
 
+-- | Parse affiliated `sortdef`s
 AndSort : AndSort and identifier eq Type { AndD $1 (SortDef $2 $3 $5) } -- TODO figure out if this is building up the slow way
         | sortdef identifier eq Type { SortDef $1 $2 $4 }
 
+-- | Function declaration
 FunDecl : fun PreFunction { [ Func $1 (Fun $2) ] }
         | prfun PreFunction { [ Func $1 (PrFun $2) ] }
         | fnx PreFunction { [ Func $1 (Fnx $2) ] }
         | extern FunDecl { over _head (Extern $1) $2 }
         | FunDecl and PreFunction { Func $2 (And $3) : $1 }
-        | prval {% Left $ Expected $1 "Function signature" "prval" }
-        | var {% Left $ Expected $1 "Function signature" "var" }
+        | lambda {% Left $ Expected $1 "Function declaration" "lam" }
+        | llambda {% Left $ Expected $1 "Function declaration" "llam" }
 
+-- | Parse a declaration defining a type
+TypeDecl : typedef identifier eq at lbrace Records rbrace { RecordType $2 [] $6 }
+         | typedef identifier eq Type { TypeDef $1 $2 [] $4 }
+         | typedef identifier openParen FullArgs closeParen eq Type { TypeDef $1 $2 $4 $7 }
+         | typedef identifier openParen FullArgs closeParen eq at lbrace Records rbrace { RecordType $2 $4 $9 }
+         | vtypedef identifier eq at lbrace Records rbrace { RecordViewType $2 [] $6 }
+         | vtypedef identifier eq Type { ViewTypeDef $1 $2 [] $4 }
+         | vtypedef identifier openParen FullArgs closeParen eq Type { ViewTypeDef $1 $2 $4 $7 }
+         | vtypedef identifier openParen FullArgs closeParen eq at lbrace Records rbrace { RecordViewType $2 $4 $9 }
+         | datatype identifier eq Leaves { SumType $2 [] $4 }
+         | datatype identifier openParen Args closeParen eq Leaves { SumType $2 $4 $7 }
+         | datavtype identifier eq Leaves { SumViewType $2 [] $4 }
+         | datavtype identifier openParen Args closeParen eq Leaves { SumViewType $2 $4 $7 }
+         | abstype identifier openParen FullArgs closeParen eq Type { AbsType $1 $2 $4 $7 }
+         | absvtype identifier openParen FullArgs closeParen eq Type { AbsViewType $1 $2 $4 $7 }
+         | dataprop identifier openParen FullArgs closeParen eq DataPropLeaves { DataProp $1 $2 $4 $7 }
+         | absprop identifier openParen FullArgs closeParen { AbsProp $1 $2 [] }
+         | stadef identifier eq Name { Stadef $2 $4 [] }
+         | stadef identifier eq Name openParen TypeIn closeParen { Stadef $2 $4 $6 }
+         | sortdef identifier eq Type { SortDef $1 $2 $4 }
+         | AndSort { $1 }
+
+-- | Parse a declaration
 Declaration : include string { Include $2 }
             | define { Define $1 }
             | cblock { CBlock $1 }
             | lineComment { Comment $1 }
-            | AndSort { $1 }
             | staload underscore eq string { Staload (Just "_") $4 }
             | staload string { Staload Nothing $2 }
             | staload identifier eq string { Staload (Just $2) $4 }
@@ -439,29 +506,12 @@ Declaration : include string { Include $2 }
             | var Pattern signature Type { Var (Just $4) $2 Nothing }
             | prval Pattern eq PreExpression { PrVal $2 $4 }
             | praxi PreFunction { Func $1 (Praxi $2) }
+            | primplmnt Implementation { ProofImpl $2 }
             | implement Implementation { Impl [] $2 }
             | implement openParen Args closeParen Implementation { Impl $3 $5 }
-            | primplmnt Implementation { ProofImpl $2 }
             | overload BinOp with Name { OverloadOp $1 $2 $4 }
-            | stadef identifier eq Name { Stadef $2 $4 }
-            | sortdef identifier eq Type { SortDef $1 $2 $4 }
-            | typedef identifier eq at lbrace Records rbrace { RecordType $2 [] $6 }
-            | typedef identifier eq Type { TypeDef $1 $2 [] $4 }
-            | typedef identifier openParen FullArgs closeParen eq Type { TypeDef $1 $2 $4 $7 }
-            | typedef identifier openParen FullArgs closeParen eq at lbrace Records rbrace { RecordType $2 $4 $9 }
-            | vtypedef identifier eq at lbrace Records rbrace { RecordViewType $2 [] $6 }
-            | vtypedef identifier eq Type { ViewTypeDef $1 $2 [] $4 }
-            | vtypedef identifier openParen FullArgs closeParen eq Type { ViewTypeDef $1 $2 $4 $7 }
-            | vtypedef identifier openParen FullArgs closeParen eq at lbrace Records rbrace { RecordViewType $2 $4 $9 }
-            | datatype identifier eq Leaves { SumType $2 [] $4 }
-            | datatype identifier openParen Args closeParen eq Leaves { SumType $2 $4 $7 }
-            | datavtype identifier eq Leaves { SumViewType $2 [] $4 }
-            | datavtype identifier openParen Args closeParen eq Leaves { SumViewType $2 $4 $7 }
-            | abstype identifier openParen FullArgs closeParen eq Type { AbsType $1 $2 $4 $7 }
-            | absvtype identifier openParen FullArgs closeParen eq Type { AbsViewType $1 $2 $4 $7 }
-            | dataprop identifier openParen FullArgs closeParen eq DataPropLeaves { DataProp $1 $2 $4 $7 }
             | assume Name openParen Args closeParen eq Expression { Assume $2 $4 $7 }
-            | absprop identifier openParen FullArgs closeParen { AbsProp $1 $2 [] }
+            | TypeDecl { $1 }
             | lambda {% Left $ Expected $1 "Declaration" "lam" }
             | llambda {% Left $ Expected $1 "Declaration" "llam" }
             | ref {% Left $ Expected $1 "Declaration" "ref" }

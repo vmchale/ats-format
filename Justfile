@@ -1,3 +1,9 @@
+approve FILE:
+    @atsfmt test/data/{{ FILE }} -o > test/data/$(echo {{ FILE }} | sed 's/\(dats\|sats\)/out/')
+
+diff FILE:
+    @diff <(atsfmt test/data/{{ FILE }} -o) test/data/$(echo {{ FILE }} | sed 's/\(dats\|sats\)/out/') | ac -s
+
 darcs:
     @darcs optimize clean
     @darcs optimize pristine
@@ -28,6 +34,7 @@ install:
 
 ci: test
     cabal new-build
+    cabal new-haddock
     cabal new-test
     hlint src app bench test
     tomlcheck --file .atsfmt.toml

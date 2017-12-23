@@ -1,4 +1,3 @@
-#include "share/atspre_define.hats"
 #include "share/atspre_staload.hats"
 #include "share/HATS/atslib_staload_libats_libc.hats"
 #include "prelude/DATS/filebas.dats"
@@ -54,298 +53,260 @@ fun acc_file() : file =
     f
   end
 
+// monoidal addition for 'file' type
 fun add_results(x : file, y : file) : file =
   let
-    var next = @{ lines = x.lines + y.lines, blanks = x.blanks
-    + y.blanks, comments = x.comments + y.comments, files = x.files
-    + y.files }
+    var next = @{ lines = x.lines + y.lines, blanks = x.blanks + y.blanks, comments = x.comments
+    + y.comments, files = x.files + y.files }
   in
     next
   end
 
 overload + with add_results
 
+// Given a string representing a filepath, return an integer.
 fun line_count(s : string, pre : Option(string)) : file =
   let
     var ref = fileref_open_opt(s, file_mode_r)
   in
     case ref of
-      | ~Some_vt (x) => let
-        var viewstream: stream_vt(string) = $EXTRA.streamize_fileref_line(x)
-        val n: file = stream_vt_foldleft_cloptr( viewstream
-                                               , acc_file()
-                                               , lam (acc, f) =<cloptr1> acc + to_file(f, pre)
-                                               )
-        val _ = fileref_close(x)
-      in
-        n
-      end
-      | ~None_vt() => (println!("[33mWarning:[0m could not open file at "
-                               + s
-                               ) ; to_file(s, None))
+      | ~Some_vt (x) => 
+        begin
+          let
+            var viewstream: stream_vt(string) = $EXTRA.streamize_fileref_line(x)
+            val n: file = stream_vt_foldleft_cloptr( viewstream
+                                                   , acc_file()
+                                                   , lam (acc, f) =<cloptr1> acc + to_file(f, pre)
+                                                   )
+            val _ = fileref_close(x)
+          in
+            n
+          end
+        end
+      | ~None_vt() => (println!("\33[33mWarning:\33[0m could not open file at " + s) ; to_file( s
+                                                                                              , None
+                                                                                              ))
   end
 
-fnx right_pad { k : int | k >= 0 }{ m : int | m <= k } .<k>.
-(s : string(m), n : int(k)) : string =
+// Pad a string of bounded length on the right by adding spaces.
+fnx right_pad { k : int | k >= 0 }{ m : int | m <= k } .<k>. (s : string(m), n : int(k)) :
+string =
   case+ length(s) < n of
     | true when n > 0 => right_pad(s, n - 1) + " "
     | _ => s
 
-fnx left_pad { k : int | k >= 0 } .<k>. ( s : string
-                                        , n : int(k)
-                                        ) : string =
+// Pad a string on the left by adding spaces.
+fnx left_pad { k : int | k >= 0 } .<k>. (s : string, n : int(k)) : string =
   case+ length(s) < n of
     | true when n > 0 => " " + left_pad(s, n - 1)
     | _ => s
 
+// helper function for make_output
 fun maybe_string(s : string, n : int) : string =
   if n > 0 then
     s + ": " + tostring_int(n) + "\n"
   else
     ""
 
-fun maybe_table { k : int | k >= 0 && k < 20 } ( s : string(k)
-                                               , f : file
-                                               ) : string =
+// helper function for make_table
+fun maybe_table { k : int | k >= 0 && k < 20 } (s : string(k), f : file) : string =
   let
     var code = f.lines - f.comments - f.blanks
   in
     if f.files > 0 then
-      " " + right_pad(s, 21) + left_pad(tostring_int(f.files), 5)
-      + left_pad(tostring_int(f.lines), 12) + left_pad(tostring_int(code), 13)
-      + left_pad(tostring_int(f.comments), 13)
+      " " + right_pad(s, 21) + left_pad(tostring_int(f.files), 5) + left_pad(tostring_int(f.lines
+                                                                                         ), 12)
+      + left_pad(tostring_int(code), 13) + left_pad(tostring_int(f.comments), 13)
       + left_pad(tostring_int(f.blanks), 13) + "\n"
     else
       ""
   end
 
+// helper function for make_output
 fun with_nonempty(s1 : string, s2 : string) : string =
   if s2 != "" then
     s1 + s2
   else
     ""
 
+// helper function to make totals for tabular output.
 fun sum_fields(sc : source_contents) : file =
   let
-    var f = @{ lines = sc.rust.lines + sc.haskell.lines + sc.ats.lines
-    + sc.python.lines + sc.vimscript.lines + sc.elm.lines + sc.idris.lines
-    + sc.madlang.lines + sc.tex.lines + sc.markdown.lines + sc.yaml.lines
-    + sc.toml.lines + sc.cabal.lines + sc.happy.lines + sc.alex.lines
-    + sc.go.lines + sc.html.lines + sc.css.lines + sc.verilog.lines
-    + sc.vhdl.lines + sc.c.lines + sc.purescript.lines + sc.futhark.lines
-    + sc.brainfuck.lines + sc.ruby.lines + sc.julia.lines + sc.perl.lines
-    + sc.ocaml.lines + sc.agda.lines + sc.cobol.lines + sc.tcl.lines
-    + sc.r.lines + sc.lua.lines + sc.cpp.lines + sc.lalrpop.lines
-    + sc.header.lines + sc.sixten.lines + sc.dhall.lines + sc.ipkg.lines
-    + sc.makefile.lines + sc.justfile.lines + sc.ion.lines + sc.bash.lines
-    + sc.hamlet.lines + sc.cassius.lines + sc.lucius.lines + sc.julius.lines
-    + sc.mercury.lines + sc.yacc.lines + sc.lex.lines + sc.coq.lines
-    + sc.jupyter.lines + sc.java.lines + sc.scala.lines + sc.erlang.lines
-    + sc.elixir.lines + sc.pony.lines + sc.clojure.lines
-    + sc.cabal_project.lines + sc.assembly.lines + sc.nix.lines
-    + sc.php.lines + sc.javascript.lines + sc.kotlin.lines + sc.fsharp.lines
-    + sc.fortran.lines + sc.swift.lines + sc.csharp.lines + sc.nim.lines
-    + sc.cpp_header.lines + sc.elisp.lines + sc.plaintext.lines
-    + sc.rakefile.lines + sc.llvm.lines + sc.autoconf.lines + sc.batch.lines
+    var f = @{ lines = sc.rust.lines + sc.haskell.lines + sc.ats.lines + sc.python.lines
+    + sc.vimscript.lines + sc.elm.lines + sc.idris.lines + sc.madlang.lines + sc.tex.lines
+    + sc.markdown.lines + sc.yaml.lines + sc.toml.lines + sc.cabal.lines + sc.happy.lines
+    + sc.alex.lines + sc.go.lines + sc.html.lines + sc.css.lines + sc.verilog.lines + sc.vhdl.lines
+    + sc.c.lines + sc.purescript.lines + sc.futhark.lines + sc.brainfuck.lines + sc.ruby.lines
+    + sc.julia.lines + sc.perl.lines + sc.ocaml.lines + sc.agda.lines + sc.cobol.lines
+    + sc.tcl.lines + sc.r.lines + sc.lua.lines + sc.cpp.lines + sc.lalrpop.lines + sc.header.lines
+    + sc.sixten.lines + sc.dhall.lines + sc.ipkg.lines + sc.makefile.lines + sc.justfile.lines
+    + sc.ion.lines + sc.bash.lines + sc.hamlet.lines + sc.cassius.lines + sc.lucius.lines
+    + sc.julius.lines + sc.mercury.lines + sc.yacc.lines + sc.lex.lines + sc.coq.lines
+    + sc.jupyter.lines + sc.java.lines + sc.scala.lines + sc.erlang.lines + sc.elixir.lines
+    + sc.pony.lines + sc.clojure.lines + sc.cabal_project.lines + sc.assembly.lines + sc.nix.lines
+    + sc.php.lines + sc.javascript.lines + sc.kotlin.lines + sc.fsharp.lines + sc.fortran.lines
+    + sc.swift.lines + sc.csharp.lines + sc.nim.lines + sc.cpp_header.lines + sc.elisp.lines
+    + sc.plaintext.lines + sc.rakefile.lines + sc.llvm.lines + sc.autoconf.lines + sc.batch.lines
     + sc.powershell.lines + sc.m4.lines + sc.objective_c.lines
-    + sc.automake.lines, blanks = sc.rust.blanks + sc.haskell.blanks
-    + sc.ats.blanks + sc.python.blanks + sc.vimscript.blanks + sc.elm.blanks
-    + sc.idris.blanks + sc.madlang.blanks + sc.tex.blanks
-    + sc.markdown.blanks + sc.yaml.blanks + sc.toml.blanks + sc.cabal.blanks
-    + sc.happy.blanks + sc.alex.blanks + sc.go.blanks + sc.html.blanks
-    + sc.css.blanks + sc.verilog.blanks + sc.vhdl.blanks + sc.c.blanks
-    + sc.purescript.blanks + sc.futhark.blanks + sc.brainfuck.blanks
-    + sc.ruby.blanks + sc.julia.blanks + sc.perl.blanks + sc.ocaml.blanks
-    + sc.agda.blanks + sc.cobol.blanks + sc.tcl.blanks + sc.r.blanks
-    + sc.lua.blanks + sc.cpp.blanks + sc.lalrpop.blanks + sc.header.blanks
-    + sc.sixten.blanks + sc.dhall.blanks + sc.ipkg.blanks
-    + sc.makefile.blanks + sc.justfile.blanks + sc.ion.blanks
-    + sc.bash.blanks + sc.hamlet.blanks + sc.cassius.blanks
-    + sc.lucius.blanks + sc.julius.blanks + sc.mercury.blanks
-    + sc.yacc.blanks + sc.lex.blanks + sc.coq.blanks + sc.jupyter.blanks
-    + sc.java.blanks + sc.scala.blanks + sc.erlang.blanks + sc.elixir.blanks
-    + sc.pony.blanks + sc.clojure.blanks + sc.cabal_project.blanks
-    + sc.assembly.blanks + sc.nix.blanks + sc.php.blanks
-    + sc.javascript.blanks + sc.kotlin.blanks + sc.fsharp.blanks
-    + sc.fortran.blanks + sc.swift.blanks + sc.csharp.blanks + sc.nim.blanks
-    + sc.cpp_header.blanks + sc.elisp.blanks + sc.plaintext.blanks
-    + sc.rakefile.blanks + sc.llvm.blanks + sc.autoconf.blanks
-    + sc.batch.blanks + sc.powershell.blanks + sc.m4.blanks
-    + sc.objective_c.blanks
-    + sc.automake.blanks, comments = sc.rust.comments + sc.haskell.comments
-    + sc.ats.comments + sc.python.comments + sc.vimscript.comments
-    + sc.elm.comments + sc.idris.comments + sc.madlang.comments
-    + sc.tex.comments + sc.markdown.comments + sc.yaml.comments
-    + sc.toml.comments + sc.cabal.comments + sc.happy.comments
-    + sc.alex.comments + sc.go.comments + sc.html.comments + sc.css.comments
-    + sc.verilog.comments + sc.vhdl.comments + sc.c.comments
-    + sc.purescript.comments + sc.futhark.comments + sc.brainfuck.comments
-    + sc.ruby.comments + sc.julia.comments + sc.perl.comments
-    + sc.ocaml.comments + sc.agda.comments + sc.cobol.comments
-    + sc.tcl.comments + sc.r.comments + sc.lua.comments + sc.cpp.comments
-    + sc.lalrpop.comments + sc.header.comments + sc.sixten.comments
-    + sc.dhall.comments + sc.ipkg.comments + sc.makefile.comments
-    + sc.justfile.comments + sc.ion.comments + sc.bash.comments
-    + sc.hamlet.comments + sc.cassius.comments + sc.lucius.comments
-    + sc.julius.comments + sc.mercury.comments + sc.yacc.comments
-    + sc.lex.comments + sc.coq.comments + sc.jupyter.comments
-    + sc.java.comments + sc.scala.comments + sc.erlang.comments
-    + sc.elixir.comments + sc.pony.comments + sc.clojure.comments
-    + sc.cabal_project.comments + sc.assembly.comments + sc.nix.comments
-    + sc.php.comments + sc.javascript.comments + sc.kotlin.comments
-    + sc.fsharp.comments + sc.fortran.comments + sc.swift.comments
-    + sc.csharp.comments + sc.nim.comments + sc.cpp_header.comments
-    + sc.elisp.comments + sc.plaintext.comments + sc.rakefile.comments
-    + sc.llvm.comments + sc.autoconf.comments + sc.batch.comments
-    + sc.powershell.comments + sc.m4.comments + sc.objective_c.comments
-    + sc.automake.comments, files = sc.rust.files + sc.haskell.files
-    + sc.ats.files + sc.python.files + sc.vimscript.files + sc.elm.files
-    + sc.idris.files + sc.madlang.files + sc.tex.files + sc.markdown.files
-    + sc.yaml.files + sc.toml.files + sc.cabal.files + sc.happy.files
-    + sc.alex.files + sc.go.files + sc.html.files + sc.css.files
-    + sc.verilog.files + sc.vhdl.files + sc.c.files + sc.purescript.files
-    + sc.futhark.files + sc.brainfuck.files + sc.ruby.files + sc.julia.files
-    + sc.perl.files + sc.ocaml.files + sc.agda.files + sc.cobol.files
-    + sc.tcl.files + sc.r.files + sc.lua.files + sc.cpp.files
-    + sc.lalrpop.files + sc.header.files + sc.sixten.files + sc.dhall.files
-    + sc.ipkg.files + sc.makefile.files + sc.justfile.files + sc.ion.files
-    + sc.bash.files + sc.hamlet.files + sc.cassius.files + sc.lucius.files
-    + sc.julius.files + sc.mercury.files + sc.yacc.files + sc.lex.files
-    + sc.coq.files + sc.jupyter.files + sc.java.files + sc.scala.files
-    + sc.erlang.files + sc.elixir.files + sc.pony.files + sc.clojure.files
-    + sc.cabal_project.files + sc.assembly.files + sc.nix.files
-    + sc.php.files + sc.javascript.files + sc.kotlin.files + sc.fsharp.files
-    + sc.fortran.files + sc.swift.files + sc.csharp.files + sc.nim.files
-    + sc.cpp_header.files + sc.elisp.files + sc.plaintext.files
-    + sc.rakefile.files + sc.llvm.files + sc.autoconf.files + sc.batch.files
-    + sc.powershell.files + sc.m4.files + sc.objective_c.files
+    + sc.automake.lines, blanks = sc.rust.blanks + sc.haskell.blanks + sc.ats.blanks
+    + sc.python.blanks + sc.vimscript.blanks + sc.elm.blanks + sc.idris.blanks + sc.madlang.blanks
+    + sc.tex.blanks + sc.markdown.blanks + sc.yaml.blanks + sc.toml.blanks + sc.cabal.blanks
+    + sc.happy.blanks + sc.alex.blanks + sc.go.blanks + sc.html.blanks + sc.css.blanks
+    + sc.verilog.blanks + sc.vhdl.blanks + sc.c.blanks + sc.purescript.blanks + sc.futhark.blanks
+    + sc.brainfuck.blanks + sc.ruby.blanks + sc.julia.blanks + sc.perl.blanks + sc.ocaml.blanks
+    + sc.agda.blanks + sc.cobol.blanks + sc.tcl.blanks + sc.r.blanks + sc.lua.blanks + sc.cpp.blanks
+    + sc.lalrpop.blanks + sc.header.blanks + sc.sixten.blanks + sc.dhall.blanks + sc.ipkg.blanks
+    + sc.makefile.blanks + sc.justfile.blanks + sc.ion.blanks + sc.bash.blanks + sc.hamlet.blanks
+    + sc.cassius.blanks + sc.lucius.blanks + sc.julius.blanks + sc.mercury.blanks + sc.yacc.blanks
+    + sc.lex.blanks + sc.coq.blanks + sc.jupyter.blanks + sc.java.blanks + sc.scala.blanks
+    + sc.erlang.blanks + sc.elixir.blanks + sc.pony.blanks + sc.clojure.blanks
+    + sc.cabal_project.blanks + sc.assembly.blanks + sc.nix.blanks + sc.php.blanks
+    + sc.javascript.blanks + sc.kotlin.blanks + sc.fsharp.blanks + sc.fortran.blanks
+    + sc.swift.blanks + sc.csharp.blanks + sc.nim.blanks + sc.cpp_header.blanks + sc.elisp.blanks
+    + sc.plaintext.blanks + sc.rakefile.blanks + sc.llvm.blanks + sc.autoconf.blanks
+    + sc.batch.blanks + sc.powershell.blanks + sc.m4.blanks + sc.objective_c.blanks
+    + sc.automake.blanks, comments = sc.rust.comments + sc.haskell.comments + sc.ats.comments
+    + sc.python.comments + sc.vimscript.comments + sc.elm.comments + sc.idris.comments
+    + sc.madlang.comments + sc.tex.comments + sc.markdown.comments + sc.yaml.comments
+    + sc.toml.comments + sc.cabal.comments + sc.happy.comments + sc.alex.comments + sc.go.comments
+    + sc.html.comments + sc.css.comments + sc.verilog.comments + sc.vhdl.comments + sc.c.comments
+    + sc.purescript.comments + sc.futhark.comments + sc.brainfuck.comments + sc.ruby.comments
+    + sc.julia.comments + sc.perl.comments + sc.ocaml.comments + sc.agda.comments
+    + sc.cobol.comments + sc.tcl.comments + sc.r.comments + sc.lua.comments + sc.cpp.comments
+    + sc.lalrpop.comments + sc.header.comments + sc.sixten.comments + sc.dhall.comments
+    + sc.ipkg.comments + sc.makefile.comments + sc.justfile.comments + sc.ion.comments
+    + sc.bash.comments + sc.hamlet.comments + sc.cassius.comments + sc.lucius.comments
+    + sc.julius.comments + sc.mercury.comments + sc.yacc.comments + sc.lex.comments
+    + sc.coq.comments + sc.jupyter.comments + sc.java.comments + sc.scala.comments
+    + sc.erlang.comments + sc.elixir.comments + sc.pony.comments + sc.clojure.comments
+    + sc.cabal_project.comments + sc.assembly.comments + sc.nix.comments + sc.php.comments
+    + sc.javascript.comments + sc.kotlin.comments + sc.fsharp.comments + sc.fortran.comments
+    + sc.swift.comments + sc.csharp.comments + sc.nim.comments + sc.cpp_header.comments
+    + sc.elisp.comments + sc.plaintext.comments + sc.rakefile.comments + sc.llvm.comments
+    + sc.autoconf.comments + sc.batch.comments + sc.powershell.comments + sc.m4.comments
+    + sc.objective_c.comments + sc.automake.comments, files = sc.rust.files + sc.haskell.files
+    + sc.ats.files + sc.python.files + sc.vimscript.files + sc.elm.files + sc.idris.files
+    + sc.madlang.files + sc.tex.files + sc.markdown.files + sc.yaml.files + sc.toml.files
+    + sc.cabal.files + sc.happy.files + sc.alex.files + sc.go.files + sc.html.files + sc.css.files
+    + sc.verilog.files + sc.vhdl.files + sc.c.files + sc.purescript.files + sc.futhark.files
+    + sc.brainfuck.files + sc.ruby.files + sc.julia.files + sc.perl.files + sc.ocaml.files
+    + sc.agda.files + sc.cobol.files + sc.tcl.files + sc.r.files + sc.lua.files + sc.cpp.files
+    + sc.lalrpop.files + sc.header.files + sc.sixten.files + sc.dhall.files + sc.ipkg.files
+    + sc.makefile.files + sc.justfile.files + sc.ion.files + sc.bash.files + sc.hamlet.files
+    + sc.cassius.files + sc.lucius.files + sc.julius.files + sc.mercury.files + sc.yacc.files
+    + sc.lex.files + sc.coq.files + sc.jupyter.files + sc.java.files + sc.scala.files
+    + sc.erlang.files + sc.elixir.files + sc.pony.files + sc.clojure.files + sc.cabal_project.files
+    + sc.assembly.files + sc.nix.files + sc.php.files + sc.javascript.files + sc.kotlin.files
+    + sc.fsharp.files + sc.fortran.files + sc.swift.files + sc.csharp.files + sc.nim.files
+    + sc.cpp_header.files + sc.elisp.files + sc.plaintext.files + sc.rakefile.files + sc.llvm.files
+    + sc.autoconf.files + sc.batch.files + sc.powershell.files + sc.m4.files + sc.objective_c.files
     + sc.automake.files }
   in
     f
   end
 
+// function to print tabular output at the end
 fun make_table(isc : source_contents) : string =
-  "-------------------------------------------------------------------------------\n [35mLanguage[0m            [35mFiles[0m        [35mLines[0m         [35mCode[0m     [35mComments[0m       [35mBlanks[0m\n-------------------------------------------------------------------------------\n"
-  + maybe_table("Alex", isc.alex) + maybe_table("Agda", isc.agda)
-  + maybe_table("Assembly", isc.assembly) + maybe_table("ATS", isc.ats)
-  + maybe_table("Autoconf", isc.autoconf) + maybe_table( "Automake"
-                                                       , isc.automake
-                                                       ) + maybe_table("Bash", isc.bash) + maybe_table( "Batch"
-                                                                                                      , isc.batch
+  "-------------------------------------------------------------------------------\n \33[35mLanguage\33[0m            \33[35mFiles\33[0m        \33[35mLines\33[0m         \33[35mCode\33[0m     \33[35mComments\33[0m       \33[35mBlanks\33[0m\n-------------------------------------------------------------------------------\n"
+  + maybe_table("Alex", isc.alex) + maybe_table("Agda", isc.agda) + maybe_table( "Assembly"
+                                                                               , isc.assembly
+                                                                               ) + maybe_table("ATS", isc.ats)
+  + maybe_table("Autoconf", isc.autoconf) + maybe_table("Automake", isc.automake)
+  + maybe_table("Bash", isc.bash) + maybe_table("Batch", isc.batch) + maybe_table( "Brainfuck"
+                                                                                 , isc.brainfuck
+                                                                                 ) + maybe_table("C", isc.c)
+  + maybe_table("C Header", isc.header) + maybe_table("C++ cpp_header", isc.cpp_header)
+  + maybe_table("C++", isc.cpp) + maybe_table("C#", isc.csharp) + maybe_table("Cabal", isc.cabal)
+  + maybe_table("Cabal Project", isc.cabal_project) + maybe_table("Cassius", isc.cassius)
+  + maybe_table("COBOL", isc.cobol) + maybe_table("Coq", isc.coq) + maybe_table("CSS", isc.css)
+  + maybe_table("Dhall", isc.dhall) + maybe_table("Elixir", isc.elixir) + maybe_table( "Elm"
+                                                                                     , isc.elm
+                                                                                     ) + maybe_table( "Emacs Lisp"
+                                                                                                    , isc.elisp
+                                                                                                    )
+  + maybe_table("Erlang", isc.erlang) + maybe_table("F#", isc.fsharp) + maybe_table( "Fortran"
+                                                                                   , isc.fortran
+                                                                                   ) + maybe_table("Go", isc.go)
+  + maybe_table("Hamlet", isc.hamlet) + maybe_table("Happy", isc.happy) + maybe_table( "Haskell"
+                                                                                     , isc.haskell
+                                                                                     ) + maybe_table("HTML", isc.html)
+  + maybe_table("Idris", isc.idris) + maybe_table("iPKG", isc.ipkg) + maybe_table("Ion", isc.ion)
+  + maybe_table("Java", isc.java) + maybe_table("JavaScript", isc.javascript)
+  + maybe_table("Julius", isc.julius) + maybe_table("Julia", isc.julia) + maybe_table( "Jupyter"
+                                                                                     , isc.jupyter
+                                                                                     ) + maybe_table( "Justfile"
+                                                                                                    , isc.justfile
+                                                                                                    )
+  + maybe_table("Kotlin", isc.kotlin) + maybe_table("LALRPOP", isc.lalrpop) + maybe_table( "Lex"
+                                                                                         , isc.lex
+                                                                                         ) + maybe_table( "LLVM"
+                                                                                                        , isc.llvm
+                                                                                                        )
+  + maybe_table("Lua", isc.lua) + maybe_table("Lucius", isc.lucius) + maybe_table("M4", isc.m4)
+  + maybe_table("Madlang", isc.madlang) + maybe_table("Makefile", isc.makefile)
+  + maybe_table("Margaret", isc.margaret) + maybe_table("Markdown", isc.markdown)
+  + maybe_table("Mercury", isc.mercury) + maybe_table("Nim", isc.nim) + maybe_table( "Nix"
+                                                                                   , isc.nix
+                                                                                   ) + maybe_table( "Objective C"
+                                                                                                  , isc.objective_c
+                                                                                                  )
+  + maybe_table("OCaml", isc.ocaml) + maybe_table("Perl", isc.perl) + maybe_table("PHP", isc.php)
+  + maybe_table("Plaintext", isc.plaintext) + maybe_table("PowerShell", isc.powershell)
+  + maybe_table("Pony", isc.pony) + maybe_table("Python", isc.python) + maybe_table( "PureScript"
+                                                                                   , isc.purescript
+                                                                                   ) + maybe_table("R", isc.r)
+  + maybe_table("Rakefile", isc.rakefile) + maybe_table("Ruby", isc.ruby) + maybe_table( "Rust"
+                                                                                       , isc.rust
+                                                                                       ) + maybe_table( "Scala"
+                                                                                                      , isc.scala
                                                                                                       )
-  + maybe_table("Brainfuck", isc.brainfuck) + maybe_table("C", isc.c)
-  + maybe_table("C Header", isc.header) + maybe_table( "C++ cpp_header"
-                                                     , isc.cpp_header
-                                                     ) + maybe_table("C++", isc.cpp) + maybe_table("C#", isc.csharp)
-  + maybe_table("Cabal", isc.cabal) + maybe_table( "Cabal Project"
-                                                 , isc.cabal_project
-                                                 ) + maybe_table("Cassius", isc.cassius) + maybe_table( "COBOL"
-                                                                                                      , isc.cobol
-                                                                                                      )
-  + maybe_table("Coq", isc.coq) + maybe_table("CSS", isc.css)
-  + maybe_table("Dhall", isc.dhall) + maybe_table("Elixir", isc.elixir)
-  + maybe_table("Elm", isc.elm) + maybe_table("Emacs Lisp", isc.elisp)
-  + maybe_table("Erlang", isc.erlang) + maybe_table("F#", isc.fsharp)
-  + maybe_table("Fortran", isc.fortran) + maybe_table("Go", isc.go)
-  + maybe_table("Hamlet", isc.hamlet) + maybe_table("Happy", isc.happy)
-  + maybe_table("Haskell", isc.haskell) + maybe_table("HTML", isc.html)
-  + maybe_table("Idris", isc.idris) + maybe_table("iPKG", isc.ipkg)
-  + maybe_table("Ion", isc.ion) + maybe_table("Java", isc.java)
-  + maybe_table("JavaScript", isc.javascript) + maybe_table( "Julius"
-                                                           , isc.julius
-                                                           ) + maybe_table("Julia", isc.julia) + maybe_table( "Jupyter"
-                                                                                                            , isc.jupyter
-                                                                                                            )
-  + maybe_table("Justfile", isc.justfile) + maybe_table( "Kotlin"
-                                                       , isc.kotlin
-                                                       ) + maybe_table("LALRPOP", isc.lalrpop) + maybe_table( "Lex"
-                                                                                                            , isc.lex
-                                                                                                            )
-  + maybe_table("LLVM", isc.llvm) + maybe_table("Lua", isc.lua)
-  + maybe_table("Lucius", isc.lucius) + maybe_table("M4", isc.m4)
-  + maybe_table("Madlang", isc.madlang) + maybe_table( "Makefile"
-                                                     , isc.makefile
-                                                     ) + maybe_table("Margaret", isc.margaret) + maybe_table( "Markdown"
-                                                                                                            , isc.markdown
-                                                                                                            )
-  + maybe_table("Mercury", isc.mercury) + maybe_table("Nim", isc.nim)
-  + maybe_table("Nix", isc.nix) + maybe_table( "Objective C"
-                                             , isc.objective_c
-                                             ) + maybe_table("OCaml", isc.ocaml) + maybe_table("Perl", isc.perl)
-  + maybe_table("PHP", isc.php) + maybe_table("Plaintext", isc.plaintext)
-  + maybe_table("PowerShell", isc.powershell) + maybe_table( "Pony"
-                                                           , isc.pony
-                                                           ) + maybe_table("Python", isc.python)
-  + maybe_table("PureScript", isc.purescript) + maybe_table("R", isc.r)
-  + maybe_table("Rakefile", isc.rakefile) + maybe_table("Ruby", isc.ruby)
-  + maybe_table("Rust", isc.rust) + maybe_table("Scala", isc.scala)
-  + maybe_table("Sixten", isc.sixten) + maybe_table("Swift", isc.swift)
-  + maybe_table("TCL", isc.tcl) + maybe_table("TeX", isc.tex)
-  + maybe_table("TOML", isc.toml) + maybe_table("Verilog", isc.verilog)
-  + maybe_table("VHDL", isc.vhdl) + maybe_table( "Vimscript"
-                                               , isc.vimscript
-                                               ) + maybe_table("Yacc", isc.yacc) + maybe_table("YAML", isc.yaml)
+  + maybe_table("Sixten", isc.sixten) + maybe_table("Swift", isc.swift) + maybe_table( "TCL"
+                                                                                     , isc.tcl
+                                                                                     ) + maybe_table("TeX", isc.tex)
+  + maybe_table("TOML", isc.toml) + maybe_table("Verilog", isc.verilog) + maybe_table( "VHDL"
+                                                                                     , isc.vhdl
+                                                                                     ) + maybe_table( "Vimscript"
+                                                                                                    , isc.vimscript
+                                                                                                    )
+  + maybe_table("Yacc", isc.yacc) + maybe_table("YAML", isc.yaml)
   + "-------------------------------------------------------------------------------\n"
   + maybe_table("Total", sum_fields(isc))
   + "-------------------------------------------------------------------------------\n"
 
+// Function to print output sorted by type of language.
 fun make_output(isc : source_contents) : string =
-  with_nonempty( "[33mProgramming Languages:[0m\n"
-               , maybe_string("Agda", isc.agda.lines) + maybe_string( "Assembly"
-                                                                    , isc.assembly.lines
-                                                                    ) + maybe_string("ATS", isc.ats.lines)
-               + maybe_string("Brainfuck", isc.brainfuck.lines) + maybe_string( "C"
-                                                                              , isc.c.lines
-                                                                              ) + maybe_string( "C Header"
-                                                                                              , isc.header.lines
-                                                                                              ) + maybe_string( "C++"
-                                                                                                              , isc.cpp.lines
-                                                                                                              )
-               + maybe_string("C++ Header", isc.cpp_header.lines) + maybe_string( "C#"
-                                                                                , isc.csharp.lines
-                                                                                ) + maybe_string( "COBOL"
-                                                                                                , isc.cobol.lines
-                                                                                                ) + maybe_string( "Coq"
-                                                                                                                , isc.coq.lines
-                                                                                                                )
-               + maybe_string("Elixir", isc.elixir.lines) + maybe_string( "Elm"
-                                                                        , isc.elm.lines
-                                                                        ) + maybe_string("Erlang", isc.erlang.lines)
-               + maybe_string("F#", isc.fsharp.lines) + maybe_string( "Fortran"
-                                                                    , isc.fortran.lines
-                                                                    ) + maybe_string("Go", isc.go.lines)
-               + maybe_string("Haskell", isc.haskell.lines) + maybe_string( "Idris"
-                                                                          , isc.idris.lines
-                                                                          ) + maybe_string("Kotline", isc.kotlin.lines)
-               + maybe_string("Java", isc.java.lines) + maybe_string( "Julia"
-                                                                    , isc.julia.lines
-                                                                    ) + maybe_string("Lua", isc.lua.lines)
-               + maybe_string("Margaret", isc.margaret.lines) + maybe_string( "Mercury"
-                                                                            , isc.mercury.lines
-                                                                            ) + maybe_string("Nim", isc.nim.lines)
-               + maybe_string("Objective C", isc.objective_c.lines)
-               + maybe_string("OCaml", isc.ocaml.lines) + maybe_string( "Perl"
-                                                                      , isc.perl.lines
-                                                                      ) + maybe_string("Pony", isc.pony.lines)
-               + maybe_string("PureScript", isc.purescript.lines)
-               + maybe_string("Python", isc.python.lines) + maybe_string( "R"
-                                                                        , isc.r.lines
-                                                                        ) + maybe_string("Ruby", isc.ruby.lines)
-               + maybe_string("Rust", isc.rust.lines) + maybe_string( "Scala"
-                                                                    , isc.scala.lines
-                                                                    ) + maybe_string("Sixten", isc.sixten.lines)
-               + maybe_string("Swift", isc.swift.lines) + maybe_string( "TCL"
-                                                                      , isc.tcl.lines
-                                                                      )
-               ) + with_nonempty( "\n[33mEditor Plugins:[0m\n"
-                                , maybe_string("Emacs Lisp", isc.elisp.lines)
-                                + maybe_string("Vimscript", isc.vimscript.lines)
-                                ) + with_nonempty( "\n[33mDocumentation:[0m\n"
+  with_nonempty( "\33[33mProgramming Languages:\33[0m\n"
+               , maybe_string("Agda", isc.agda.lines) + maybe_string("Assembly", isc.assembly.lines)
+               + maybe_string("ATS", isc.ats.lines) + maybe_string("Brainfuck", isc.brainfuck.lines)
+               + maybe_string("C", isc.c.lines) + maybe_string("C Header", isc.header.lines)
+               + maybe_string("C++", isc.cpp.lines) + maybe_string("C++ Header", isc.cpp_header.lines)
+               + maybe_string("C#", isc.csharp.lines) + maybe_string("COBOL", isc.cobol.lines)
+               + maybe_string("Coq", isc.coq.lines) + maybe_string("Elixir", isc.elixir.lines)
+               + maybe_string("Elm", isc.elm.lines) + maybe_string("Erlang", isc.erlang.lines)
+               + maybe_string("F#", isc.fsharp.lines) + maybe_string("Fortran", isc.fortran.lines)
+               + maybe_string("Go", isc.go.lines) + maybe_string("Haskell", isc.haskell.lines)
+               + maybe_string("Idris", isc.idris.lines) + maybe_string("Kotline", isc.kotlin.lines)
+               + maybe_string("Java", isc.java.lines) + maybe_string("Julia", isc.julia.lines)
+               + maybe_string("Lua", isc.lua.lines) + maybe_string("Margaret", isc.margaret.lines)
+               + maybe_string("Mercury", isc.mercury.lines) + maybe_string("Nim", isc.nim.lines)
+               + maybe_string("Objective C", isc.objective_c.lines) + maybe_string("OCaml", isc.ocaml.lines)
+               + maybe_string("Perl", isc.perl.lines) + maybe_string("Pony", isc.pony.lines)
+               + maybe_string("PureScript", isc.purescript.lines) + maybe_string("Python", isc.python.lines)
+               + maybe_string("R", isc.r.lines) + maybe_string("Ruby", isc.ruby.lines) + maybe_string( "Rust"
+                                                                                                     , isc.rust.lines
+                                                                                                     )
+               + maybe_string("Scala", isc.scala.lines) + maybe_string("Sixten", isc.sixten.lines)
+               + maybe_string("Swift", isc.swift.lines) + maybe_string("TCL", isc.tcl.lines)
+               ) + with_nonempty( "\n\33[33mEditor Plugins:\33[0m\n"
+                                , maybe_string("Emacs Lisp", isc.elisp.lines) + maybe_string( "Vimscript"
+                                                                                            , isc.vimscript.lines
+                                                                                            )
+                                ) + with_nonempty( "\n\33[33mDocumentation:\33[0m\n"
                                                  , maybe_string("Markdown", isc.markdown.lines)
                                                  + maybe_string("Plaintext", isc.plaintext.lines) + maybe_string( "TeX"
                                                                                                                 , isc.tex.lines
                                                                                                                 )
-                                                 ) + with_nonempty( "\n[33mConfiguration:[0m\n"
+                                                 ) + with_nonempty( "\n\33[33mConfiguration:\33[0m\n"
                                                                   , maybe_string("Cabal", isc.cabal.lines)
                                                                   + maybe_string( "Cabal Project"
                                                                                 , isc.cabal_project.lines
@@ -356,7 +317,7 @@ fun make_output(isc : source_contents) : string =
                                                                                                                 )
                                                                   + maybe_string("TOML", isc.toml.lines)
                                                                   + maybe_string("YAML", isc.yaml.lines)
-                                                                  ) + with_nonempty( "\n[33mShell:[0m\n"
+                                                                  ) + with_nonempty( "\n\33[33mShell:\33[0m\n"
                                                                                    , maybe_string( "Bash"
                                                                                                  , isc.bash.lines
                                                                                                  )
@@ -369,32 +330,24 @@ fun make_output(isc : source_contents) : string =
                                                                                                  , isc.powershell.lines
                                                                                                  )
                                                                                    )
-  + with_nonempty( "\n[33mParser Generators:[0m\n"
-                 , maybe_string("Alex", isc.alex.lines) + maybe_string( "Happy"
-                                                                      , isc.happy.lines
-                                                                      ) + maybe_string("LALRPOP", isc.lalrpop.lines)
-                 + maybe_string("Lex", isc.lex.lines) + maybe_string( "Yacc"
-                                                                    , isc.yacc.lines
-                                                                    )
-                 ) + with_nonempty( "\n[33mWeb:[0m\n"
-                                  , maybe_string("Cassius", isc.cassius.lines) + maybe_string( "CSS"
-                                                                                             , isc.css.lines
-                                                                                             ) + maybe_string( "Hamlet"
-                                                                                                             , isc.hamlet.lines
-                                                                                                             )
-                                  + maybe_string("HTML", isc.html.lines) + maybe_string( "JavaScript"
-                                                                                       , isc.javascript.lines
-                                                                                       ) + maybe_string( "Julius"
-                                                                                                       , isc.julius.lines
-                                                                                                       )
+  + with_nonempty( "\n\33[33mParser Generators:\33[0m\n"
+                 , maybe_string("Alex", isc.alex.lines) + maybe_string("Happy", isc.happy.lines)
+                 + maybe_string("LALRPOP", isc.lalrpop.lines) + maybe_string("Lex", isc.lex.lines)
+                 + maybe_string("Yacc", isc.yacc.lines)
+                 ) + with_nonempty( "\n\33[33mWeb:\33[0m\n"
+                                  , maybe_string("Cassius", isc.cassius.lines) + maybe_string("CSS", isc.css.lines)
+                                  + maybe_string("Hamlet", isc.hamlet.lines) + maybe_string("HTML", isc.html.lines)
+                                  + maybe_string("JavaScript", isc.javascript.lines) + maybe_string( "Julius"
+                                                                                                   , isc.julius.lines
+                                                                                                   )
                                   + maybe_string("Lucius", isc.lucius.lines)
-                                  ) + with_nonempty( "\n[33mHardware:[0m\n"
+                                  ) + with_nonempty( "\n\33[33mHardware:\33[0m\n"
                                                    , maybe_string("Verilog", isc.verilog.lines) + maybe_string( "VHDL"
                                                                                                               , isc.vhdl.lines
                                                                                                               )
-                                                   ) + with_nonempty( "\n[33mNotebooks:[0m\n"
+                                                   ) + with_nonempty( "\n\33[33mNotebooks:\33[0m\n"
                                                                     , maybe_string("Jupyter", isc.jupyter.lines)
-                                                                    ) + with_nonempty( "\n[33mOther:[0m\n"
+                                                                    ) + with_nonempty( "\n\33[33mOther:\33[0m\n"
                                                                                      , maybe_string( "Autoconf"
                                                                                                    , isc.autoconf.lines
                                                                                                    )
@@ -419,57 +372,43 @@ fun make_output(isc : source_contents) : string =
                                                                                                    )
                                                                                      )
 
-fun add_contents( x : source_contents
-                , y : source_contents
-                ) : source_contents =
+fun add_contents(x : source_contents, y : source_contents) : source_contents =
   let
-    var next = @{ rust = x.rust + y.rust, haskell = x.haskell
-    + y.haskell, ats = x.ats + y.ats, python = x.python
-    + y.python, vimscript = x.vimscript + y.vimscript, elm = x.elm
-    + y.elm, idris = x.idris + y.idris, madlang = x.madlang
-    + y.madlang, tex = x.tex + y.tex, markdown = x.markdown
-    + y.markdown, yaml = x.yaml + y.yaml, toml = x.toml
-    + y.toml, cabal = x.cabal + y.cabal, happy = x.happy
-    + y.happy, alex = x.alex + y.alex, go = x.go + y.go, html = x.html
-    + y.html, css = x.css + y.css, verilog = x.verilog
-    + y.verilog, vhdl = x.vhdl + y.vhdl, c = x.c
-    + y.c, purescript = x.purescript + y.purescript, futhark = x.futhark
-    + y.futhark, brainfuck = x.brainfuck + y.brainfuck, ruby = x.ruby
-    + y.ruby, julia = x.julia + y.julia, perl = x.perl
-    + y.perl, ocaml = x.ocaml + y.ocaml, agda = x.agda
-    + y.agda, cobol = x.cobol + y.cobol, tcl = x.tcl + y.tcl, r = x.r
-    + y.r, lua = x.lua + y.lua, cpp = x.cpp + y.cpp, lalrpop = x.lalrpop
-    + y.lalrpop, header = x.header + y.header, sixten = x.sixten
-    + y.sixten, dhall = x.dhall + y.dhall, ipkg = x.ipkg
-    + y.ipkg, makefile = x.makefile + y.makefile, justfile = x.justfile
-    + y.justfile, ion = x.ion + y.ion, bash = x.bash
-    + y.bash, hamlet = x.hamlet + y.hamlet, cassius = x.cassius
-    + y.cassius, lucius = x.lucius + y.lucius, julius = x.julius
-    + y.julius, mercury = x.mercury + y.mercury, yacc = x.yacc
+    var next = @{ rust = x.rust + y.rust, haskell = x.haskell + y.haskell, ats = x.ats
+    + y.ats, python = x.python + y.python, vimscript = x.vimscript + y.vimscript, elm = x.elm
+    + y.elm, idris = x.idris + y.idris, madlang = x.madlang + y.madlang, tex = x.tex
+    + y.tex, markdown = x.markdown + y.markdown, yaml = x.yaml + y.yaml, toml = x.toml
+    + y.toml, cabal = x.cabal + y.cabal, happy = x.happy + y.happy, alex = x.alex
+    + y.alex, go = x.go + y.go, html = x.html + y.html, css = x.css + y.css, verilog = x.verilog
+    + y.verilog, vhdl = x.vhdl + y.vhdl, c = x.c + y.c, purescript = x.purescript
+    + y.purescript, futhark = x.futhark + y.futhark, brainfuck = x.brainfuck
+    + y.brainfuck, ruby = x.ruby + y.ruby, julia = x.julia + y.julia, perl = x.perl
+    + y.perl, ocaml = x.ocaml + y.ocaml, agda = x.agda + y.agda, cobol = x.cobol
+    + y.cobol, tcl = x.tcl + y.tcl, r = x.r + y.r, lua = x.lua + y.lua, cpp = x.cpp
+    + y.cpp, lalrpop = x.lalrpop + y.lalrpop, header = x.header + y.header, sixten = x.sixten
+    + y.sixten, dhall = x.dhall + y.dhall, ipkg = x.ipkg + y.ipkg, makefile = x.makefile
+    + y.makefile, justfile = x.justfile + y.justfile, ion = x.ion + y.ion, bash = x.bash
+    + y.bash, hamlet = x.hamlet + y.hamlet, cassius = x.cassius + y.cassius, lucius = x.lucius
+    + y.lucius, julius = x.julius + y.julius, mercury = x.mercury + y.mercury, yacc = x.yacc
     + y.yacc, lex = x.lex + y.lex, coq = x.coq + y.coq, jupyter = x.jupyter
-    + y.jupyter, java = x.java + y.java, scala = x.scala
-    + y.scala, erlang = x.erlang + y.erlang, elixir = x.elixir
-    + y.elixir, pony = x.pony + y.pony, clojure = x.clojure
-    + y.clojure, cabal_project = x.cabal_project
-    + y.cabal_project, assembly = x.assembly + y.assembly, nix = x.nix
-    + y.nix, php = x.php + y.php, javascript = x.javascript
-    + y.javascript, kotlin = x.kotlin + y.kotlin, fsharp = x.fsharp
-    + y.fsharp, fortran = x.fortran + y.fortran, swift = x.swift
-    + y.swift, csharp = x.csharp + y.csharp, nim = x.nim
+    + y.jupyter, java = x.java + y.java, scala = x.scala + y.scala, erlang = x.erlang
+    + y.erlang, elixir = x.elixir + y.elixir, pony = x.pony + y.pony, clojure = x.clojure
+    + y.clojure, cabal_project = x.cabal_project + y.cabal_project, assembly = x.assembly
+    + y.assembly, nix = x.nix + y.nix, php = x.php + y.php, javascript = x.javascript
+    + y.javascript, kotlin = x.kotlin + y.kotlin, fsharp = x.fsharp + y.fsharp, fortran = x.fortran
+    + y.fortran, swift = x.swift + y.swift, csharp = x.csharp + y.csharp, nim = x.nim
     + y.nim, cpp_header = x.cpp_header + y.cpp_header, elisp = x.elisp
     + y.elisp, plaintext = x.plaintext + y.plaintext, rakefile = x.rakefile
-    + y.rakefile, llvm = x.llvm + y.llvm, autoconf = x.autoconf
-    + y.autoconf, batch = x.batch + y.batch, powershell = x.powershell
-    + y.powershell, m4 = x.m4 + y.m4, objective_c = x.objective_c
-    + y.objective_c, automake = x.automake
+    + y.rakefile, llvm = x.llvm + y.llvm, autoconf = x.autoconf + y.autoconf, batch = x.batch
+    + y.batch, powershell = x.powershell + y.powershell, m4 = x.m4
+    + y.m4, objective_c = x.objective_c + y.objective_c, automake = x.automake
     + y.automake, margaret = x.margaret + y.margaret } : source_contents
   in
     next
   end
 
-fun adjust_contents( prev : source_contents
-                   , scf : pl_type
-                   ) : source_contents =
+// This is the step function used when streaming directory contents. 
+fun adjust_contents(prev : source_contents, scf : pl_type) : source_contents =
   let
     val sc_r = ref<source_contents>(prev)
     val _ = case+ scf of
@@ -644,19 +583,16 @@ fun free_pl(pl : pl_type) : void =
     | ~automake _ => ()
     | ~margaret _ => ()
 
-fun match_keywords { m : nat | m <= 10 } ( keys : list(string, m)
-                                         , word : string
-                                         ) : bool =
+// match a particular word against a list of keywords
+fun match_keywords { m : nat | m <= 10 } (keys : list(string, m), word : string) : bool =
   list_foldright_cloref( keys
                        , lam (next, acc) =<cloref1> acc || eq_string_string(next, word)
                        , false
                        )
 
-fun step_keyword( size : file
-                , pre : pl_type
-                , word : string
-                , ext : string
-                ) : pl_type =
+// TODO use list_vt{int}(0, 1, 2, 3, 4) instead?
+// helper function for check_keywords
+fun step_keyword(size : file, pre : pl_type, word : string, ext : string) : pl_type =
   case+ pre of
     | unknown _ => let
       
@@ -670,9 +606,7 @@ fun step_keyword( size : file
             happy(size)
           else
             if let
-              var yacc_keywords = list_cons( "struct"
-                                           , list_cons("char", list_cons("int", list_nil()))
-                                           )
+              var yacc_keywords = list_cons("struct", list_cons("char", list_cons("int", list_nil())))
             in
               match_keywords(yacc_keywords, word)
             end then
@@ -722,9 +656,7 @@ fun step_keyword( size : file
         end
         | "m" => let
           val _ = free_pl(pre)
-          var mercury_keywords = list_cons( "module"
-                                          , list_cons("pred", list_cons("mode", list_nil()))
-                                          )
+          var mercury_keywords = list_cons("module", list_cons("pred", list_cons("mode", list_nil())))
         in
           if match_keywords(mercury_keywords, word) then
             mercury(size)
@@ -744,6 +676,9 @@ fun step_keyword( size : file
     end
     | _ => pre
 
+// Function to disambiguate extensions such as .v (Coq and Verilog) and .m
+// (Mercury and Objective C). This should only be called when extensions are in
+// conflict, as it reads the whole file.
 fun check_keywords(s : string, size : file, ext : string) : pl_type =
   let
     var ref = fileref_open_opt(s, file_mode_r)
@@ -760,11 +695,13 @@ fun check_keywords(s : string, size : file, ext : string) : pl_type =
       in
         result
       end
-      | ~None_vt() => (println!("[33mWarning:[0m could not open file at "
-                               + s
-                               ) ; unknown)
+      | ~None_vt() => (println!("\33[33mWarning:\33[0m could not open file at " + s) ; unknown)
   end
 
+// Check shebang on scripts.
+//
+// TODO flexible parser that drops spaces as appropriate
+// TODO check magic number so as to avoid checking shebang of binary file
 fun check_shebang(s : string) : pl_type =
   let
     val ref = fileref_open_opt(s, file_mode_r)
@@ -775,9 +712,7 @@ fun check_shebang(s : string) : pl_type =
       in
         s
       end
-      | ~None_vt() => (println!("[33mWarning:[0m could not open file at "
-                               + s
-                               ) ; "")
+      | ~None_vt() => (println!("\33[33mWarning:\33[0m could not open file at " + s) ; "")
   in
     case+ str of
       | "#!/usr/bin/env ion" => ion(line_count(s, Some("#")))
@@ -798,10 +733,12 @@ fun check_shebang(s : string) : pl_type =
       | _ => unknown
   end
 
+// Match based on filename (for makefiles, etc.)
 fun match_filename(s : string) : pl_type =
   let
     val (prf | str) = filename_get_base(s)
     val match = $UN.strptr2string(str)
+    
     prval () = prf(str)
   in
     case+ match of
@@ -816,6 +753,8 @@ fun match_filename(s : string) : pl_type =
       | _ => check_shebang(s)
   end
 
+// Match based on file extension (assuming the file name is passed in as an
+// argument).
 fun prune_extension(s : string, file_proper : string) : pl_type =
   let
     val (prf | str) = filename_get_ext(file_proper)
@@ -823,6 +762,7 @@ fun prune_extension(s : string, file_proper : string) : pl_type =
       $UN.strptr2string(str)
     else
       ""
+    
     prval () = prf(str)
   in
     case+ match of
@@ -937,6 +877,7 @@ fun prune_extension(s : string, file_proper : string) : pl_type =
       | _ => unknown
   end
 
+// filter out directories containing artifacts
 fun bad_dir(s : string, excludes : List0(string)) : bool =
   case+ s of
     | "." => true
@@ -974,15 +915,11 @@ fnx step_stream( acc : source_contents
     flow_stream(full_name, acc, excludes)
   else
     adjust_contents(acc, prune_extension(full_name, file_proper))
-and flow_stream( s : string
-               , init : source_contents
-               , excludes : List0(string)
-               ) : source_contents =
+and flow_stream(s : string, init : source_contents, excludes : List0(string)) :
+source_contents =
   let
     var files = streamize_dirname_fname(s)
-    var ffiles = stream_vt_filter_cloptr( files
-                                        , lam x => not(bad_dir(x, excludes))
-                                        )
+    var ffiles = stream_vt_filter_cloptr(files, lam x => not(bad_dir(x, excludes)))
   in
     stream_vt_foldleft_cloptr( ffiles
                              , init
@@ -1078,17 +1015,14 @@ fun empty_contents() : source_contents =
     isc
   end
 
-fun map_stream( acc : source_contents
-              , includes : List0(string)
-              , excludes : List0(string)
-              ) : source_contents =
+fun map_stream(acc : source_contents, includes : List0(string), excludes : List0(string)) :
+source_contents =
   list_foldleft_cloref( includes
                       , acc
                       , lam (acc, next) => if test_file_exists(next) || next = "" then
                         step_stream(acc, next, next, excludes)
                       else
-                        (prerr("[31mError:[0m directory '" + next + "' does not exist\n") ;
-                        (exit(1) ; acc))
+                        (prerr("\33[31mError:\33[0m directory '" + next + "' does not exist\n") ; (exit(1) ; acc))
                       )
 
 fun is_flag(s : string) : bool =
@@ -1098,19 +1032,14 @@ fun process_excludes(s : string, acc : command_line) : command_line =
   let
     val acc_r = ref<command_line>(acc)
     val () = if is_flag(s) then
-      (println!("Error: flag " + s
-               + " found where a directory name was expected"
-               ) ; (exit(0) ; ()))
+      (println!("Error: flag " + s + " found where a directory name was expected") ; (exit(0) ; ()))
     else
       acc_r->excludes := list_cons(s, acc.excludes)
   in
     !acc_r
   end
 
-fun process( s : string
-           , acc : command_line
-           , is_first : bool
-           ) : command_line =
+fun process(s : string, acc : command_line, is_first : bool) : command_line =
   let
     val acc_r = ref<command_line>(acc)
     val () = if is_flag(s) then
@@ -1120,25 +1049,20 @@ fun process( s : string
         | "--no-table" => if not(acc.no_table) then
           acc_r->no_table := true
         else
-          (println!("[31mError:[0m flag " + s + " cannot appear twice") ;
-          (exit(0) ; ()))
+          (println!("\33[31mError:\33[0m flag " + s + " cannot appear twice") ; (exit(0) ; ()))
         | "-t" => if not(acc.no_table) then
           acc_r->no_table := true
         else
-          (println!("[31mError:[0m flag " + s + " cannot appear twice") ;
-          (exit(0) ; ()))
+          (println!("\33[31mError:\33[0m flag " + s + " cannot appear twice") ; (exit(0) ; ()))
         | "--parallel" => acc_r->parallel := true
         | "-p" => acc_r->parallel := true
         | "--version" => acc_r->version := true
         | "-V" => acc_r->version := true
-        | "-e" => (println!("[31mError:[0m flag " + s
-                           + " must be followed by an argument"
-                           ) ; (exit(0) ; ()))
-        | "--exclude" => (println!("[31mError:[0m flag " + s
-                                  + " must be followed by an argument"
-                                  ) ; (exit(0) ; ()))
-        | _ => (println!("[31mError:[0m flag '" + s + "' not recognized") ;
+        | "-e" => (println!("\33[31mError:\33[0m flag " + s + " must be followed by an argument") ;
         (exit(0) ; ()))
+        | "--exclude" => (println!("\33[31mError:\33[0m flag " + s + " must be followed by an argument"
+                                  ) ; (exit(0) ; ()))
+        | _ => (println!("\33[31mError:\33[0m flag '" + s + "' not recognized") ; (exit(0) ; ()))
     else
       if not(is_first) then
         acc_r->includes := list_cons(s, acc.includes)
@@ -1148,13 +1072,12 @@ fun process( s : string
     !acc_r
   end
 
-fnx get_cli { n : int | n >= 1 }{ m : nat | m < n } .<n - m>.
-( argc : int(n)
-, argv : !argv(n)
-, current : int(m)
-, prev_is_exclude : bool
-, acc : command_line
-) : command_line =
+fnx get_cli { n : int | n >= 1 }{ m : nat | m < n } .<n - m>. ( argc : int(n)
+                                                              , argv : !(argv(n))
+                                                              , current : int(m)
+                                                              , prev_is_exclude : bool
+                                                              , acc : command_line
+                                                              ) : command_line =
   let
     var arg = argv[current]
   in
@@ -1185,24 +1108,24 @@ fnx get_cli { n : int | n >= 1 }{ m : nat | m < n } .<n - m>.
   end
 
 fun version() : void =
-  println!("polygot version 0.3.10\nCopyright (c) 2017 Vanessa McHale")
+  println!("polygot version 0.3.11\nCopyright (c) 2017 Vanessa McHale")
 
 fun help() : void =
   print("polyglot - Count lines of code quickly.
-       
-       [36mUSAGE:[0m poly [DIRECTORY] ... [OPTION] ...
-       
-       [36mFLAGS:[0m
-       -V, --version            show version information
-       -h, --help               display this help and exit
-       -e, --exclude            exclude a directory
-       -p, --parallel           execute in parallel
-       -t, --no-table           display results in alternate format
-       
-       When no directory is provided poly will execute in the
-       current directory.
-       
-       Bug reports and updates: nest.pijul.com/vamchale/polyglot\n"
+              
+              \33[36mUSAGE:\33[0m poly [DIRECTORY] ... [OPTION] ...
+              
+              \33[36mFLAGS:\33[0m
+                  -V, --version            show version information
+                  -h, --help               display this help and exit
+                  -e, --exclude            exclude a directory
+                  -p, --parallel           execute in parallel
+                  -t, --no-table           display results in alternate format
+              
+              When no directory is provided poly will execute in the
+              current directory.
+              
+              Bug reports and updates: nest.pijul.com/vamchale/polyglot\n"
        )
 
 fun head(xs : List0(string)) : string =
@@ -1210,6 +1133,7 @@ fun head(xs : List0(string)) : string =
     | list_cons (x, xs) => x + ", " + head(xs)
     | list_nil() => ""
 
+// TODO channel to draw work? e.g. take a channel of strings, return a channel of source_contents
 fun work( excludes : List0(string)
         , send : channel(List0(string))
         , chan : channel(source_contents)
@@ -1224,18 +1148,20 @@ fun work( excludes : List0(string)
       | ~Some_vt (snd) => queue_free<List0(string)>(snd)
   }
 
+// Function returning the number of CPU cores.
+extern
+fun  ncpu  () : int
 
-extern fun  ncpu  () : int
 %{^
 #include <unistd.h>
 int ncpu() {
-return sysconf(_SC_NPROCESSORS_ONLN);
+  return sysconf(_SC_NPROCESSORS_ONLN);
 }
 %}
 
 #define NCPU 4
-fun apportion(includes : List0(string)
-             ) : (List0(string), List0(string)) =
+
+fun apportion(includes : List0(string)) : (List0(string), List0(string)) =
   let
     var n = length(includes) / 2
     val (p, q) = list_split_at(includes, n)
@@ -1243,9 +1169,8 @@ fun apportion(includes : List0(string)
     (list_vt2t(p), q)
   end
 
-fun threads( includes : List0(string)
-           , excludes : List0(string)
-           ) : source_contents =
+// TODO maybe make a parallel fold?
+fun threads(includes : List0(string), excludes : List0(string)) : source_contents =
   let
     val chan = channel_make<source_contents>(2)
     val chan2 = channel_ref(chan)
@@ -1261,16 +1186,8 @@ fun threads( includes : List0(string)
     val (fst, snd) = apportion(new_includes)
     val _ = channel_insert(send1, fst)
     val _ = channel_insert(send2, snd)
-    val t2 = athread_create_cloptr_exn(llam () => work( excludes
-                                                      , send_r1
-                                                      , chan2
-                                                      )
-                                      )
-    val t3 = athread_create_cloptr_exn(llam () => work( excludes
-                                                      , send_r2
-                                                      , chan3
-                                                      )
-                                      )
+    val t2 = athread_create_cloptr_exn(llam () => work(excludes, send_r1, chan2))
+    val t3 = athread_create_cloptr_exn(llam () => work(excludes, send_r2, chan3))
     val- ~None_vt() = channel_unref(send1)
     val- ~None_vt() = channel_unref(send2)
     val- (n) = channel_remove(chan)
@@ -1308,10 +1225,7 @@ implement main0 (argc, argv) =
             if length(parsed.includes) > 0 then
               map_stream(empty_contents(), parsed.includes, parsed.excludes)
             else
-              map_stream( empty_contents()
-                        , list_cons(".", list_nil())
-                        , parsed.excludes
-                        )
+              map_stream(empty_contents(), list_cons(".", list_nil()), parsed.excludes)
         in
           if parsed.no_table then
             print(make_output(result))

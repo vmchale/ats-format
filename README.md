@@ -10,10 +10,7 @@ a work-in-progress, but it can handle a subset of the language already.
 Currently it is only tested with ATS 0.3.8.
 
 If you find something that's not listed in `TODO.md` feel free to open
-an issue. The pretty-printer is a bit anemic, so you're welcome to submit code
-samples where it produces bad output.
-
-The formatter is pleasantly fast, formatting a 1500 line file in <20ms.
+an issue. Code samples that were formatted into something ugly are also welcome.
 
 ## Configuration
 

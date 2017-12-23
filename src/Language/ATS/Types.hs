@@ -1,11 +1,12 @@
-{-# LANGUAGE DeriveAnyClass    #-}
-{-# LANGUAGE DeriveFoldable    #-}
-{-# LANGUAGE DeriveFunctor     #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE DeriveTraversable #-}
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE DeriveAnyClass     #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveFoldable     #-}
+{-# LANGUAGE DeriveFunctor      #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE DeriveTraversable  #-}
+{-# LANGUAGE LambdaCase         #-}
+{-# LANGUAGE TemplateHaskell    #-}
+{-# LANGUAGE TypeFamilies       #-}
 
 -- | This is a module containing types to model the ATS syntax tree. As it is
 -- collapsed by the pretty printer, you may see that in some places it is
@@ -31,12 +32,12 @@ module Language.ATS.Types
     , Addendum (..)
     , DataPropLeaf (..)
     , PreFunction (..)
+    , Paired (..)
     , rewriteATS
-    , binList
     ) where
 
 import           Control.DeepSeq          (NFData)
-import           Control.Lens.Plated
+import           Data.Functor.Foldable    (cata, embed)
 import           Data.Functor.Foldable.TH (makeBaseFunctor)
 import           GHC.Generics             (Generic)
 import           Language.ATS.Lexer       (Addendum (..), AlexPosn)
@@ -55,7 +56,7 @@ data Declaration = Func AlexPosn Function
                  | AndDecl (Maybe Type) Pattern Expression
                  | Include String
                  | Staload (Maybe String) String
-                 | Stadef String Name
+                 | Stadef String Name [Type]
                  | CBlock String
                  | RecordType String [Arg] [(String, Type)]
                  | RecordViewType String [Arg] [(String, Type)]
@@ -110,11 +111,13 @@ data Type = Bool
           | ViewType AlexPosn Type
           | FunctionType String Type Type
           | NoneType AlexPosn
+          | ImplicitType AlexPosn
           deriving (Show, Eq, Generic, NFData)
 
 -- | A type for the various lambda arrows (`=>`, `=<cloref1>`, etc.)
 data LambdaType = Plain AlexPosn
                 | Full AlexPosn String
+                | Spear AlexPosn
                 deriving (Show, Eq, Generic, NFData)
 
 -- | A name can be qualified (`$UN.unsafefn`) or not
@@ -131,14 +134,18 @@ data Pattern = Wildcard AlexPosn
              | PLiteral Expression
              | Guarded AlexPosn Expression Pattern
              | Free Pattern
-             | Proof AlexPosn Pattern Pattern
-             | NullPattern AlexPosn
+             | Proof AlexPosn [Pattern] [Pattern]
              | TuplePattern [Pattern]
              deriving (Show, Eq, Generic, NFData)
 
+data Paired a b = Both a b
+                | First a
+                | Second b
+                deriving (Show, Eq, Generic, NFData)
+
 -- | An argument to a function.
-data Arg = Arg String (Maybe Type)
-         | PrfArg Arg [Arg]
+data Arg = Arg (Paired String Type)
+         | PrfArg Arg Arg
     deriving (Show, Eq, Generic, NFData)
 
 -- | Wrapper for universal quantifiers (refinement types)
@@ -166,14 +173,15 @@ data BinOp = Add
            | NotEqual
            | LogicalAnd
            | LogicalOr
+           | StaticEq
            deriving (Show, Eq, Generic, NFData)
 
 -- | A (possibly effectful) expression.
 data Expression = Let AlexPosn ATS (Maybe Expression)
                 | VoidLiteral -- The '()' literal representing inaction.
                     AlexPosn
-                -- The first list is implicit arguments such as `<a>`, the second is implicits such as `{list_vt(string)}`, the third is an optional proof, and the last is the actual arguments
-                | Call Name [Expression] [Type] (Maybe Expression) [Expression]
+                -- The first list is implicit arguments such as `<a>`, the second is implicits such as `{list_vt(string)}` the third is an optional proof, and the last is the actual arguments
+                | Call Name [Type] [Type] (Maybe Expression) [Expression]
                 | NamedVal Name
                 | If { cond     :: Expression -- ^ Expression evaluating to a boolean value
                      , whenTrue :: Expression -- ^ Expression to be returned when true
@@ -222,26 +230,6 @@ data Expression = Let AlexPosn ATS (Maybe Expression)
                 | PrecedeList { _exprs :: [Expression] }
                 deriving (Show, Eq, Generic, NFData)
 
-instance Plated Expression where
-    plate f (Binary op e e') = Binary op <$> f e <*> f e'
-    plate f (Precede e e')   = Precede <$> f e <*> f e'
-    plate _ x                = pure x
-
-rewriteATS :: Expression -> Expression
-rewriteATS = precedeList
-
-precedeList :: Expression -> Expression
-precedeList = transform $ \case
-    (Precede e@PrecedeList{} e') -> PrecedeList (e' : _exprs e)
-    (Precede e e') -> PrecedeList [e, e']
-    a -> a
-
-binList :: Expression -> Expression
-binList = transform $ \case
-    (Binary Add e e'@Binary{})  -> BinList Add [e, e'] -- FIXME both have to be 'Add'
-    (Binary Add e@BinList{} e') -> BinList Add (e' : _exprs e)
-    a                          -> a
-
 -- | An 'implement' declaration
 data Implementation = Implement { pos            :: AlexPosn
                                 , preUniversalsI :: [Universal]
@@ -276,3 +264,11 @@ data PreFunction = PreF { fname         :: Name -- ^ Function name
 makeBaseFunctor ''Pattern
 makeBaseFunctor ''Expression
 makeBaseFunctor ''Type
+
+rewriteATS :: Expression -> Expression
+rewriteATS = cata a where
+    a (PrecedeF e e'@PrecedeList{}) = PrecedeList (e : _exprs e')
+    a (PrecedeF e e')               = PrecedeList [e, e']
+    a x                             = embed x
+    {- a (BinaryF Add e e'@BinList{})  = BinList Add (e : _exprs e') -}
+    {- a (BinaryF Add e e')            = BinList Add [e, e'] -}

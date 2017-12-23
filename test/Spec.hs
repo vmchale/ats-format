@@ -31,7 +31,7 @@ testFile f = it f $ do
 main :: IO ()
 main = hspec $
     describe "pretty-print" $ parallel $
-    runSafeT $ runEffect $ atsPath >-> mapS testFile
+        runSafeT $ runEffect $ atsPath >-> mapS testFile
 
 mapS :: (a -> SpecM () ()) -> Proxy () a y' y (SafeT (SpecM ())) r
 mapS = P.mapM_ . (lift .)

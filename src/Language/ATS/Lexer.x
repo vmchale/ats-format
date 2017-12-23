@@ -3,6 +3,7 @@
     {-# OPTIONS_GHC -fno-warn-unused-matches -fno-warn-incomplete-uni-patterns #-}
     {-# LANGUAGE DeriveGeneric #-}
     {-# LANGUAGE DeriveAnyClass #-}
+    {-# LANGUAGE DeriveDataTypeable #-}
     {-# LANGUAGE StandaloneDeriving #-}
     {-# LANGUAGE OverloadedStrings #-}
 
@@ -16,6 +17,7 @@
                               , token_posn
                               ) where
 
+import Data.Data (Typeable, Data)
 import Data.Char (toUpper, toLower)
 import Control.Lens (over, _head)
 import Control.DeepSeq (NFData)
@@ -78,7 +80,7 @@ $esc_char = \27
 -- FIXME whatever the fuck this is: -<cloptr,fe>
 @func_type = "-<fun>" | "-<cloptr1>" | "-<lincloptr1>" | "-<lin,cloptr1>" | "-<fun0>" | "-<lin,prf>" | "-<>" | "-<prf>" -- FIXME allow spaces after comma?
 
-@operator = "+" | "-" | "*" | "/" | "!=" | ">=" | "<=" | "=" | "~" | "&&" | "||" | "->" | ":=" | ".<" | ">." | "<" | ">" | ">>" | "?" | "?!" | "#[" -- TODO context so tilde doesn't follow |
+@operator = "+" | "-" | "*" | "/" | ".." | "!=" | ">=" | "<=" | "==" | "=" | "~" | "&&" | "||" | "->" | ":=" | ".<" | ">." | "<" | ">" | ">>" | "?" | "?!" | "#[" -- TODO context so tilde doesn't follow |
 
 @double_parens = "(" @block_comment ")" | "()"
 @double_braces = "{" @block_comment "}" | "{}"
@@ -187,13 +189,16 @@ tokens :-
 
 deriving instance Generic AlexPosn
 deriving instance NFData AlexPosn
+deriving instance Data AlexPosn
+deriving instance Typeable AlexPosn
 
 tok f p s = f p s
 
+-- | Determines the default behavior for incomplete pattern matches
 data Addendum = None
               | Plus
               | Minus
-              deriving (Eq, Show, Generic, NFData)
+              deriving (Eq, Show, Generic, NFData, Data, Typeable)
 
 data Keyword = KwFun
              | KwFnx

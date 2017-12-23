@@ -15,20 +15,18 @@
 - [ ] monadic parser for error handling?
 - [ ] `Control.Lens.Plated` to rewrite nested binary operations?
 - [ ] handle location information in a comonad?
+- [ ] type for static expressions
+- [ ] fix ambiguities in what's a tuple vs. function call
 # Bugs
-- [ ] spurious line in `fib.out`
+- [ ] `{i:nat;j:int}`
+- [ ] break on eq rather than `(` in `vtypedef parser(a : vt@ype+) = @{ modify = cstream -<lincloptr1> (cstream, a) }`
 - [ ] `Arg` should include proofs, e.g. `ptr_get0<a> (pf1 | p1)`.
-- [ ] ATS parses `if` statements differently than we do (else clause isn't
-  necessary)
 - [ ] macdef
-- [ ] `:<>` and the like
-- [ ] `vtypdef` should work on more inputs
-- [ ] `datavtype` should be more general (dependent types)
 - [ ] `assume`
 - [ ] `castfn`
 - [ ] `propdef`
 - [ ] `abstype`
-- [ ] `type`
+- [ ] `absvtype`
 - [ ] `view`
 - [ ] `prfn`
 - [ ] `tkindef` / `typekindef`?

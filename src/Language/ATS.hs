@@ -3,11 +3,30 @@ module Language.ATS ( -- * Functions
                       lexATS
                     , parseATS
                     , printATS
-                    -- * Types
+                    -- * Syntax Tree
                     , ATS (..)
                     , Declaration (..)
                     , Expression (..)
                     , Type (..)
+                    , Function (..)
+                    , Implementation (..)
+                    , Pattern (..)
+                    , Name (..)
+                    , UnOp (..)
+                    , BinOp (..)
+                    , DataPropLeaf (..)
+                    , Arg (..)
+                    , Addendum (..)
+                    , LambdaType (..)
+                    , Universal (..)
+                    , Existential (..)
+                    , PreFunction (..)
+                    -- * Lexical types
+                    , Token (..)
+                    , AlexPosn (..)
+                    , Keyword (..)
+                    -- * Error types
+                    , ATSError
                     -- * Executable
                     , exec
                     ) where

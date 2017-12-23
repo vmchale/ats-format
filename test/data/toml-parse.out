@@ -45,7 +45,7 @@ fun compose {a : type}{b : type}{c : type} ( f : a -<lincloptr1> b
       let
         val y = g(f(x))
       in
-        (cloptr_free($UN.castvwtp0(f)) ; (cloptr_free($UN.castvwtp0(g)) ; y))
+        (cloptr_free($UN.castvwtp0(f)) ; cloptr_free($UN.castvwtp0(g)) ; y)
       end
     end
 

@@ -17,6 +17,7 @@ module Language.ATS.PrettyPrint ( printATS
 import           Control.Arrow                         hiding ((<+>))
 import           Control.Composition
 import           Control.DeepSeq                       (NFData)
+import           Control.Lens                          hiding (op)
 #if __GLASGOW_HASKELL__ >= 801
 import           Data.Function                         (on)
 #endif
@@ -81,6 +82,7 @@ instance Pretty Name where
 
 instance Pretty LambdaType where
     pretty Plain{}    = "=>"
+    pretty Spear{}    = "=>>"
     pretty (Full _ v) = "=<" <> string v <> ">"
 
 instance Pretty BinOp where
@@ -96,6 +98,7 @@ instance Pretty BinOp where
     pretty LogicalOr     = "||"
     pretty LessThanEq    = "<="
     pretty GreaterThanEq = ">="
+    pretty StaticEq      = "=="
 
 splits :: BinOp -> Bool
 splits Mult       = True
@@ -110,6 +113,12 @@ startsParens :: Doc -> Bool
 startsParens d = f (show d) where
     f ('(':_) = True
     f _       = False
+
+prettyBinary :: Doc -> [Doc] -> Doc
+prettyBinary _ []       = mempty
+prettyBinary _ [e]      = e
+prettyBinary op [e, e'] = e <+> op <+> e'
+prettyBinary _ _        = "FIXME"
 
 instance Pretty Expression where
     pretty = cata a . rewriteATS where
@@ -126,9 +135,7 @@ instance Pretty Expression where
         a (LinearLambdaF _ lt p e)      = "llam" <+> pretty p <+> pretty lt <+> e
         a (FloatLitF f)                 = pretty f
         a (StringLitF s)                = string s
-        a (BinListF op es)
-            | splits op = encloseSep (head es) (" " <> pretty op <> " ") (last es) (init $ tail es)
-            | otherwise = "error state"
+        a (BinListF op@Add es)                    = prettyBinary (pretty op) es
         a (BinaryF op e e')
             | splits op = e </> pretty op <+> e'
             | otherwise = e <+> pretty op <+> e'
@@ -140,20 +147,20 @@ instance Pretty Expression where
             | startsParens x = pretty name <> pretty x
         a (CallF name [] [] Nothing xs) = pretty name <> prettyArgsG "(" ")" xs
         a (CallF name [] ys Nothing []) = pretty name <> prettyArgsG "<" ">" (fmap pretty ys)-- FIXME this should use { too?
-        a (CallF name us [] Nothing []) = pretty name <> prettyArgsG "{" "}" us
+        a (CallF name us [] Nothing []) = pretty name <> prettyArgsCaret "{ " " }" us
         a (CallF name [] ys Nothing xs) = pretty name <> prettyArgsG "<" ">" (fmap pretty ys) <> prettyArgsG "(" ")" xs
         a (CallF name us [] Nothing [x])
-            | startsParens x = pretty name <> prettyArgsG "{" "}" us <> pretty x
-        a (CallF name us [] Nothing xs) = pretty name <> prettyArgsG "{" "}" us <> prettyArgsG "(" ")" xs
+            | startsParens x = pretty name <> prettyArgsCaret "{ " " }" us <> pretty x
+        a (CallF name us [] Nothing xs) = pretty name <> prettyArgsCaret "{ " " }" us <> prettyArgsG "(" ")" xs
         a (CallF name us ys Nothing [x])
-            | startsParens x = pretty name <> prettyArgsG "{" "}" us <> prettyArgsG "<" ">" (fmap pretty ys) <> pretty x
-        a (CallF name us ys Nothing xs) = pretty name <> prettyArgsG "{" "}" us <> prettyArgsG "<" ">" (fmap pretty ys) <+> prettyArgsG "(" ")" xs
+            | startsParens x = pretty name <> prettyArgsCaret "{ " " }" us <> prettyArgsG "<" ">" (fmap pretty ys) <> pretty x
+        a (CallF name us ys Nothing xs) = pretty name <> prettyArgsCaret "{ " " }" us <> prettyArgsG "<" ">" (fmap pretty ys) <+> prettyArgsG "(" ")" xs
         a (CaseF _ add e cs)            = "case" <> pretty add <+> e <+> "of" <$> indent 2 (prettyCases cs)
         a (VoidLiteralF _)              = "()"
         a (RecordValueF _ es Nothing)   = prettyRecord es
         a (RecordValueF _ es (Just x))  = prettyRecord es <+> ":" <+> pretty x
         a (PrecedeF e e')               = parens (e <+> ";" </> e') -- TODO use plated + write this like arguments with commas
-        a (PrecedeListF es)             = prettyArgsG' ";" "(" ")" es
+        a (PrecedeListF es)             = prettyArgsList " ; " "(" ")" es
         a (FieldMutateF _ o f v)        = pretty o <> "->" <> string f <+> ":=" <+> v
         a (MutateF e e')                = e <+> ":=" <+> e'
         a (DerefF _ e)                  = "!" <> e
@@ -184,6 +191,9 @@ instance Pretty Expression where
 noParens :: Doc -> Bool
 noParens = all (`notElem` ("()" :: String)) . show
 
+patternHelper :: [Doc] -> Doc
+patternHelper ps = mconcat (punctuate ", " (reverse ps))
+
 instance Pretty Pattern where
     pretty = cata a where
         a (WildcardF _)      = "_"
@@ -191,18 +201,17 @@ instance Pretty Pattern where
         a (PLiteralF e)      = pretty e
         a (PNameF s [])      = string s
         a (PNameF s [x])     = string s <> parens x
-        a (PNameF s ps)      = string s <> parens (mconcat (punctuate ", " (reverse ps)))
+        a (PNameF s ps)      = string s <> parens (patternHelper ps)
         a (FreeF p)          = "~" <> p
         a (GuardedF _ e p)   = p <+> "when" <+> pretty e
-        a (ProofF _ p p')    = parens (p <+> "|" <+> p')
-        a NullPatternF{}     = "()"
-        a (TuplePatternF ps) = parens (mconcat (punctuate ", " (reverse ps)))
+        a (ProofF _ p p')    = parens (patternHelper p <+> "|" <+> patternHelper p')
+        a (TuplePatternF ps) = parens (patternHelper ps)
 
 instance Pretty Arg where
-    pretty (Arg s Nothing)   = pretty s
-    pretty (Arg "" (Just t)) = pretty t
-    pretty (Arg s (Just t))  = pretty s <+> colon <+> pretty t
-    pretty (PrfArg a as)     = "(" <> pretty a <+> "|" <+> prettyArgs as <> ")"
+    pretty (Arg (First s))  = pretty s
+    pretty (Arg (Second t)) = pretty t
+    pretty (Arg (Both s t)) = pretty s <+> colon <+> pretty t
+    pretty (PrfArg a a')    = pretty a <+> "|" <+> pretty a'
 
 instance Pretty Type where
     pretty = cata a where
@@ -236,6 +245,7 @@ instance Pretty Type where
         a (ViewTypeF _ t)     = "view@" <> parens t
         a (FunctionTypeF s t t') = t <+> string s <+> t'
         a NoneTypeF{} = "()"
+        a ImplicitTypeF{} = ".."
 
 gan :: Maybe Type -> Doc
 gan (Just t) = " : " <> pretty t <> " "
@@ -245,16 +255,18 @@ instance Pretty Existential where
     pretty (Existential [] Nothing (Just e)) = lbracket <+> pretty e <+> rbracket
     pretty (Existential bs ty Nothing)  = lbracket <+> mconcat (punctuate ", " (fmap pretty (reverse bs))) <> gan ty <+> rbracket
     pretty (Existential bs ty (Just e)) = lbracket <+> mconcat (punctuate ", " (fmap go (reverse bs))) <> gan ty <+> "|" <+> pretty e <+> rbracket
-        where go (Arg s Nothing)  = pretty s
-              go (Arg s (Just t)) = pretty s <+> colon <+> pretty t
+        where go (Arg (First s))  = pretty s
+              go (Arg (Both s t)) = pretty s <+> colon <+> pretty t
               go _                = "FIXME" -- maybe use a new type? I don't think this should ever happen.
 
 instance Pretty Universal where
-    pretty (Universal [x] Nothing Nothing) = lbrace <> pretty x <> rbrace
+    pretty (Universal [x@PrfArg{}] Nothing Nothing) = lbrace <+> pretty x <+> rbrace -- FIXME universals can now be length-one arguments
+    pretty (Universal [x] Nothing Nothing) = lbrace <> pretty x <> rbrace -- FIXME universals can now be length-one arguments
     pretty (Universal bs ty Nothing) = lbrace <+> mconcat (punctuate ", " (fmap pretty (reverse bs))) <> gan ty <+> rbrace
     pretty (Universal bs ty (Just e)) = lbrace <+> mconcat (punctuate ", " (fmap go (reverse bs))) <> gan ty <+> "|" <+> pretty e <+> rbrace
-        where go (Arg s Nothing)  = pretty s
-              go (Arg s (Just t)) = pretty s <+> colon <+> pretty t
+        where go (Arg (First s))  = pretty s
+              go (Arg (Both s t)) = pretty s <+> colon <+> pretty t
+              go (Arg (Second t)) = pretty t
               go _                = "FIXME"
 
 instance Pretty ATS where
@@ -321,15 +333,28 @@ prettyLeaf [(s, Just e)]     = indent 2 ("|" <+> string s <+> "of" <+> pretty e)
 prettyLeaf ((s, Nothing):xs) = prettyLeaf xs $$ indent 2 ("|" <+> string s)
 prettyLeaf ((s, Just e):xs)  = prettyLeaf xs $$ indent 2 ("|" <+> string s <+> "of" <+> pretty e)
 
+prettyHelper :: Doc -> [Doc] -> [Doc]
+prettyHelper _ [x]    = [x]
+prettyHelper c (x:xs) = flatAlt (" " <> x) x : fmap (c <>) xs
+prettyHelper _ x      = x
+
+prettyBody :: Doc -> Doc -> [Doc] -> Doc
+prettyBody c1 c2 = (c1 <>) . align . indent (-1) . cat . (<> pure c2)
+
 prettyArgsG' :: Doc -> Doc -> Doc -> [Doc] -> Doc
-prettyArgsG' c3 c1 c2 = (c1 <>) . align . indent (-1) . cat . (<> pure c2) . go . reverse -- TODO when it's only one arg, don't split ( off
-    where go :: [Doc] -> [Doc]
-          go [x]    = [x]
-          go (x:xs) = flatAlt (" " <> x) x : fmap (c3 <>) xs
-          go x      = x
+prettyArgsG' c3 c1 c2 = prettyBody c1 c2 . prettyHelper c3 . reverse
+
+prettyArgsList :: Doc -> Doc -> Doc -> [Doc] -> Doc
+prettyArgsList c3 c1 c2 = prettyBody c1 c2 . va . prettyHelper c3
+
+va :: [Doc] -> [Doc]
+va = (& _tail.traverse %~ group)
 
 prettyArgsG :: Doc -> Doc -> [Doc] -> Doc
 prettyArgsG = prettyArgsG' ", "
+
+prettyArgsCaret :: (Pretty a) => Doc -> Doc -> [a] -> Doc
+prettyArgsCaret = prettyArgs' ","
 
 prettyArgs' :: (Pretty a) => Doc -> Doc -> Doc -> [a] -> Doc
 prettyArgs' = fmap pretty -.*** prettyArgsG'

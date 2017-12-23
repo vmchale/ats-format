@@ -39,10 +39,13 @@ implement left_pad { p, l } (pad, c, s) =
         val pad_string = string_make_list_vt(char_list)
         val res = strnptr_append(pad_string, s)
       in
-        (strnptr_free(pad_string) ; (strnptr_free(s) ; (Yep{p, l} | res)))
+        
+          begin
+            strnptr_free(pad_string ; strnptr_free(s) ; (Yep<p, l> | res))
+          end
       end
     else
-      (Nope{p, l} | s)
+      (Nope<p, l> | s)
   end
 
 implement main0 (argc, argv) =
@@ -51,9 +54,7 @@ implement main0 (argc, argv) =
     val _ = if list_vt_length(args) = 3 then
       let
         val c = '0'
-        val s = g1ofg0(args[1]) : [ n : nat ] string
-        
-        //n
+        val s = g1ofg0(args[1]) : [ n : nat ] string(n)
         val pad = g1ofg0(g0string2int(args[2]))
       in
         if length(s) > 0 && pad > 0 then
