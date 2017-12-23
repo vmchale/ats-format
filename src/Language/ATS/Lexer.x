@@ -70,7 +70,7 @@ $br = [\<\>]
 @if_block = "#if" ([^\#] | "#then" | "#print" | \n)+ "#endif" .*
 
 -- FIXME this is a disaster lol
-@ref_call = ($alpha | $digit | "(" | ")" | _ | ($white* "," $white*))+ ">"
+@ref_call = ($alpha | $digit | "(" | ")" | _ | (","))+ ">"
 
 @not_close_c = \% [^\}]
 @c_block = \%\{ ("#" | "$" | "^" | "") ([^\%] | @not_close_c | \n)* \%\} -- TODO include %{# and %{$

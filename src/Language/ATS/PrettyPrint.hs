@@ -15,7 +15,7 @@ module Language.ATS.PrettyPrint ( printATS
                                 ) where
 
 import           Control.Arrow                         hiding ((<+>))
-import           Control.Composition
+import           Control.Composition                   hiding ((&))
 import           Control.DeepSeq                       (NFData)
 import           Control.Lens                          hiding (op)
 #if __GLASGOW_HASKELL__ >= 801
@@ -369,6 +369,9 @@ instance Pretty PreFunction where
     pretty (PreF i si pus [] as rt (Just t) (Just e)) = fancyU pus </> pretty i <+> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e)
     pretty (PreF i si pus us as rt (Just t) (Just e)) = fancyU pus </> pretty i </> fancyU us </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e)
     pretty (PreF i si pus us as rt Nothing (Just e)) = fancyU pus </> pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e)
+    pretty (PreF i si [] [] as rt Nothing Nothing) = pretty i <> prettyArgs as <+> ":" <> string si </> pretty rt
+    pretty (PreF i si [] us [] rt Nothing Nothing) = pretty i </> fancyU us <+> ":" <> string si </> pretty rt
+    pretty (PreF i si [] us as rt Nothing Nothing) = pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si </> pretty rt
     pretty (PreF i si pus us as rt Nothing Nothing) = fancyU pus </> pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si </> pretty rt
     pretty _ = "FIXME"
 

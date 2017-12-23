@@ -1257,7 +1257,7 @@ fun work( excludes : List0(string)
 
 // Function returning the number of CPU cores.
 extern
-fun  ncpu  () : int
+fun ncpu() : int
 
 %{^
 #include <unistd.h>

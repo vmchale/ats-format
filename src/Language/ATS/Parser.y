@@ -338,6 +338,7 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | fromVT {% Left $ Expected $1 "Expression" "?!" }
               | prfTransform {% Left $ Expected $1 "Expression" ">>" }
               | maybeProof {% Left $ Expected $1 "Expression" "?" }
+              | let openParen {% Left $ Expected $1 "Declaration" "(" }
 
 -- | Parse a termetric
 Termetric : openTermetric Expression closeTermetric { ($1, $2) }
