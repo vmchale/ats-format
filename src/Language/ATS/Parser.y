@@ -147,9 +147,9 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     fromVT { Operator $$ "?!" } -- For types like a?!
     openExistential { Operator $$ "#[" } -- Same as `[` in ATS2
     cblock { CBlockLex _ $$ }
-    ref { RefTok $$ }
     define { MacroBlock _ $$ }
     lineComment { CommentLex _ $$ }
+    lspecial { SpecialBracket $$ }
 
 %%
 
@@ -282,6 +282,10 @@ Expression : PreExpression { $1 }
            | openParen Tuple closeParen { TupleEx $1 $2 }
            | Name PreExpression { Call $1 [] [] Nothing [$2] }
            | begin Expression end { Begin $1 $2 }
+           | Expression semicolon Expression { Precede $1 $3 }
+           | Expression semicolon { $1 }
+           | openParen Expression closeParen { $2 }
+           | Expression signature Type { TypeSignature $1 $3 }
 
 TypeArgs : lbrace Type rbrace { [$2] }
          | lbrace TypeIn rbrace { $2 }
@@ -296,8 +300,11 @@ Call : Name doubleParens { Call $1 [] [] Nothing [] }
      | Name openParen ExpressionPrf closeParen { Call $1 [] [] (fst $3) (snd $3) }
      | Name TypeArgs openParen ExpressionPrf closeParen { Call $1 [] $2 (fst $4) (snd $4) }
      | Name TypeArgs { Call $1 [] $2 Nothing [] }
+     | Name lspecial TypeIn rbracket openParen ExpressionPrf closeParen { Call $1 $3 [] (fst $6) (snd $6) }
+     | Name lspecial TypeIn rbracket { Call $1 $3 [] Nothing [] }
      | dollar raise PreExpression { Call (SpecialName $1 "raise") [] [] Nothing [$3] } -- we do this because a $raise can have at most one argument
 
+-- | Parse an expression that can be called without parentheses
 PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqualified $1) $3 }
               | Literal { $1 }
               | Call { $1 }
@@ -306,23 +313,18 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | PreExpression BinOp PreExpression { Binary $2 $1 $3 }
               | UnOp PreExpression { Unary $1 $2 } -- FIXME throw error when we try to negate a string literal/time
               | PreExpression dot Name { Access $2 $1 $3 }
-              | openParen PreExpression closeParen { $2 }
-              | if PreExpression then Expression { If $2 $4 Nothing}
-              | if PreExpression then Expression else Expression { If $2 $4 (Just $6) }
+              | if Expression then Expression { If $2 $4 Nothing}
+              | if Expression then Expression else Expression { If $2 $4 (Just $6) }
               | let ATS in end { Let $1 $2 Nothing }
               | let ATS in Expression end { Let $1 $2 (Just $4) }
               | lambda Pattern LambdaArrow Expression { Lambda $1 $3 $2 $4 }
               | llambda Pattern LambdaArrow Expression { LinearLambda $1 $3 $2 $4 }
               | at lbrace RecordVal rbrace { RecordValue $1 $3 Nothing }
               | at lbrace RecordVal rbrace signature Type { RecordValue $1 $3 (Just $6) }
-              | PreExpression semicolon PreExpression { Precede $1 $3 }
-              | PreExpression semicolon { $1 }
               | exclamation PreExpression { Deref $1 $2 }
               | PreExpression mutateArrow identifier mutateEq PreExpression { FieldMutate $2 $1 $3 $5 }
               | PreExpression mutateEq PreExpression { Mutate $1 $3 }
-              | ref Type rbracket PreExpression { Ref $1 $2 $4 }
               | PreExpression where lbrace Declarations rbrace { WhereExp $1 $4 }
-              | PreExpression signature Type { TypeSignature $1 $3 }
               | Name { NamedVal $1 }
               | lbrace ATS rbrace { Actions $2 }
               | while openParen PreExpression closeParen PreExpression { While $1 $3 $5 }
@@ -437,7 +439,6 @@ DataPropLeaves : DataPropLeaf { [$1] }
                | var {% Left $ Expected $1 "Constructor" "var" }
                | lambda {% Left $ Expected $1 "Constructor" "lam" }
                | llambda {% Left $ Expected $1 "Constructor" "llam" }
-               | ref {% Left $ Expected $1 "Constructor" "ref" }
                | minus {% Left $ Expected $1 "Constructor" "-" }
                | dollar {% Left $ Expected $1 "Constructor" "$" }
                | fromVT {% Left $ Expected $1 "Constructor" "?!" }
@@ -501,7 +502,7 @@ Declaration : include string { Include $2 }
             | extern Declaration { Extern $1 $2 }
             | var Pattern signature Type eq PreExpression { Var (Just $4) $2 (Just $6) }
             | val Pattern signature Type eq PreExpression { Val $1 (Just $4) $2 $6 }
-            | val Pattern eq PreExpression { Val $1 Nothing $2 $4 }
+            | val Pattern eq Expression { Val $1 Nothing $2 $4 }
             | var Pattern eq PreExpression { Var Nothing $2 (Just $4) }
             | var Pattern signature Type { Var (Just $4) $2 Nothing }
             | prval Pattern eq PreExpression { PrVal $2 $4 }
@@ -511,10 +512,10 @@ Declaration : include string { Include $2 }
             | implement openParen Args closeParen Implementation { Impl $3 $5 }
             | overload BinOp with Name { OverloadOp $1 $2 $4 }
             | assume Name openParen Args closeParen eq Expression { Assume $2 $4 $7 }
+            | tkindef Name eq string { TKind $1 $2 $4 }
             | TypeDecl { $1 }
             | lambda {% Left $ Expected $1 "Declaration" "lam" }
             | llambda {% Left $ Expected $1 "Declaration" "llam" }
-            | ref {% Left $ Expected $1 "Declaration" "ref" }
             | minus {% Left $ Expected $1 "Declaration" "-" }
             | dollar {% Left $ Expected $1 "Declaration" "$" }
             | fromVT {% Left $ Expected $1 "Declaration" "?!" }

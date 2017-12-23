@@ -39,13 +39,10 @@ implement left_pad { p, l } (pad, c, s) =
         val pad_string = string_make_list_vt(char_list)
         val res = strnptr_append(pad_string, s)
       in
-        
-          begin
-            strnptr_free(pad_string ; strnptr_free(s) ; (Yep<p, l> | res))
-          end
+        (strnptr_free(pad_string) ; strnptr_free(s) ; (Yep{p,l} | res))
       end
     else
-      (Nope<p, l> | s)
+      (Nope{p,l} | s)
   end
 
 implement main0 (argc, argv) =

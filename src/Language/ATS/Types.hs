@@ -76,6 +76,7 @@ data Declaration = Func AlexPosn Function
                  | Local AlexPosn [Declaration] [Declaration]
                  | AbsProp AlexPosn String [Arg]
                  | Assume Name [Arg] Expression
+                 | TKind AlexPosn Name String
                  deriving (Show, Eq, Generic, NFData)
 
 data DataPropLeaf = DataPropLeaf [Universal] Expression
@@ -180,7 +181,7 @@ data BinOp = Add
 data Expression = Let AlexPosn ATS (Maybe Expression)
                 | VoidLiteral -- The '()' literal representing inaction.
                     AlexPosn
-                -- The first list is implicit arguments such as `<a>`, the second is implicits such as `{list_vt(string)}` the third is an optional proof, and the last is the actual arguments
+                -- function call: <a>, then {n}
                 | Call Name [Type] [Type] (Maybe Expression) [Expression]
                 | NamedVal Name
                 | If { cond     :: Expression -- ^ Expression evaluating to a boolean value
@@ -216,15 +217,12 @@ data Expression = Let AlexPosn ATS (Maybe Expression)
                               }
                 | Mutate Expression Expression
                 | Deref AlexPosn Expression
-                | Ref AlexPosn Type Expression
                 | ProofExpr AlexPosn Expression Expression
                 | TypeSignature Expression Type
                 | WhereExp Expression [Declaration]
                 | TupleEx AlexPosn [Expression]
                 | While AlexPosn Expression Expression
                 | Actions ATS
-                | TKind AlexPosn Name String
-                | ViewExpr AlexPosn Type -- TODO separate type for proof values?
                 | Begin AlexPosn Expression
                 | BinList { _op :: BinOp, _exprs :: [Expression] }
                 | PrecedeList { _exprs :: [Expression] }

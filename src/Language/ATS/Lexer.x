@@ -39,14 +39,16 @@ $esc_char = \27
 @escape_ch = \\ [nt\'\\]
 @escape_str = \\ [nt\"\\]
 @char = ($terminal # [\\\']) | " " | @escape_ch | $esc_char
-@bool = (true | false)
-
 @char_lit = \' @char \'
 
-@time_lit = $digit+ u
+$br = [\<\>]
+
+-- Boolean literals
+@bool = (true | false)
 
 -- Integer
 @integer = $digit+
+@time_lit = $digit+ u
 
 -- Floats
 @decimals = $digit+
@@ -65,12 +67,10 @@ $esc_char = \27
 @slash_comment = \/\* ([^\/\*] | @not_close_slash | \n)* \*\/
 @block_comment = @paren_comment | @slash_comment
 
-@ref = "ref<"
-
 @if_block = "#if" ([^\#] | "#then" | "#print" | \n)+ "#endif" .*
 
 -- FIXME this is a disaster lol
-@ref_call = @identifier "<" ($alpha | $digit | "(" | ")" | _)+ ">"
+@ref_call = ($alpha | $digit | "(" | ")" | _ | ($white* "," $white*))+ ">"
 
 @not_close_c = \% [^\}]
 @c_block = \%\{ ("#" | "$" | "^" | "") ([^\%] | @not_close_c | \n)* \%\} -- TODO include %{# and %{$
@@ -177,8 +177,7 @@ tokens :-
     @time_lit                { tok (\p s -> TimeTok p s) }
     @integer                 { tok (\p s -> IntTok p (read s)) }
     @float                   { tok (\p s -> FloatTok p (read s)) }
-    @ref                     { tok (\p s -> RefTok p) }
-    @ref_call                { tok (\p s -> Identifier p s) }
+    $br / @ref_call          { tok (\p s -> SpecialBracket p) }
     @operator                { tok (\p s -> Operator p s) }
     @signature               { tok (\p s -> SignatureTok p (tail s)) }
     $special                 { tok (\p s -> Special p s) }
@@ -274,13 +273,13 @@ data Token = Identifier AlexPosn String
            | Arrow AlexPosn String
            | FuncType AlexPosn String
            | CommentLex AlexPosn String
-           | RefTok AlexPosn
            | MacroBlock AlexPosn String
            | TimeTok AlexPosn String
            | SignatureTok AlexPosn String
            | DoubleParenTok AlexPosn
            | DoubleBracesTok AlexPosn
            | DoubleBracketTok AlexPosn
+           | SpecialBracket AlexPosn
            deriving (Eq, Show, Generic, NFData)
 
 instance Pretty Addendum where
@@ -360,7 +359,6 @@ instance Pretty Token where
     pretty (Special _ s) = string s
     pretty CBlockLex{} = "%{"
     pretty (Arrow _ s) = string s
-    pretty RefTok{} = "ref"
     pretty (CommentLex _ s) = string $ take 2 s
     pretty (FuncType _ s) = string s
     pretty (TimeTok _ s) = string s
@@ -370,6 +368,7 @@ instance Pretty Token where
     pretty DoubleParenTok{} = "()"
     pretty DoubleBracesTok{} = "{}"
     pretty DoubleBracketTok{} = "<>"
+    pretty SpecialBracket{} = "{"
 
 token_posn (Identifier p _) = p
 token_posn (Keyword p _) = p
@@ -384,13 +383,13 @@ token_posn (Arrow p _) = p
 token_posn (FuncType p _) = p
 token_posn (CharTok p _) = p
 token_posn (CommentLex p _) = p
-token_posn (RefTok p) = p
 token_posn (MacroBlock p _) = p
 token_posn (TimeTok p _) = p
 token_posn (SignatureTok p _) = p
 token_posn (DoubleParenTok p) = p
 token_posn (DoubleBracesTok p) = p
 token_posn (DoubleBracketTok p) = p
+token_posn (SpecialBracket p) = p
 
 toChar :: String -> Char
 toChar "'\\n'" = '\n'

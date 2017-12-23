@@ -146,15 +146,11 @@ instance Pretty Expression where
         a (CallF name [] [] Nothing [x])
             | startsParens x = pretty name <> pretty x
         a (CallF name [] [] Nothing xs) = pretty name <> prettyArgsG "(" ")" xs
-        a (CallF name [] ys Nothing []) = pretty name <> prettyArgsG "<" ">" (fmap pretty ys)-- FIXME this should use { too?
-        a (CallF name us [] Nothing []) = pretty name <> prettyArgsCaret "{ " " }" us
-        a (CallF name [] ys Nothing xs) = pretty name <> prettyArgsG "<" ">" (fmap pretty ys) <> prettyArgsG "(" ")" xs
-        a (CallF name us [] Nothing [x])
-            | startsParens x = pretty name <> prettyArgsCaret "{ " " }" us <> pretty x
-        a (CallF name us [] Nothing xs) = pretty name <> prettyArgsCaret "{ " " }" us <> prettyArgsG "(" ")" xs
-        a (CallF name us ys Nothing [x])
-            | startsParens x = pretty name <> prettyArgsCaret "{ " " }" us <> prettyArgsG "<" ">" (fmap pretty ys) <> pretty x
-        a (CallF name us ys Nothing xs) = pretty name <> prettyArgsCaret "{ " " }" us <> prettyArgsG "<" ">" (fmap pretty ys) <+> prettyArgsG "(" ")" xs
+        a (CallF name [] us Nothing []) = pretty name <> prettyArgsU "{" "}" us
+        a (CallF name is [] Nothing []) = pretty name <> prettyArgsU "<" ">" is
+        a (CallF name is [] Nothing [x])
+            | startsParens x = pretty name <> prettyArgsU "<" ">" is <> pretty x
+        a (CallF name is [] Nothing xs) = pretty name <> prettyArgsU "<" ">" is <> prettyArgsG "(" ")" xs
         a (CaseF _ add e cs)            = "case" <> pretty add <+> e <+> "of" <$> indent 2 (prettyCases cs)
         a (VoidLiteralF _)              = "()"
         a (RecordValueF _ es Nothing)   = prettyRecord es
@@ -171,7 +167,6 @@ instance Pretty Expression where
         a (CharLitF '\n')              = "'\\n'"
         a (CharLitF '\t')              = "'\\t'"
         a (CharLitF c)                 = "'" <> char c <> "'"
-        a (RefF _ t e)                 = "ref<" <> pretty t <> ">" <> parens e
         a (ProofExprF _ e e')          = "(" <> e <+> "|" <+> e' <> ")"
         a (TypeSignatureF e t)         = e <+> ":" <+> pretty t
         a (WhereExpF e d)              = e <+> "where" <$> braces (" " <> pretty (ATS d) <> " ")
@@ -353,8 +348,8 @@ va = (& _tail.traverse %~ group)
 prettyArgsG :: Doc -> Doc -> [Doc] -> Doc
 prettyArgsG = prettyArgsG' ", "
 
-prettyArgsCaret :: (Pretty a) => Doc -> Doc -> [a] -> Doc
-prettyArgsCaret = prettyArgs' ","
+prettyArgsU :: (Pretty a) => Doc -> Doc -> [a] -> Doc
+prettyArgsU = prettyArgs' ","
 
 prettyArgs' :: (Pretty a) => Doc -> Doc -> Doc -> [a] -> Doc
 prettyArgs' = fmap pretty -.*** prettyArgsG'
