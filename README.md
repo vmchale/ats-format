@@ -21,6 +21,11 @@ configuration with
  $ atsfmt --default-config
 ```
 
+### Vim
+
+You can use [this](https://github.com/vmchale/ats-vim) plugin to enable
+automatic formatting on write.
+
 ## Installation
 
 ### Binary Releases
