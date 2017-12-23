@@ -58,7 +58,7 @@ script:
       yamllint .hlint.yaml
       yamllint .stylish-haskell.yaml
       curl -sL https://raw.github.com/ndmitchell/hlint/master/misc/travis.sh | sh -s src app test bench
-      curl -sL https://raw.github.com/ndmitchell/weeder/master/misc/travis.sh | sh -s .
+      # curl -sL https://raw.github.com/ndmitchell/weeder/master/misc/travis.sh | sh -s .
     else
       echo "skipping yaml verification..."
     fi
