@@ -80,6 +80,8 @@ $br = [\<\>]
 -- FIXME whatever the fuck this is: -<cloptr,fe>
 @func_type = "-<fun>" | "-<cloptr1>" | "-<lincloptr1>" | "-<lin,cloptr1>" | "-<fun0>" | "-<lin,prf>" | "-<>" | "-<prf>" -- FIXME allow spaces after comma?
 
+@at_brace = \@ ($white | @block_comment)* \{
+
 @operator = "+" | "-" | "*" | "/" | ".." | "!=" | ">=" | "<=" | "==" | "=" | "~" | "&&" | "||" | "->" | ":=" | ".<" | ">." | "<" | ">" | ">>" | "?" | "?!" | "#[" -- TODO context so tilde doesn't follow |
 
 @double_parens = "(" @block_comment ")" | "()"
@@ -167,6 +169,8 @@ tokens :-
     propdef                  { tok (\p s -> Keyword p KwPropdef) }
     tkindef                  { tok (\p s -> Keyword p KwTKind) }
     "$raise"                 { tok (\p s -> Keyword p KwRaise) }
+    "println!"               { tok (\p s -> Identifier p s) }
+    "prerrln!"               { tok (\p s -> Identifier p s) }
     @double_parens           { tok (\p s -> DoubleParenTok p) }
     @double_braces           { tok (\p s -> DoubleBracesTok p) }
     @double_brackets         { tok (\p s -> DoubleBracketTok p) }
@@ -178,6 +182,7 @@ tokens :-
     @integer                 { tok (\p s -> IntTok p (read s)) }
     @float                   { tok (\p s -> FloatTok p (read s)) }
     $br / @ref_call          { tok (\p s -> SpecialBracket p) }
+    @at_brace                { tok (\p s -> Operator p "@{") } -- FIXME this is kinda sloppy
     @operator                { tok (\p s -> Operator p s) }
     @signature               { tok (\p s -> SignatureTok p (tail s)) }
     $special                 { tok (\p s -> Special p s) }

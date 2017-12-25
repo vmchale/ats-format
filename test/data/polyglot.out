@@ -1180,7 +1180,7 @@ command_line =
 
 fnx get_cli { n : int | n >= 1 }{ m : nat | m < n } .<n - m>.
 ( argc : int(n)
-, argv : !(argv(n))
+, argv : !argv(n)
 , current : int(m)
 , prev_is_exclude : bool
 , acc : command_line

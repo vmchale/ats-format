@@ -4,11 +4,6 @@ approve FILE:
 diff FILE:
     @diff <(atsfmt test/data/{{ FILE }} -o) test/data/$(echo {{ FILE }} | sed 's/\(dats\|sats\)/out/') | ac -s
 
-darcs:
-    @darcs optimize clean
-    @darcs optimize pristine
-    @darcs optimize cache
-
 clean:
     sn c .
     rm -rf tags *.c

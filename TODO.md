@@ -18,6 +18,16 @@
 - [ ] type for static expressions
 - [ ] fix ambiguities in what's a tuple vs. function call
 # Bugs
+```
+  @{ modify = llam c =<lincloptr1> let
+    val f = x.modify
+    val g = y.modify
+    val (pre_res, _) = f(c)
+    val (res, y) = g(pre_res)
+    val _ = cloptr_free($UN.castvwtp0(f))
+    val _ = cloptr_free($UN.castvwtp0(g))
+  in
+```
 - [ ] `{i:nat;j:int}`
 - [ ] break on eq rather than `(` in `vtypedef parser(a : vt@ype+) = @{ modify = cstream -<lincloptr1> (cstream, a) }`
 - [ ] `Arg` should include proofs, e.g. `ptr_get0<a> (pf1 | p1)`.

@@ -33,6 +33,7 @@ module Language.ATS.Types
     , DataPropLeaf (..)
     , PreFunction (..)
     , Paired (..)
+    , Bifurcated (..)
     , rewriteATS
     ) where
 
@@ -41,6 +42,10 @@ import           Data.Functor.Foldable    (cata, embed)
 import           Data.Functor.Foldable.TH (makeBaseFunctor)
 import           GHC.Generics             (Generic)
 import           Language.ATS.Lexer       (Addendum (..), AlexPosn)
+
+data Bifurcated a = Nil
+                  | Comma a (Bifurcated a)
+                  | Bar a (Bifurcated a)
 
 -- | Newtype wrapper containing a list of declarations
 newtype ATS = ATS { unATS :: [Declaration] }
@@ -52,14 +57,14 @@ data Declaration = Func AlexPosn Function
                  | ProofImpl Implementation -- primplmnt -- TODO add args
                  | Val Addendum (Maybe Type) Pattern Expression -- TODO expression should be optional?
                  | PrVal Pattern Expression
-                 | Var (Maybe Type) Pattern (Maybe Expression) -- TODO AlexPosn
+                 | Var (Maybe Type) Pattern (Maybe Expression) (Maybe Expression) -- TODO AlexPosn
                  | AndDecl (Maybe Type) Pattern Expression
                  | Include String
                  | Staload (Maybe String) String
                  | Stadef String Name [Type]
                  | CBlock String
-                 | RecordType String [Arg] [(String, Type)]
-                 | RecordViewType String [Arg] [(String, Type)]
+                 | RecordType String [Arg] [Universal] [(String, Type)]
+                 | RecordViewType String [Arg] [Universal] [(String, Type)]
                  | TypeDef AlexPosn String [Arg] Type
                  | ViewTypeDef AlexPosn String [Arg] Type
                  | SumType String [Arg] [(String, Maybe Type)] -- TODO [Arg] for here
