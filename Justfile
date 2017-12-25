@@ -1,6 +1,22 @@
 approve FILE:
     @atsfmt test/data/{{ FILE }} -o > test/data/$(echo {{ FILE }} | sed 's/\(dats\|sats\)/out/')
 
+next:
+    @export VERSION=$(ac ats-format.cabal | grep -P -o '\d+\.\d+\.\d+\.\d+' ats-format.cabal | head -n1 | awk -F. '{$NF+=1; print $0}' | sed 's/ /\./g') && echo $VERSION && sed -i "2s/[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+/$VERSION/" ats-format.cabal
+    git commit -am "next"
+    sn c .
+
+release:
+    git tag "$(grep -P -o '\d+\.\d+\.\d+\.\d+' ats-format.cabal | head -n1)"
+    git push origin --tags
+    git tag -d "$(grep -P -o '\d+\.\d+\.\d+\.\d+' ats-format.cabal | head -n1)"
+    git push origin master
+
+upload:
+    rm -rf dist/ .ghc.environment.*
+    cabal sdist
+    cabal upload --publish $(fd '\.tar\.gz$' -I)
+
 diff FILE:
     @diff <(atsfmt test/data/{{ FILE }} -o) test/data/$(echo {{ FILE }} | sed 's/\(dats\|sats\)/out/') | ac -s
 
