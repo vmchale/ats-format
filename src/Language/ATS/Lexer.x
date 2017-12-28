@@ -58,7 +58,7 @@ $br = [\<\>]
 @string = \" ($printable # [\"] | @escape_str | $esc_char | \n)* \"
 
 -- Identifiers
-@identifier = $alpha ($alpha | $digit | _ | !)*
+@identifier = $alpha ($alpha | $digit | _ | ! | ')*
 
 -- Multi-line comments
 @not_close_paren = (\*+ [^\)] | [^\*] \))
@@ -78,11 +78,11 @@ $br = [\<\>]
 @lambda = "=>" | "=<cloref1>" | "=<cloptr1>" | "=>>" | "=<lincloptr1>"
 
 -- FIXME whatever the fuck this is: -<cloptr,fe>
-@func_type = "-<fun>" | "-<cloptr1>" | "-<lincloptr1>" | "-<lin,cloptr1>" | "-<fun0>" | "-<lin,prf>" | "-<>" | "-<prf>" -- FIXME allow spaces after comma?
+@func_type = "-<fun>" | "-<cloptr1>" | "-<lincloptr1>" | "-<lin,cloptr1>" | "-<fun0>" | "-<lin,prf>" | "-<>" | "-<prf>" | "->" -- FIXME allow spaces after comma?
 
 @at_brace = \@ ($white | @block_comment)* \{
 
-@operator = "+" | "-" | "*" | "/" | ".." | "!=" | ">=" | "<=" | "==" | "=" | "~" | "&&" | "||" | "->" | ":=" | ".<" | ">." | "<" | ">" | ">>" | "?" | "?!" | "#[" -- TODO context so tilde doesn't follow |
+@operator = "+" | "-" | "*" | "/" | ".." | "!=" | ">=" | "<=" | "==" | "=" | "~" | "&&" | "||" | ":=" | ".<" | ">." | "<" | ">" | ">>" | "?" | "?!" | "#[" -- TODO context so tilde doesn't follow |
 
 @double_parens = "(" @block_comment ")" | "()"
 @double_braces = "{" @block_comment "}" | "{}"
@@ -95,8 +95,8 @@ $br = [\<\>]
 tokens :-
 
     $white+                  ;
-    ^ @block_comment         { tok (\p s -> CommentLex p s) }
-    ^ "//".*                 { tok (\p s -> CommentLex p s) }
+    ^ @block_comment { tok (\p s -> CommentLex p s) }
+    ^ "//".*         { tok (\p s -> CommentLex p s) }
     "//".*                   ;
     @block_comment           ;
     "#define".*              { tok (\p s -> MacroBlock p s) }      
@@ -169,8 +169,11 @@ tokens :-
     propdef                  { tok (\p s -> Keyword p KwPropdef) }
     tkindef                  { tok (\p s -> Keyword p KwTKind) }
     "$raise"                 { tok (\p s -> Keyword p KwRaise) }
+    mod                      { tok (\p s -> Keyword p KwMod) }
     "println!"               { tok (\p s -> Identifier p s) }
     "prerrln!"               { tok (\p s -> Identifier p s) }
+    "fix@"                   { tok (\p s -> Keyword p KwFixAt) }
+    "lam@"                   { tok (\p s -> Keyword p KwLambdaAt) }
     @double_parens           { tok (\p s -> DoubleParenTok p) }
     @double_braces           { tok (\p s -> DoubleBracesTok p) }
     @double_brackets         { tok (\p s -> DoubleBracketTok p) }
@@ -263,6 +266,9 @@ data Keyword = KwFun
              | KwPropdef
              | KwRaise
              | KwTKind
+             | KwMod
+             | KwFixAt
+             | KwLambdaAt
              deriving (Eq, Show, Generic, NFData)
 
 data Token = Identifier AlexPosn String
@@ -352,6 +358,9 @@ instance Pretty Keyword where
     pretty KwSortdef = "sortdef"
     pretty KwPropdef = "propdef"
     pretty KwTKind = "tkind"
+    pretty KwMod = "mod"
+    pretty KwFixAt = "fix@"
+    pretty KwLambdaAt = "lambda@"
 
 instance Pretty Token where
     pretty (Identifier _ s) = string s

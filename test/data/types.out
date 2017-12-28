@@ -20,5 +20,5 @@ datavtype either(a : t@ype, b : t@ype+) =
   | left of a
   | right of b
 
-vtypedef parser(a : vt@ype+
-               ) = @{ modify = cstream -<lincloptr1> (cstream, a) }
+vtypedef parser(a : vt@ype+) =
+  @{ modify = cstream -<lincloptr1> (cstream, a) }

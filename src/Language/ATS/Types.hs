@@ -34,6 +34,8 @@ module Language.ATS.Types
     , PreFunction (..)
     , Paired (..)
     , Bifurcated (..)
+    , StaticExpression (..)
+    , StaticExpressionF (..)
     , rewriteATS
     ) where
 
@@ -94,9 +96,9 @@ data Type = Bool
           | Char
           | Int
           | Nat
-          | DependentInt Expression
-          | DependentBool Expression
-          | DepString Expression
+          | DependentInt StaticExpression
+          | DependentBool StaticExpression
+          | DepString StaticExpression
           | Double
           | Float
           | Tuple AlexPosn [Type]
@@ -152,6 +154,7 @@ data Paired a b = Both a b
 -- | An argument to a function.
 data Arg = Arg (Paired String Type)
          | PrfArg Arg Arg
+         | NoArgs
     deriving (Show, Eq, Generic, NFData)
 
 -- | Wrapper for universal quantifiers (refinement types)
@@ -180,7 +183,15 @@ data BinOp = Add
            | LogicalAnd
            | LogicalOr
            | StaticEq
+           | Mod
            deriving (Show, Eq, Generic, NFData)
+
+data StaticExpression = StaticVal Name
+                      | StaticBinary BinOp StaticExpression StaticExpression
+                      | StaticInt Int
+                      | StaticBool Bool
+                      | Sif { scond :: StaticExpression, wwhenTrue :: StaticExpression, selseExpr :: StaticExpression } -- Static if (for proofs)
+                      deriving (Show, Eq, Generic, NFData)
 
 -- | A (possibly effectful) expression.
 data Expression = Let AlexPosn ATS (Maybe Expression)
@@ -193,7 +204,6 @@ data Expression = Let AlexPosn ATS (Maybe Expression)
                      , whenTrue :: Expression -- ^ Expression to be returned when true
                      , elseExpr :: Maybe Expression -- ^ Expression to be returned when false
                      }
-                | Sif { cond :: Expression, whenTrue :: Expression, selseExpr :: Expression } -- Static if (for proofs)
                 | BoolLit Bool
                 | TimeLit String
                 | FloatLit Float
@@ -231,6 +241,7 @@ data Expression = Let AlexPosn ATS (Maybe Expression)
                 | Begin AlexPosn Expression
                 | BinList { _op :: BinOp, _exprs :: [Expression] }
                 | PrecedeList { _exprs :: [Expression] }
+                | FixAt PreFunction
                 deriving (Show, Eq, Generic, NFData)
 
 -- | An 'implement' declaration
@@ -266,6 +277,7 @@ data PreFunction = PreF { fname         :: Name -- ^ Function name
 
 makeBaseFunctor ''Pattern
 makeBaseFunctor ''Expression
+makeBaseFunctor ''StaticExpression
 makeBaseFunctor ''Type
 
 rewriteATS :: Expression -> Expression

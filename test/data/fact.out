@@ -26,7 +26,7 @@ fnx fact {n : nat} (n : int(n)) : int =
     
     // end of [loop]
     var res: int with pf = 1
-    val () = loop(pf | n, addr@(res))
+    val () = loop(pf | n, addr@res)
   in
     res
   end

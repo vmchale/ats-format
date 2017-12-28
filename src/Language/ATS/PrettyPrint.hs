@@ -99,6 +99,7 @@ instance Pretty BinOp where
     pretty LessThanEq    = "<="
     pretty GreaterThanEq = ">="
     pretty StaticEq      = "=="
+    pretty Mod           = "mod"
 
 splits :: BinOp -> Bool
 splits Mult       = True
@@ -124,7 +125,6 @@ instance Pretty Expression where
     pretty = cata a . rewriteATS where
         a (IfF e e' (Just e''))         = "if" <+> e <+> "then" <$> indent 2 e' <$> "else" <$> indent 2 e''
         a (IfF e e' Nothing)            = "if" <+> e <+> "then" <$> indent 2 e'
-        a (SifF e e' e'')               = "sif" <+> e <+> "then" <$> indent 2 e' <$> "else" <$> indent 2 e''
         a (LetF _ e (Just e'))          = "let" <$> indent 2 (pretty ((\(ATS x) -> ATS $ reverse x) e)) <$> "in" <$> indent 2 e' <$> "end" -- TODO soft linebreak?
         a (LetF _ e Nothing)            = "let" <$> indent 2 (pretty ((\(ATS x) -> ATS $ reverse x) e)) <$> "in end"
         a (BoolLitF True)               = "true"
@@ -145,7 +145,7 @@ instance Pretty Expression where
         a (CallF name [] [] Nothing []) = pretty name <> "()"
         a (CallF name [] [] Nothing [x])
             | startsParens x = pretty name <> pretty x
-        a (CallF name [] [] (Just e) xs) = pretty name <> prettyArgsG ("(" <> pretty e <+> "| ") ")" xs
+        a (CallF name [] [] (Just e) xs) = pretty name <> prettyArgsG ("(" <> pretty e <+> "| ") ")" xs -- FIXME split eagerly on "|"
         a (CallF name [] [] Nothing xs) = pretty name <> prettyArgsG "(" ")" xs
         a (CallF name [] us Nothing []) = pretty name <> prettyArgsU "{" "}" us
         a (CallF name is [] Nothing []) = pretty name <> prettyArgsU "<" ">" is
@@ -175,10 +175,11 @@ instance Pretty Expression where
         a (WhileF _ e e')              = "while" <> parens e <> e'
         a (ActionsF as)                = "{" <$> indent 2 (pretty ((\(ATS x) -> ATS $ reverse x) as)) <$> "}"
         a UnderscoreLitF{}             = "_"
-        a (AtExprF e e')               = e <> "@" <> parens e'
+        a (AtExprF e e')               = e <> "@" <> e'
         a (BeginF _ e)
             | not (startsParens e) = linebreak <> indent 2 ("begin" <$> indent 2 e <$> "end")
             | otherwise = e
+        a (FixAtF (PreF n s [] [] as t Nothing (Just e))) = "fix@" <+> pretty n <+> prettyArgs as <+> pretty s <> ":" <+> pretty t <+> "=>" </> pretty e
         a _ = "FIXME"
         prettyCases []           = mempty
         prettyCases [(s, t)]     = "|" <+> pretty s <+> "=>" <+> t
@@ -208,6 +209,15 @@ instance Pretty Arg where
     pretty (Arg (Second t)) = pretty t
     pretty (Arg (Both s t)) = pretty s <+> colon <+> pretty t
     pretty (PrfArg a a')    = pretty a <+> "|" <+> pretty a'
+    pretty NoArgs           = "FIXME"
+
+instance Pretty StaticExpression where
+    pretty = cata a where
+        a (StaticValF n)            = pretty n
+        a (StaticBinaryF op se se') = se <+> pretty op <+> se'
+        a (StaticIntF i)            = pretty i
+        a (SifF e e' e'')           = "sif" <+> e <+> "then" <$> indent 2 e' <$> "else" <$> indent 2 e''
+        a _                         = "FIXME"
 
 instance Pretty Type where
     pretty = cata a where
@@ -362,9 +372,11 @@ fancyU :: [Universal] -> Doc
 fancyU = foldMap pretty . reverse
 
 instance Pretty PreFunction where
+    pretty (PreF i si [] [] [NoArgs] rt Nothing (Just e)) = pretty i <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e) -- FIXME this is an awful hack
     pretty (PreF i si [] [] as rt Nothing (Just e)) = pretty i <> prettyArgs as <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e)
     pretty (PreF i si [] [] as rt (Just t) (Just e)) = pretty i </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e)
     pretty (PreF i si [] us as rt (Just t) (Just e)) = pretty i </> fancyU us </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e)
+    pretty (PreF i si [] us [NoArgs] rt Nothing (Just e)) = pretty i </> fancyU us <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e)
     pretty (PreF i si [] us as rt Nothing (Just e)) = pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e)
     pretty (PreF i si pus [] as rt Nothing (Just e)) = fancyU pus </> pretty i <> prettyArgs as <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e)
     pretty (PreF i si pus [] as rt (Just t) (Just e)) = fancyU pus </> pretty i <+> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> string si </> pretty rt <+> "=" <$> indent 2 (pretty e)
@@ -379,12 +391,15 @@ instance Pretty PreFunction where
 instance Pretty DataPropLeaf where
     pretty (DataPropLeaf us e) = "|" <+> foldMap pretty (reverse us) <+> pretty e
 
+typeHelper :: [(String, Type)] -> Doc
+typeHelper rs = group (flatAlt ("=" <$> indent 2 (prettyRecord rs)) ("=" <+> prettyRecord rs))
+
 instance Pretty Declaration where
     pretty (RecordType s [] [] rs)   = "typedef" <+> string s <+> "=" <+> prettyRecord rs
     pretty (RecordType s as [] rs)   = "typedef" <+> string s <> prettyArgs as <+> "=" <+> prettyRecord rs
-    pretty (RecordViewType s [] [] rs) = "vtypedef" <+> string s <+> "=" <+> prettyRecord rs
-    pretty (RecordViewType s as [] rs) = "vtypedef" <+> string s <> prettyArgs as <+> "=" <+> prettyRecord rs
-    pretty (RecordViewType s as us rs) = "vtypedef" <+> string s <> prettyArgs as <+> "=" <+> fancyU us </> prettyRecord rs
+    pretty (RecordViewType s [] [] rs) = "vtypedef" <+> string s <+> "=" </> prettyRecord rs
+    pretty (RecordViewType s as [] rs) = "vtypedef" <+> string s <> prettyArgs as <+> typeHelper rs
+    pretty (RecordViewType s as us rs) = "vtypedef" <+> string s <> prettyArgs as <+> "=" </> fancyU us </> prettyRecord rs
     pretty (SumViewType s [] ls) = "datavtype" <+> string s <+> "=" <$> prettyLeaf ls
     pretty (SumViewType s as ls) = "datavtype" <+> string s <> prettyArgs as <+> "=" <$> prettyLeaf ls
     pretty (SumType s [] ls)     = "datatype" <+> string s <+> "=" <$> prettyLeaf ls
@@ -411,8 +426,8 @@ instance Pretty Declaration where
     pretty (Extern _ d)          = "extern" <$> pretty d
     pretty (Define s)            = string s
     pretty (DataProp _ s as ls)  = "dataprop" <+> string s <> prettyArgs as <+> "=" <$> prettyDL ls
-    pretty (ViewTypeDef _ s [] t) = "vtypedef" <+> string s <+> "=" <+> pretty t
-    pretty (ViewTypeDef _ s as t) = "vtypedef" <+> string s <> prettyArgs as <+> "=" <+> pretty t
+    pretty (ViewTypeDef _ s [] t) = "vtypedef" <+> string s <+> "=" </> pretty t
+    pretty (ViewTypeDef _ s as t) = "vtypedef" <+> string s <> prettyArgs as <+> "=" </> pretty t
     pretty (TypeDef _ s [] t)    = "typedef" <+> string s <+> "=" <+> pretty t
     pretty (TypeDef _ s as t)    = "typedef" <+> string s <> prettyArgs as <+> "=" <+> pretty t
     pretty (AbsProp _ n as)      = "absprop" <+> string n <+> prettyArgs as

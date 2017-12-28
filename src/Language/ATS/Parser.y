@@ -106,7 +106,7 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     neq { Operator $$ "!=" }
     openTermetric { Operator $$ ".<" }
     closeTermetric { Operator $$ ">." }
-    mutateArrow { Operator $$ "->" }
+    mutateArrow { FuncType $$ "->" }
     mutateEq { Operator $$ ":=" }
     lbracket { Operator $$ "<" }
     rbracket { Operator $$ ">" }
@@ -151,6 +151,9 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     lineComment { CommentLex _ $$ }
     lspecial { SpecialBracket $$ }
     atbrace { Operator $$ "@{" }
+    mod { Keyword $$ KwMod }
+    fixAt { Keyword $$ KwFixAt }
+    lamAt { Keyword $$ KwLambdaAt }
 
 %%
 
@@ -184,12 +187,13 @@ Type : Name openParen TypeInExpr closeParen { Dependent $1 $3 }
      | t0pCo { T0p Plus }
      | vt0pPlain { Vt0p None }
      | vt0pCo { Vt0p Plus }
-     | stringType openParen PreExpression closeParen { DepString $3 }
-     | stringType PreExpression { DepString $2 }
-     | int openParen PreExpression closeParen { DependentInt $3 }
-     | bool openParen PreExpression closeParen { DependentBool $3 }
+     | stringType openParen StaticExpression closeParen { DepString $3 }
+     | stringType StaticExpression { DepString $2 }
+     | int openParen StaticExpression closeParen { DependentInt $3 }
+     | bool openParen StaticExpression closeParen { DependentBool $3 }
      | identifier { Named $1 }
      | exclamation Type { Unconsumed $2 }
+     | Type mutateArrow Type { FunctionType "->" $1 $3 }
      | Type funcArrow Type { FunctionType $2 $1 $3 }
      | refType Type { RefType $2 }
      | Type maybeProof { MaybeVal $1 } 
@@ -311,9 +315,9 @@ Call : Name doubleParens { Call $1 [] [] Nothing [] }
      | Name lspecial TypeIn rbracket { Call $1 $3 [] Nothing [] }
      | dollar raise PreExpression { Call (SpecialName $1 "raise") [] [] Nothing [$3] } -- we do this because a $raise can have at most one argument
 
-StaticExpression : Name { NamedVal $1 }
-                 | StaticExpression BinOp StaticExpression { Binary $2 $1 $3 }
-                 | intLit { IntLit $1 }
+StaticExpression : Name { StaticVal $1 }
+                 | StaticExpression BinOp StaticExpression { StaticBinary $2 $1 $3 }
+                 | intLit { StaticInt $1 }
                  | sif StaticExpression then StaticExpression else StaticExpression { Sif $2 $4 $6 } -- TODO separate type for static expressions
 
 -- | Parse an expression that can be called without parentheses
@@ -366,7 +370,7 @@ Existential : lsqbracket Args vbar Expression rsqbracket { Existential $2 Nothin
             
 -- | Parse a universal quantifier on a type
 Universal : lbrace Args rbrace { Universal $2 Nothing Nothing }
-          | lbrace Args vbar StaticExpression rbrace { Universal $2 Nothing (Just $4) }
+          | lbrace Args vbar Expression rbrace { Universal $2 Nothing (Just $4) }
 
 -- | Parse the details of an implementation
 Implementation : FunName doubleParens eq Expression { Implement $2 [] [] $1 [] $4 }
@@ -434,6 +438,7 @@ BinOp : plus { Add }
       | or { LogicalOr }
       | doubleEq { StaticEq }
       | eq { Equal }
+      | mod { Mod }
 
 -- | Optionally parse a function body
 OptExpression : { Nothing }
@@ -457,7 +462,7 @@ DataPropLeaves : DataPropLeaf { [$1] }
 
 -- | Parse a type signature and optional function body
 PreFunction : FunName openParen FullArgs closeParen signature Type OptExpression { (PreF $1 $5 [] [] $3 $6 Nothing $7) }
-            | FunName Universals OptTermetric signature Type OptExpression { PreF $1 $4 [] $2 [] $5 $3 $6 }
+            | FunName Universals OptTermetric signature Type OptExpression { PreF $1 $4 [] $2 [NoArgs] $5 $3 $6 }
             | FunName Universals OptTermetric doubleParens signature Type OptExpression { PreF $1 $5 [] $2 [] $6 $3 $7 }
             | FunName Universals OptTermetric openParen FullArgs closeParen signature Type OptExpression { PreF $1 $7 [] $2 $5 $8 $3 $9 }
             | Universals FunName Universals OptTermetric openParen FullArgs closeParen signature Type OptExpression { PreF $2 $8 $1 $3 $6 $9 $4 $10 }
@@ -518,6 +523,7 @@ Declaration : include string { Include $2 }
             | val Pattern eq Expression { Val $1 Nothing $2 $4 }
             | var Pattern eq PreExpression { Var Nothing $2 (Just $4) Nothing }
             | var Pattern signature Type { Var (Just $4) $2 Nothing Nothing }
+            | var Pattern eq fixAt identifier openParen Args closeParen signature Type plainArrow Expression { Var Nothing $2 (Just $ FixAt (PreF (Unqualified $5) $9 [] [] $7 $10 Nothing (Just $12))) Nothing }
             | prval Pattern eq PreExpression { PrVal $2 $4 }
             | praxi PreFunction { Func $1 (Praxi $2) }
             | primplmnt Implementation { ProofImpl $2 }

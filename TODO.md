@@ -15,7 +15,7 @@
 - [ ] monadic parser for error handling?
 - [ ] `Control.Lens.Plated` to rewrite nested binary operations?
 - [ ] handle location information in a comonad?
-- [ ] type for static expressions
+- [ ] type for static expressions (so they print correctly)
 - [ ] fix ambiguities in what's a tuple vs. function call
 # Bugs
 ```
@@ -28,6 +28,8 @@
     val _ = cloptr_free($UN.castvwtp0(g))
   in
 ```
+- [ ] `lam@`
+- [ ] `fix@`
 - [ ] `{i:nat;j:int}`
 - [ ] break on eq rather than `(` in `vtypedef parser(a : vt@ype+) = @{ modify = cstream -<lincloptr1> (cstream, a) }`
 - [ ] `Arg` should include proofs, e.g. `ptr_get0<a> (pf1 | p1)`.
@@ -41,6 +43,7 @@
 - [ ] `prfn`
 - [ ] `tkindef` / `typekindef`?
 - [ ] `prfun`
+- [ ] `<>` (aka not-equals)
 - [ ] `propdef`
 - [ ] `stacst`
 - [ ] `primplmnt'
