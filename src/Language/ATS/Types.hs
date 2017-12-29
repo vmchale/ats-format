@@ -133,6 +133,7 @@ data Name = Unqualified String
           | Qualified AlexPosn String String
           | SpecialName AlexPosn String
           | Functorial String String
+          | Unnamed AlexPosn
           deriving (Show, Eq, Generic, NFData)
 
 -- | A data type for patterns.
@@ -242,6 +243,7 @@ data Expression = Let AlexPosn ATS (Maybe Expression)
                 | BinList { _op :: BinOp, _exprs :: [Expression] }
                 | PrecedeList { _exprs :: [Expression] }
                 | FixAt PreFunction
+                | LambdaAt PreFunction
                 deriving (Show, Eq, Generic, NFData)
 
 -- | An 'implement' declaration

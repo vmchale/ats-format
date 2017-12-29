@@ -153,7 +153,7 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     atbrace { Operator $$ "@{" }
     mod { Keyword $$ KwMod }
     fixAt { Keyword $$ KwFixAt }
-    lamAt { Keyword $$ KwLambdaAt }
+    lambdaAt { Keyword $$ KwLambdaAt }
 
 %%
 
@@ -524,6 +524,7 @@ Declaration : include string { Include $2 }
             | var Pattern eq PreExpression { Var Nothing $2 (Just $4) Nothing }
             | var Pattern signature Type { Var (Just $4) $2 Nothing Nothing }
             | var Pattern eq fixAt identifier openParen Args closeParen signature Type plainArrow Expression { Var Nothing $2 (Just $ FixAt (PreF (Unqualified $5) $9 [] [] $7 $10 Nothing (Just $12))) Nothing }
+            | var Pattern eq lambdaAt openParen Args closeParen signature Type plainArrow Expression { Var Nothing $2 (Just $ LambdaAt (PreF (Unnamed $4) $8 [] [] $6 $9 Nothing (Just $11))) Nothing }
             | prval Pattern eq PreExpression { PrVal $2 $4 }
             | praxi PreFunction { Func $1 (Praxi $2) }
             | primplmnt Implementation { ProofImpl $2 }

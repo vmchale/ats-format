@@ -18,6 +18,7 @@
 - [ ] type for static expressions (so they print correctly)
 - [ ] fix ambiguities in what's a tuple vs. function call
 # Bugs
+- [ ] nasty bug with string indentation
 ```
   @{ modify = llam c =<lincloptr1> let
     val f = x.modify

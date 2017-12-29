@@ -79,6 +79,7 @@ instance Pretty Name where
     pretty (Qualified _ i n) = "$" <> string n <> "." <> string i
     pretty (SpecialName _ s) = "$" <> string s
     pretty (Functorial s s') = string s <> "$" <> string s'
+    pretty Unnamed{}         = mempty
 
 instance Pretty LambdaType where
     pretty Plain{}    = "=>"
@@ -135,7 +136,7 @@ instance Pretty Expression where
         a (LinearLambdaF _ lt p e)      = "llam" <+> pretty p <+> pretty lt <+> e
         a (FloatLitF f)                 = pretty f
         a (StringLitF s)                = string s
-        a (BinListF op@Add es)                    = prettyBinary (pretty op) es
+        a (BinListF op@Add es)          = prettyBinary (pretty op) es
         a (BinaryF op e e')
             | splits op = e </> pretty op <+> e'
             | otherwise = e <+> pretty op <+> e'
@@ -180,6 +181,7 @@ instance Pretty Expression where
             | not (startsParens e) = linebreak <> indent 2 ("begin" <$> indent 2 e <$> "end")
             | otherwise = e
         a (FixAtF (PreF n s [] [] as t Nothing (Just e))) = "fix@" <+> pretty n <+> prettyArgs as <+> pretty s <> ":" <+> pretty t <+> "=>" </> pretty e
+        a (LambdaAtF (PreF Unnamed{} s [] [] as t Nothing (Just e))) = "lam@" <+> prettyArgs as <+> pretty s <> ":" <+> pretty t <+> "=>" </> pretty e
         a _ = "FIXME"
         prettyCases []           = mempty
         prettyCases [(s, t)]     = "|" <+> pretty s <+> "=>" <+> t

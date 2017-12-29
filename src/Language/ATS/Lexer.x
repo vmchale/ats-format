@@ -30,14 +30,15 @@ import Text.PrettyPrint.ANSI.Leijen hiding (line, column, (<$>))
 
 -- Digits
 $digit = 0-9
+$octal = 0-7
 
 -- Characters
 $special = [\+\-\&\|\[\]\{\}\(\)\_\=\!\%\^\$\@\;\~\,\.\\\#]
 $alpha = [a-zA-Z]
 $terminal = $printable # $white
 $esc_char = \27
-@escape_ch = \\ [nt\'\\]
-@escape_str = \\ [nt\"\\]
+@escape_ch = \\ ([nt\'\\] | $octal+)
+@escape_str = \\ ([nt\"\\] | $octal+)
 @char = ($terminal # [\\\']) | " " | @escape_ch | $esc_char
 @char_lit = \' @char \'
 
@@ -55,7 +56,7 @@ $br = [\<\>]
 @float = @decimals \. @decimals
 
 -- Strings
-@string = \" ($printable # [\"] | @escape_str | $esc_char | \n)* \"
+@string = \" ($printable # [\"\\] | @escape_str | $esc_char | \n)* \"
 
 -- Identifiers
 @identifier = $alpha ($alpha | $digit | _ | ! | ')*
