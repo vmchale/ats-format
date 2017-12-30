@@ -32,6 +32,7 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
 
 %token
     fun { Keyword $$ KwFun }
+    fn { Keyword $$ KwFn }
     prfun { Keyword $$ KwPrfun }
     fnx { Keyword $$ KwFnx }
     and { Keyword $$ KwAnd }
@@ -86,6 +87,8 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     raise { Keyword $$ KwRaise }
     tkindef { Keyword $$ KwTKind }
     assume { Keyword $$ KwAssume }
+    addrAt { Keyword $$ KwAddrAt }
+    viewAt { Keyword $$ KwViewAt }
     boolLit { BoolTok _ $$ }
     timeLit { TimeTok _ $$ }
     intLit { IntTok _ $$ }
@@ -259,9 +262,9 @@ Pattern : identifier { PName $1 [] }
         | plus {% Left $ Expected $1 "Pattern" "+" }
 
 -- | Parse a case expression
-Case : vbar Pattern CaseArrow Expression { [($2, $4)] }
-     | Pattern CaseArrow Expression { [($1, $3)] }
-     | Case vbar Pattern CaseArrow Expression { ($3, $5) : $1 }
+Case : vbar Pattern CaseArrow Expression { [($2, $3, $4)] }
+     | Pattern CaseArrow Expression { [($1, $2, $3)] }
+     | Case vbar Pattern CaseArrow Expression { ($3, $4, $5) : $1 }
 
 ExpressionPrf : ExpressionIn { (Nothing, $1) }
               | Expression vbar ExpressionIn { (Just $1, $3) } -- FIXME only passes one proof?
@@ -294,7 +297,7 @@ Expression : PreExpression { $1 }
            | begin Expression end { Begin $1 $2 }
            | Expression semicolon Expression { Precede $1 $3 }
            | Expression semicolon { $1 }
-           | openParen Expression closeParen { $2 }
+           | openParen Expression closeParen { ParenExpr $1 $2 }
            | Expression signature Type { TypeSignature $1 $3 }
            | openParen Expression vbar Expression closeParen { ProofExpr $1 $2 $4 }
 
@@ -318,6 +321,7 @@ Call : Name doubleParens { Call $1 [] [] Nothing [] }
 StaticExpression : Name { StaticVal $1 }
                  | StaticExpression BinOp StaticExpression { StaticBinary $2 $1 $3 }
                  | intLit { StaticInt $1 }
+                 | boolLit { StaticBool $1 }
                  | sif StaticExpression then StaticExpression else StaticExpression { Sif $2 $4 $6 } -- TODO separate type for static expressions
 
 -- | Parse an expression that can be called without parentheses
@@ -325,7 +329,8 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | Literal { $1 }
               | Call { $1 }
               | case PreExpression of Case { Case $3 $1 $2 $4 }
-              | PreExpression BinOp PreExpression { Binary $2 $1 $3 }
+              | PreExpression BinOp Expression { Binary $2 $1 $3 }
+              | openParen PreExpression BinOp PreExpression closeParen { ParenExpr $1 (Binary $3 $2 $4) }
               | UnOp PreExpression { Unary $1 $2 } -- FIXME throw error when we try to negate a string literal/time
               | PreExpression dot Name { Access $2 $1 $3 }
               | if Expression then Expression { If $2 $4 Nothing}
@@ -334,6 +339,8 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | let ATS in Expression end { Let $1 $2 (Just $4) }
               | lambda Pattern LambdaArrow Expression { Lambda $1 $3 $2 $4 }
               | llambda Pattern LambdaArrow Expression { LinearLambda $1 $3 $2 $4 }
+              | addrAt PreExpression { AddrAt $1 $2 }
+              | viewAt PreExpression { ViewAt $1 $2 }
               | PreExpression at PreExpression { AtExpr $1 $3 }
               | atbrace RecordVal rbrace { RecordValue $1 $2 Nothing }
               | atbrace RecordVal rbrace signature Type { RecordValue $1 $2 (Just $5) }
@@ -477,6 +484,7 @@ AndSort : AndSort and identifier eq Type { AndD $1 (SortDef $2 $3 $5) } -- TODO 
 
 -- | Function declaration
 FunDecl : fun PreFunction { [ Func $1 (Fun $2) ] }
+        | fn PreFunction { [ Func $1 (Fn $2) ] }
         | prfun PreFunction { [ Func $1 (PrFun $2) ] }
         | fnx PreFunction { [ Func $1 (Fnx $2) ] }
         | extern FunDecl { over _head (Extern $1) $2 }

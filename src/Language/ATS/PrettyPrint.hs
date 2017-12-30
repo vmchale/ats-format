@@ -136,6 +136,7 @@ instance Pretty Expression where
         a (LinearLambdaF _ lt p e)      = "llam" <+> pretty p <+> pretty lt <+> e
         a (FloatLitF f)                 = pretty f
         a (StringLitF s)                = string s
+        a (ParenExprF _ e)              = parens e
         a (BinListF op@Add es)          = prettyBinary (pretty op) es
         a (BinaryF op e e')
             | splits op = e </> pretty op <+> e'
@@ -182,10 +183,12 @@ instance Pretty Expression where
             | otherwise = e
         a (FixAtF (PreF n s [] [] as t Nothing (Just e))) = "fix@" <+> pretty n <+> prettyArgs as <+> pretty s <> ":" <+> pretty t <+> "=>" </> pretty e
         a (LambdaAtF (PreF Unnamed{} s [] [] as t Nothing (Just e))) = "lam@" <+> prettyArgs as <+> pretty s <> ":" <+> pretty t <+> "=>" </> pretty e
+        a (AddrAtF _ e)                = "addr@" <> e
+        a (ViewAtF _ e)                = "view@" <> e
         a _ = "FIXME"
-        prettyCases []           = mempty
-        prettyCases [(s, t)]     = "|" <+> pretty s <+> "=>" <+> t
-        prettyCases ((s, t): xs) = prettyCases xs $$ "|" <+> pretty s <+> "=>" <+> t
+        prettyCases []              = mempty
+        prettyCases [(s, l, t)]     = "|" <+> pretty s <+> pretty l <+> t
+        prettyCases ((s, l, t): xs) = prettyCases xs $$ "|" <+> pretty s <+> pretty l <+> t
 
 noParens :: Doc -> Bool
 noParens = all (`notElem` ("()" :: String)) . show
@@ -420,6 +423,7 @@ instance Pretty Declaration where
     pretty (CBlock s)            = string s
     pretty (Comment s)           = string s
     pretty (OverloadOp _ o n)    = "overload" <+> pretty o <+> "with" <+> pretty n
+    pretty (Func _ (Fn pref))    = "fn" </> pretty pref
     pretty (Func _ (Fun pref))   = "fun" </> pretty pref
     pretty (Func _ (Fnx pref))   = "fnx" </> pretty pref
     pretty (Func _ (And pref))   = "and" </> pretty pref

@@ -84,11 +84,10 @@ fun line_count(s : string, pre : Option(string)) : file =
             n
           end
         end
-      | ~None_vt() => ( println!("\33[33mWarning:\33[0m could not open file at "
-                                + s
-                                )
-                       ; to_file(s, None)
-                      )
+      | ~None_vt() => (( println!("\33[33mWarning:\33[0m could not open file at "
+                       + s)
+                        ; to_file(s, None)
+                       ))
   end
 
 // Pad a string of bounded length on the right by adding spaces.
@@ -778,11 +777,10 @@ fun check_keywords(s : string, size : file, ext : string) : pl_type =
       in
         result
       end
-      | ~None_vt() => ( println!("\33[33mWarning:\33[0m could not open file at "
-                                + s
-                                )
-                       ; unknown
-                      )
+      | ~None_vt() => (( println!("\33[33mWarning:\33[0m could not open file at "
+                       + s)
+                        ; unknown
+                       ))
   end
 
 // Check shebang on scripts.
@@ -799,11 +797,10 @@ fun check_shebang(s : string) : pl_type =
       in
         s
       end
-      | ~None_vt() => ( println!("\33[33mWarning:\33[0m could not open file at "
-                                + s
-                                )
-                       ; ""
-                      )
+      | ~None_vt() => (( println!("\33[33mWarning:\33[0m could not open file at "
+                       + s)
+                        ; ""
+                       ))
   in
     case+ str of
       | "#!/usr/bin/env ion" => ion(line_count(s, Some("#")))
@@ -1119,8 +1116,8 @@ fun map_stream( acc : source_contents
                       , lam (acc, next) => if test_file_exists(next) || next = "" then
                         step_stream(acc, next, next, excludes)
                       else
-                        (prerr("\33[31mError:\33[0m directory '" + next + "' does not exist\n"
-                              ) ; exit(1) ; acc)
+                        ((prerr("\33[31mError:\33[0m directory '" + next
+                         + "' does not exist\n") ; ((exit(1) ; acc))))
                       )
 
 fun is_flag(s : string) : bool =
@@ -1130,9 +1127,8 @@ fun process_excludes(s : string, acc : command_line) : command_line =
   let
     val acc_r = ref<command_line>(acc)
     val () = if is_flag(s) then
-      (println!("Error: flag " + s
-               + " found where a directory name was expected"
-               ) ; exit(0) ; ())
+      ((println!("Error: flag " + s
+       + " found where a directory name was expected") ; ((exit(0) ; ()))))
     else
       acc_r->excludes := list_cons(s, acc.excludes)
   in
@@ -1150,25 +1146,23 @@ command_line =
         | "--no-table" => if not(acc.no_table) then
           acc_r->no_table := true
         else
-          (println!("\33[31mError:\33[0m flag " + s + " cannot appear twice"
-                   ) ; exit(0) ; ())
+          ((println!("\33[31mError:\33[0m flag " + s
+           + " cannot appear twice") ; ((exit(0) ; ()))))
         | "-t" => if not(acc.no_table) then
           acc_r->no_table := true
         else
-          (println!("\33[31mError:\33[0m flag " + s + " cannot appear twice"
-                   ) ; exit(0) ; ())
+          ((println!("\33[31mError:\33[0m flag " + s
+           + " cannot appear twice") ; ((exit(0) ; ()))))
         | "--parallel" => acc_r->parallel := true
         | "-p" => acc_r->parallel := true
         | "--version" => acc_r->version := true
         | "-V" => acc_r->version := true
-        | "-e" => (println!("\33[31mError:\33[0m flag " + s
-                           + " must be followed by an argument"
-                           ) ; exit(0) ; ())
-        | "--exclude" => (println!("\33[31mError:\33[0m flag " + s
-                                  + " must be followed by an argument"
-                                  ) ; exit(0) ; ())
-        | _ => (println!("\33[31mError:\33[0m flag '" + s + "' not recognized"
-                        ) ; exit(0) ; ())
+        | "-e" => ((println!("\33[31mError:\33[0m flag " + s
+                   + " must be followed by an argument") ; ((exit(0) ; ()))))
+        | "--exclude" => ((println!("\33[31mError:\33[0m flag " + s
+                          + " must be followed by an argument") ; ((exit(0) ; ()))))
+        | _ => ((println!("\33[31mError:\33[0m flag '" + s
+                + "' not recognized") ; ((exit(0) ; ()))))
     else
       if not(is_first) then
         acc_r->includes := list_cons(s, acc.includes)
@@ -1330,10 +1324,10 @@ implement main0 (argc, argv) =
     val parsed = get_cli(argc, argv, 0, false, cli)
   in
     if parsed.help then
-      (help() ; exit(0))
+      ((help() ; exit(0)))
     else
       if parsed.version then
-        (version() ; exit(0))
+        ((version() ; exit(0)))
       else
         let
           val result = if parsed.parallel then

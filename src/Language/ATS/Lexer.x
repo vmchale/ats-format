@@ -76,10 +76,12 @@ $br = [\<\>]
 @not_close_c = \% [^\}]
 @c_block = \%\{ ("#" | "$" | "^" | "") ([^\%] | @not_close_c | \n)* \%\} -- TODO include %{# and %{$
 
-@lambda = "=>" | "=<cloref1>" | "=<cloptr1>" | "=>>" | "=<lincloptr1>"
+@inner_signature = ("!wrt" | "!exn" | "!exnwrt" | "0" | "1" | "!all" | "!laz" | "lin" | "fun" | "clo" | "cloptr" | "cloref" | "!ntm" | "!ref" | "prf" | @block_comment)
+@inner_signature_mult = (@inner_signature (("," | "") @inner_signature)*) | ""
 
--- FIXME whatever the fuck this is: -<cloptr,fe>
-@func_type = "-<fun>" | "-<cloptr1>" | "-<lincloptr1>" | "-<lin,cloptr1>" | "-<fun0>" | "-<lin,prf>" | "-<>" | "-<prf>" | "->" -- FIXME allow spaces after comma?
+@lambda = "=>" | "=>>" | "=<" @inner_signature_mult ">"
+@signature = ":<" @inner_signature_mult ">" | ":"
+@func_type = "->" | "-<" @inner_signature_mult ">"
 
 @at_brace = \@ ($white | @block_comment)* \{
 
@@ -90,8 +92,6 @@ $br = [\<\>]
 @double_brackets = "<" @block_comment ">" | "<>"
 
 @view = v | view
-
-@signature = ":<>" | ":<!wrt>" | ":<!exnwrt>" | ":<!laz>" | ":<!all>" | ":"
 
 tokens :-
 
@@ -104,6 +104,7 @@ tokens :-
     @if_block                { tok (\p s -> MacroBlock p s) }      
     @c_block                 { tok (\p s -> CBlockLex p s) }
     fun                      { tok (\p s -> Keyword p KwFun) }
+    fn                       { tok (\p s -> Keyword p KwFn) }
     fnx                      { tok (\p s -> Keyword p KwFnx) }
     and                      { tok (\p s -> Keyword p KwAnd) }
     prval                    { tok (\p s -> Keyword p KwPrval) }
@@ -152,6 +153,7 @@ tokens :-
     @view"t@ype"             { tok (\p s -> Keyword p (KwVt0p None)) }
     abstype                  { tok (\p s -> Keyword p KwAbstype) }
     abs @view type           { tok (\p s -> Keyword p KwAbsvtype) }
+    absview                  { tok (\p s -> Keyword p KwAbsview) }
     view                     { tok (\p s -> Keyword p KwView) }
     "#"include               { tok (\p s -> Keyword p KwInclude) }
     when                     { tok (\p s -> Keyword p KwWhen) }
@@ -175,6 +177,11 @@ tokens :-
     "prerrln!"               { tok (\p s -> Identifier p s) }
     "fix@"                   { tok (\p s -> Keyword p KwFixAt) }
     "lam@"                   { tok (\p s -> Keyword p KwLambdaAt) }
+    "addr@"                  { tok (\p s -> Keyword p KwAddrAt) }
+    "view@"                  { tok (\p s -> Keyword p KwViewAt) }
+    sta                      { tok (\p s -> Keyword p KwSta) }
+    symintr                  { tok (\p s -> Keyword p KwSymintr) }
+    absview                  { tok (\p s -> Keyword p KwAbsview) }
     @double_parens           { tok (\p s -> DoubleParenTok p) }
     @double_braces           { tok (\p s -> DoubleBracesTok p) }
     @double_brackets         { tok (\p s -> DoubleBracketTok p) }
@@ -270,6 +277,15 @@ data Keyword = KwFun
              | KwMod
              | KwFixAt
              | KwLambdaAt
+             | KwAddrAt
+             | KwSta
+             | KwViewAt
+             | KwSymintr
+             | KwAbsview
+             | KwFn
+             | KwInfix
+             | KwInfixr
+             | KwInfixl
              deriving (Eq, Show, Generic, NFData)
 
 data Token = Identifier AlexPosn String
@@ -361,7 +377,16 @@ instance Pretty Keyword where
     pretty KwTKind = "tkind"
     pretty KwMod = "mod"
     pretty KwFixAt = "fix@"
-    pretty KwLambdaAt = "lambda@"
+    pretty KwLambdaAt = "lam@"
+    pretty KwAddrAt = "addr@"
+    pretty KwSta = "sta"
+    pretty KwViewAt = "view@"
+    pretty KwSymintr = "symintr"
+    pretty KwAbsview = "absview"
+    pretty KwFn = "fn"
+    pretty KwInfix = "infix"
+    pretty KwInfixr = "infixr"
+    pretty KwInfixl = "infixl"
 
 instance Pretty Token where
     pretty (Identifier _ s) = string s

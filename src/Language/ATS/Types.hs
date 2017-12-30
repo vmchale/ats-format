@@ -217,12 +217,14 @@ data Expression = Let AlexPosn ATS (Maybe Expression)
                 | StringLit String
                 | CharLit Char
                 | AtExpr Expression Expression
+                | AddrAt AlexPosn Expression
+                | ViewAt AlexPosn Expression
                 | Binary BinOp Expression Expression
                 | Unary UnOp Expression
                 | Case { posE :: AlexPosn
                        , kind :: Addendum
                        , val  :: Expression
-                       , arms :: [(Pattern, Expression)] -- ^ Each `(Pattern, Expression)` pair corresponds to a branch of the 'case' statement
+                       , arms :: [(Pattern, LambdaType, Expression)] -- ^ Each `(Pattern, Expression)` pair corresponds to a branch of the 'case' statement
                        }
                 | RecordValue AlexPosn [(String, Expression)] (Maybe Type)
                 | Precede Expression Expression
@@ -244,6 +246,7 @@ data Expression = Let AlexPosn ATS (Maybe Expression)
                 | PrecedeList { _exprs :: [Expression] }
                 | FixAt PreFunction
                 | LambdaAt PreFunction
+                | ParenExpr AlexPosn Expression
                 deriving (Show, Eq, Generic, NFData)
 
 -- | An 'implement' declaration
@@ -259,6 +262,7 @@ data Implementation = Implement { pos            :: AlexPosn
 -- | A function declaration accounting for all three keywords (???) ATS uses to
 -- define them.
 data Function = Fun PreFunction
+              | Fn PreFunction
               | Fnx PreFunction
               | And PreFunction
               | PrFun PreFunction
