@@ -222,7 +222,8 @@ instance Pretty StaticExpression where
         a (StaticBinaryF op se se') = se <+> pretty op <+> se'
         a (StaticIntF i)            = pretty i
         a (SifF e e' e'')           = "sif" <+> e <+> "then" <$> indent 2 e' <$> "else" <$> indent 2 e''
-        a _                         = "FIXME"
+        a (StaticBoolF True)        = "true"
+        a (StaticBoolF False)       = "false"
 
 instance Pretty Type where
     pretty = cata a where
