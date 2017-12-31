@@ -192,6 +192,7 @@ data StaticExpression = StaticVal Name
                       | StaticInt Int
                       | StaticBool Bool
                       | Sif { scond :: StaticExpression, wwhenTrue :: StaticExpression, selseExpr :: StaticExpression } -- Static if (for proofs)
+                      | SCall Name [StaticExpression]
                       deriving (Show, Eq, Generic, NFData)
 
 -- | A (possibly effectful) expression.
@@ -276,7 +277,7 @@ data PreFunction = PreF { fname         :: Name -- ^ Function name
                         , universals    :: [Universal] -- ^ Universal quantifiers/refinement type
                         , args          :: [Arg] -- ^ Actual function arguments
                         , returnType    :: Type -- ^ Return type
-                        , termetric     :: Maybe Expression -- ^ Optional termination metric
+                        , termetric     :: Maybe StaticExpression -- ^ Optional termination metric
                         , expression    :: Maybe Expression -- ^ Expression holding the actual function body (not present in static templates)
                         }
                         deriving (Show, Eq, Generic, NFData)

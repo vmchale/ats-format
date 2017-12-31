@@ -17,6 +17,7 @@
 - [ ] handle location information in a comonad?
 - [ ] type for static expressions (so they print correctly)
 - [ ] fix ambiguities in what's a tuple vs. function call
+- [ ] Make static expressions only work on integers?
 # Bugs
 - [ ] nasty bug with string indentation
 ```

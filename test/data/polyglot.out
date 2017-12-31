@@ -1172,7 +1172,7 @@ command_line =
     !acc_r
   end
 
-fnx get_cli { n : int | n >= 1 }{ m : nat | m < n } .<n - m>.
+fnx get_cli { n : int | n >= 1 }{ m : nat | m < n } .<n-m>.
 ( argc : int(n)
 , argv : !argv(n)
 , current : int(m)

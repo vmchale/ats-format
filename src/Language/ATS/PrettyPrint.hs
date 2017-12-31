@@ -219,11 +219,12 @@ instance Pretty Arg where
 instance Pretty StaticExpression where
     pretty = cata a where
         a (StaticValF n)            = pretty n
-        a (StaticBinaryF op se se') = se <+> pretty op <+> se'
+        a (StaticBinaryF op se se') = se <> pretty op <> se'
         a (StaticIntF i)            = pretty i
         a (SifF e e' e'')           = "sif" <+> e <+> "then" <$> indent 2 e' <$> "else" <$> indent 2 e''
         a (StaticBoolF True)        = "true"
         a (StaticBoolF False)       = "false"
+        a (SCallF n cs)             = pretty n <> parens (mconcat (punctuate "," . reverse . fmap pretty $ cs))
 
 instance Pretty Type where
     pretty = cata a where

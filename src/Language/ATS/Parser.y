@@ -318,12 +318,16 @@ Call : Name doubleParens { Call $1 [] [] Nothing [] }
      | Name lspecial TypeIn rbracket { Call $1 $3 [] Nothing [] }
      | dollar raise PreExpression { Call (SpecialName $1 "raise") [] [] Nothing [$3] } -- we do this because a $raise can have at most one argument
 
+StaticArgs : StaticExpression { [$1] }
+           | StaticArgs comma StaticExpression { $3 : $1 }
+
 StaticExpression : Name { StaticVal $1 }
                  | StaticExpression BinOp StaticExpression { StaticBinary $2 $1 $3 }
                  | intLit { StaticInt $1 }
                  | boolLit { StaticBool $1 }
                  | sif StaticExpression then StaticExpression else StaticExpression { Sif $2 $4 $6 } -- TODO separate type for static expressions
-
+                 | Name openParen StaticArgs closeParen { SCall $1 $3 }
+    
 -- | Parse an expression that can be called without parentheses
 PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqualified $1) $3 }
               | Literal { $1 }
@@ -363,7 +367,7 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | let openParen {% Left $ Expected $1 "Declaration" "(" }
 
 -- | Parse a termetric
-Termetric : openTermetric Expression closeTermetric { ($1, $2) }
+Termetric : openTermetric StaticExpression closeTermetric { ($1, $2) }
           | underscore {% Left $ Expected $1 "_" "Name" }
           | dollar {% Left $ Expected $1 "$" "Name" }
 
