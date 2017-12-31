@@ -104,6 +104,7 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     openParen { Special $$ "(" }
     signature { SignatureTok _ $$ }
     comma { Special $$ "," }
+    percent { Operator $$ "%" }
     geq { Operator $$ ">=" }
     leq { Operator $$ "<=" }
     neq { Operator $$ "!=" }
@@ -358,7 +359,6 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | include {% Left $ Expected $1 "Expression" "include" }
               | staload {% Left $ Expected $1 "Expression" "staload" }
               | overload {% Left $ Expected $1 "Expression" "overload" }
-              | prval {% Left $ Expected $1 "Expression" "prval" }
               | var {% Left $ Expected $1 "Expression" "var" }
               | Termetric {% Left $ Expected (fst $1) "Expression" "termetric" }
               | fromVT {% Left $ Expected $1 "Expression" "?!" }
@@ -381,7 +381,7 @@ Existential : lsqbracket Args vbar Expression rsqbracket { Existential $2 Nothin
             
 -- | Parse a universal quantifier on a type
 Universal : lbrace Args rbrace { Universal $2 Nothing Nothing }
-          | lbrace Args vbar Expression rbrace { Universal $2 Nothing (Just $4) }
+          | lbrace Args vbar StaticExpression rbrace { Universal $2 Nothing (Just $4) }
 
 -- | Parse the details of an implementation
 Implementation : FunName doubleParens eq Expression { Implement $2 [] [] $1 [] $4 }
@@ -450,6 +450,7 @@ BinOp : plus { Add }
       | doubleEq { StaticEq }
       | eq { Equal }
       | mod { Mod }
+      | percent { Mod }
 
 -- | Optionally parse a function body
 OptExpression : { Nothing }

@@ -59,11 +59,9 @@ implement main0 (argc, argv) =
             prval _ = lemma_not_empty(s) where
             { extern
               praxi lemma_not_empty {n : int} (x : string(n)) : [ n > 0 ] void }
-            
             prval _ = lemma_not_zero(pad) where
             { extern
               praxi lemma_not_zero {n : int} (x : int(n)) : [ n > 0 ] void }
-            
             val (pf | res) = left_pad(i2ssz(pad), c, string1_copy(s))
           in
             (println!("padding: ", res) ; strnptr_free(res))

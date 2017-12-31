@@ -159,7 +159,7 @@ data Arg = Arg (Paired String Type)
     deriving (Show, Eq, Generic, NFData)
 
 -- | Wrapper for universal quantifiers (refinement types)
-data Universal = Universal { bound :: [Arg], typeU :: Maybe Type, prop :: Maybe Expression }
+data Universal = Universal { bound :: [Arg], typeU :: Maybe Type, prop :: Maybe StaticExpression }
     deriving (Show, Eq, Generic, NFData)
 
 -- | Wrapper for existential quantifiers/types

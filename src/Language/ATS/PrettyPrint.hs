@@ -100,7 +100,7 @@ instance Pretty BinOp where
     pretty LessThanEq    = "<="
     pretty GreaterThanEq = ">="
     pretty StaticEq      = "=="
-    pretty Mod           = "mod"
+    pretty Mod           = "%"
 
 splits :: BinOp -> Bool
 splits Mult       = True
@@ -216,10 +216,17 @@ instance Pretty Arg where
     pretty (PrfArg a a')    = pretty a <+> "|" <+> pretty a'
     pretty NoArgs           = "FIXME"
 
+squish :: BinOp -> Bool
+squish Add = True
+squish Sub = True
+squish _   = False
+
 instance Pretty StaticExpression where
     pretty = cata a where
         a (StaticValF n)            = pretty n
-        a (StaticBinaryF op se se') = se <> pretty op <> se'
+        a (StaticBinaryF op se se')
+            | squish op = se <> pretty op <> se'
+            | otherwise = se <+> pretty op <+> se'
         a (StaticIntF i)            = pretty i
         a (SifF e e' e'')           = "sif" <+> e <+> "then" <$> indent 2 e' <$> "else" <$> indent 2 e''
         a (StaticBoolF True)        = "true"
@@ -292,14 +299,18 @@ instance Pretty Implementation where
     pretty (Implement _ ps [] n ias e) = "implement" <+> foldMap pretty ps </> pretty n <+> prettyArgs ias <+> "=" <$> indent 2 (pretty e)
     pretty (Implement _ ps us n ias e) = "implement" <+> foldMap pretty ps </> pretty n </> foldMap pretty us <+> prettyArgs ias <+> "=" <$> indent 2 (pretty e)
 
+isVal :: Declaration -> Bool
+isVal Val{}   = True
+isVal Var{}   = True
+isVal PrVal{} = True
+isVal _       = False
+
 glue :: Declaration -> Declaration -> Bool
+glue x y
+    | isVal x && isVal y = True
 glue Staload{} Staload{}           = True
 glue Include{} Include{}           = True
 glue ViewTypeDef{} ViewTypeDef{}   = True
-glue Val{} Val{}                   = True
-glue Val{} Var{}                   = True
-glue Var{} Val{}                   = True
-glue Var{} Var{}                   = True
 glue Comment{} _                   = True
 glue (Func _ Fnx{}) (Func _ And{}) = True
 glue _ _                           = False

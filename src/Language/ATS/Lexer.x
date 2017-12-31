@@ -85,7 +85,7 @@ $br = [\<\>]
 
 @at_brace = \@ ($white | @block_comment)* \{
 
-@operator = "+" | "-" | "*" | "/" | ".." | "!=" | ">=" | "<=" | "==" | "=" | "~" | "&&" | "||" | ":=" | ".<" | ">." | "<" | ">" | ">>" | "?" | "?!" | "#[" -- TODO context so tilde doesn't follow |
+@operator = "+" | "-" | "*" | "/" | ".." | "!=" | ">=" | "<=" | "==" | "=" | "~" | "%" | "&&" | "||" | ":=" | ".<" | ">." | "<" | ">" | ">>" | "?" | "?!" | "#[" -- TODO context so tilde doesn't follow |
 
 @double_parens = "(" @block_comment ")" | "()"
 @double_braces = "{" @block_comment "}" | "{}"

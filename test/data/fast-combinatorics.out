@@ -49,13 +49,13 @@ fun is_prime(k : intGt(0)) : bool =
                                                      , bound : int(m)
                                                      ) :<> bool =
             if i < bound then
-              if k mod i = 0 then
+              if k % i = 0 then
                 false
               else
                 true && loop(i + 1, bound)
             else
               if i = bound then
-                if k mod i = 0 then
+                if k % i = 0 then
                   false
                 else
                   true
