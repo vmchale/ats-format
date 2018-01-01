@@ -181,8 +181,8 @@ instance Pretty Expression where
         a (BeginF _ e)
             | not (startsParens e) = linebreak <> indent 2 ("begin" <$> indent 2 e <$> "end")
             | otherwise = e
-        a (FixAtF (PreF n s [] [] as t Nothing (Just e))) = "fix@" <+> pretty n <+> prettyArgs as <+> pretty s <> ":" <+> pretty t <+> "=>" </> pretty e
-        a (LambdaAtF (PreF Unnamed{} s [] [] as t Nothing (Just e))) = "lam@" <+> prettyArgs as <+> pretty s <> ":" <+> pretty t <+> "=>" </> pretty e
+        a (FixAtF (PreF n s [] [] as t Nothing (Just e))) = "fix@" <+> pretty n <+> prettyArgs as <+> ":" <> pretty s <+> pretty t <+> "=>" </> pretty e
+        a (LambdaAtF (PreF Unnamed{} s [] [] as t Nothing (Just e))) = "lam@" <+> prettyArgs as <+> ":" <> pretty s <+> pretty t <+> "=>" </> pretty e
         a (AddrAtF _ e)                = "addr@" <> e
         a (ViewAtF _ e)                = "view@" <> e
         a _ = "FIXME"
@@ -438,6 +438,7 @@ instance Pretty Declaration where
     pretty (OverloadOp _ o n)    = "overload" <+> pretty o <+> "with" <+> pretty n
     pretty (Func _ (Fn pref))    = "fn" </> pretty pref
     pretty (Func _ (Fun pref))   = "fun" </> pretty pref
+    pretty (Func _ (CastFn pref)) = "fun" </> pretty pref
     pretty (Func _ (Fnx pref))   = "fnx" </> pretty pref
     pretty (Func _ (And pref))   = "and" </> pretty pref
     pretty (Func _ (Praxi pref)) = "praxi" </> pretty pref

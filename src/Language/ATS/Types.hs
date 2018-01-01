@@ -269,6 +269,7 @@ data Function = Fun PreFunction
               | PrFun PreFunction
               | PrFn PreFunction
               | Praxi PreFunction
+              | CastFn PreFunction
               deriving (Show, Eq, Generic, NFData)
 
 data PreFunction = PreF { fname         :: Name -- ^ Function name

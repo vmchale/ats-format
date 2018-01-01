@@ -33,6 +33,7 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
 %token
     fun { Keyword $$ KwFun }
     fn { Keyword $$ KwFn }
+    castfn { Keyword $$ KwCastfn }
     prfun { Keyword $$ KwPrfun }
     fnx { Keyword $$ KwFnx }
     and { Keyword $$ KwAnd }
@@ -489,12 +490,16 @@ AndSort : AndSort and identifier eq Type { AndD $1 (SortDef $2 $3 $5) } -- TODO 
 
 -- | Function declaration
 FunDecl : fun PreFunction { [ Func $1 (Fun $2) ] }
-        | fn PreFunction { [ Func $1 (Fn $2) ] }
         | prfun PreFunction { [ Func $1 (PrFun $2) ] }
         | fnx PreFunction { [ Func $1 (Fnx $2) ] }
-        | extern FunDecl { over _head (Extern $1) $2 }
+        | castfn PreFunction { [ Func $1 (CastFn $2) ] }
+        | fn PreFunction { [ Func $1 (Fn $2) ] }
         | FunDecl and PreFunction { Func $2 (And $3) : $1 }
+        | extern FunDecl { over _head (Extern $1) $2 }
         | extern fun PreFunction eq {% Left $ Expected $1 "Declaration" "Function body" }
+        | extern fnx PreFunction eq {% Left $ Expected $1 "Declaration" "Function body" }
+        | extern praxi PreFunction eq {% Left $ Expected $1 "Declaration" "Function body" }
+        | extern prfun PreFunction eq {% Left $ Expected $1 "Declaration" "Function body" }
         | lambda {% Left $ Expected $1 "Function declaration" "lam" }
         | llambda {% Left $ Expected $1 "Function declaration" "llam" }
 
