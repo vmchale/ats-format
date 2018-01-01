@@ -438,7 +438,7 @@ instance Pretty Declaration where
     pretty (OverloadOp _ o n)    = "overload" <+> pretty o <+> "with" <+> pretty n
     pretty (Func _ (Fn pref))    = "fn" </> pretty pref
     pretty (Func _ (Fun pref))   = "fun" </> pretty pref
-    pretty (Func _ (CastFn pref)) = "fun" </> pretty pref
+    pretty (Func _ (CastFn pref)) = "castfn" </> pretty pref
     pretty (Func _ (Fnx pref))   = "fnx" </> pretty pref
     pretty (Func _ (And pref))   = "and" </> pretty pref
     pretty (Func _ (Praxi pref)) = "praxi" </> pretty pref
