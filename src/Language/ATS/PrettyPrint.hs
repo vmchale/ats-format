@@ -443,6 +443,7 @@ instance Pretty Declaration where
     pretty (Func _ (And pref))   = "and" </> pretty pref
     pretty (Func _ (Praxi pref)) = "praxi" </> pretty pref
     pretty (Func _ (PrFun pref)) = "prfun" </> pretty pref
+    pretty (Func _ (PrFn pref))  = "prfn" </> pretty pref
     pretty (Extern _ d)          = "extern" <$> pretty d
     pretty (Define s)            = string s
     pretty (DataProp _ s as ls)  = "dataprop" <+> string s <> prettyArgs as <+> "=" <$> prettyDL ls
