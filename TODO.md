@@ -19,6 +19,12 @@
 - [ ] fix ambiguities in what's a tuple vs. function call
 - [ ] Make static expressions only work on integers?
 # Bugs
+- [ ] `absvt@ype`
+- [ ] `propdef`
+- [ ] overloading non-binary operators
+- [ ] `@` at the beginning of a type (??)
+- [ ] fix parsing of `|` and make arguments list make sense
+- [ ] fixity (`infixr 40 :: @`, `prefix 99 !`)
 - [ ] nasty bug with string indentation
 ```
   @{ modify = llam c =<lincloptr1> let

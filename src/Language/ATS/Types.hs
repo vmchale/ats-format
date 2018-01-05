@@ -71,9 +71,14 @@ data Declaration = Func AlexPosn Function
                  | ViewTypeDef AlexPosn String [Arg] Type
                  | SumType String [Arg] [(String, Maybe Type)] -- TODO [Arg] for here
                  | SumViewType String [Arg] [(String, Maybe Type)]
-                 | AbsType AlexPosn String [Arg] Type
-                 | AbsViewType AlexPosn String [Arg] Type
+                 | AbsType AlexPosn String [Arg] (Maybe Type)
+                 | AbsViewType AlexPosn String [Arg] (Maybe Type)
+                 | AbsView AlexPosn String [Arg] (Maybe Type)
+                 | AbsVT0p AlexPosn String [Arg] (Maybe Type)
+                 | AbsT0p AlexPosn String Type
+                 | ViewDef AlexPosn String [Arg] Type
                  | OverloadOp AlexPosn BinOp Name
+                 | OverloadIdent AlexPosn String Name
                  | Comment String
                  | DataProp AlexPosn String [Arg] [DataPropLeaf]
                  | Extern AlexPosn Declaration
@@ -84,9 +89,11 @@ data Declaration = Func AlexPosn Function
                  | AbsProp AlexPosn String [Arg]
                  | Assume Name [Arg] Expression
                  | TKind AlexPosn Name String
+                 | SymIntr AlexPosn Name
+                 | Stacst AlexPosn Name Type (Maybe Expression)
                  deriving (Show, Eq, Generic, NFData)
 
-data DataPropLeaf = DataPropLeaf [Universal] Expression
+data DataPropLeaf = DataPropLeaf [Universal] Expression (Maybe Expression)
                   deriving (Show, Eq, Generic, NFData)
 
 -- | A type for parsed ATS types
@@ -96,6 +103,7 @@ data Type = Bool
           | Char
           | Int
           | Nat
+          | Addr
           | DependentInt StaticExpression
           | DependentBool StaticExpression
           | DepString StaticExpression
@@ -120,6 +128,7 @@ data Type = Bool
           | FunctionType String Type Type
           | NoneType AlexPosn
           | ImplicitType AlexPosn
+          | ViewLiteral Addendum
           deriving (Show, Eq, Generic, NFData)
 
 -- | A type for the various lambda arrows (`=>`, `=<cloref1>`, etc.)
@@ -145,6 +154,7 @@ data Pattern = Wildcard AlexPosn
              | Free Pattern
              | Proof AlexPosn [Pattern] [Pattern]
              | TuplePattern [Pattern]
+             | AtPattern AlexPosn Pattern
              deriving (Show, Eq, Generic, NFData)
 
 data Paired a b = Both a b
@@ -190,7 +200,9 @@ data BinOp = Add
 data StaticExpression = StaticVal Name
                       | StaticBinary BinOp StaticExpression StaticExpression
                       | StaticInt Int
+                      | SPrecede StaticExpression StaticExpression
                       | StaticBool Bool
+                      | StaticVoid AlexPosn
                       | Sif { scond :: StaticExpression, wwhenTrue :: StaticExpression, selseExpr :: StaticExpression } -- Static if (for proofs)
                       | SCall Name [StaticExpression]
                       deriving (Show, Eq, Generic, NFData)
@@ -288,10 +300,12 @@ makeBaseFunctor ''Expression
 makeBaseFunctor ''StaticExpression
 makeBaseFunctor ''Type
 
+-- precedence: rewrite n + 2 * x to n + (2 * x)
 rewriteATS :: Expression -> Expression
 rewriteATS = cata a where
-    a (PrecedeF e e'@PrecedeList{}) = PrecedeList (e : _exprs e')
-    a (PrecedeF e e')               = PrecedeList [e, e']
-    a x                             = embed x
-    {- a (BinaryF Add e e'@BinList{})  = BinList Add (e : _exprs e') -}
-    {- a (BinaryF Add e e')            = BinList Add [e, e'] -}
+    a (PrecedeF e e'@PrecedeList{})        = PrecedeList (e : _exprs e')
+    a (PrecedeF e e')                      = PrecedeList [e, e']
+    a (BinaryF Mult (Binary Add e e') e'') = Binary Add e (Binary Mult e' e'')
+    a (ParenExprF _ e@Precede{})           = e
+    a (ParenExprF _ e@PrecedeList{})       = e
+    a x                                    = embed x

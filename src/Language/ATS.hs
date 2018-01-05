@@ -3,6 +3,8 @@ module Language.ATS ( -- * Functions
                       lexATS
                     , parseATS
                     , printATS
+                    -- * Documentation generation
+                    , generateATSDocs
                     -- * Syntax Tree
                     , ATS (..)
                     , Declaration (..)
@@ -21,6 +23,8 @@ module Language.ATS ( -- * Functions
                     , Universal (..)
                     , Existential (..)
                     , PreFunction (..)
+                    , StaticExpression (..)
+                    , Paired (..)
                     -- * Lexical types
                     , Token (..)
                     , AlexPosn (..)
@@ -31,6 +35,7 @@ module Language.ATS ( -- * Functions
                     , exec
                     ) where
 
+import           Language.ATS.Doc
 import           Language.ATS.Exec
 import           Language.ATS.Lexer
 import           Language.ATS.Parser

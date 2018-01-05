@@ -1,5 +1,5 @@
 name:                ats-format
-version:             0.1.0.15
+version:             0.1.0.17
 synopsis:            A source-code formatter for ATS
 description:         An opinionated source-code formatter for ATS (http://www.ats-lang.org/).
 homepage:            https://hub.darcs.net/vmchale/ats-format#readme
@@ -41,6 +41,7 @@ library
                      , Language.ATS.Parser
                      , Language.ATS.PrettyPrint
                      , Language.ATS.Exec
+                     , Language.ATS.Doc
                      , Paths_ats_format
   build-depends:       base >= 4.8 && < 5
                      , array
@@ -55,6 +56,8 @@ library
                      , megaparsec
                      , unordered-containers
                      , text
+                     , blaze-markup
+                     , blaze-html
                      , directory
                      , process
                      , file-embed

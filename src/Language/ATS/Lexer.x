@@ -74,9 +74,9 @@ $br = [\<\>]
 @ref_call = ($alpha | $digit | "(" | ")" | _ | (","))+ ">"
 
 @not_close_c = \% [^\}]
-@c_block = \%\{ ("#" | "$" | "^" | "") ([^\%] | @not_close_c | \n)* \%\} -- TODO include %{# and %{$
+@c_block = \%\{ ("#" | "$" | "^" | "") ([^\%] | @not_close_c | \n)* \%\}
 
-@inner_signature = ("!wrt" | "!exn" | "!exnwrt" | "0" | "1" | "!all" | "!laz" | "lin" | "fun" | "clo" | "cloptr" | "cloref" | "!ntm" | "!ref" | "prf" | @block_comment)
+@inner_signature = ("!wrt" | "!exn" | "!exnwrt" | "0" | "1" | "!all" | "!laz" | "lin" | "fun" | "clo" | "cloptr" | "cloref" | "!ntm" | "!ref" | "prf" | "fe" | @block_comment)
 @inner_signature_mult = (@inner_signature (("," | "") @inner_signature)*) | ""
 
 @lambda = "=>" | "=>>" | "=<" @inner_signature_mult ">"
@@ -96,8 +96,8 @@ $br = [\<\>]
 tokens :-
 
     $white+                  ;
-    ^ @block_comment { tok (\p s -> CommentLex p s) }
-    ^ "//".*         { tok (\p s -> CommentLex p s) }
+    ^ @block_comment         { tok (\p s -> CommentLex p s) }
+    ^ "//".*                 { tok (\p s -> CommentLex p s) }
     "//".*                   ;
     @block_comment           ;
     "#define".*              { tok (\p s -> MacroBlock p s) }      
@@ -145,6 +145,7 @@ tokens :-
     primplmnt                { tok (\p s -> Keyword p KwProofImplement) }
     primplement              { tok (\p s -> Keyword p KwProofImplement) } -- TODO does this squash too much?
     abst"@"ype               { tok (\p s -> Keyword p (KwAbst0p None)) }
+    abs@view"t@ype"          { tok (\p s -> Keyword p (KwAbsvt0p None)) }
     t"@"ype"+"               { tok (\p s -> Keyword p (KwT0p Plus)) }
     t"@"ype"-"               { tok (\p s -> Keyword p (KwT0p Minus)) }
     t"@"ype                  { tok (\p s -> Keyword p (KwT0p None)) }
@@ -154,11 +155,15 @@ tokens :-
     abstype                  { tok (\p s -> Keyword p KwAbstype) }
     abs @view type           { tok (\p s -> Keyword p KwAbsvtype) }
     absview                  { tok (\p s -> Keyword p KwAbsview) }
-    view                     { tok (\p s -> Keyword p KwView) }
+    view                     { tok (\p s -> Keyword p (KwView None)) }
+    view"+"                  { tok (\p s -> Keyword p (KwView Plus)) }
+    view"-"                  { tok (\p s -> Keyword p (KwView Minus)) }
+    viewdef                  { tok (\p s -> Keyword p KwViewdef) }
     "#"include               { tok (\p s -> Keyword p KwInclude) }
     when                     { tok (\p s -> Keyword p KwWhen) }
     of                       { tok (\p s -> Keyword p KwOf) }
     stadef                   { tok (\p s -> Keyword p KwStadef) }
+    stacst                   { tok (\p s -> Keyword p KwStacst) }
     local                    { tok (\p s -> Keyword p KwLocal) }
     praxi                    { tok (\p s -> Keyword p KwPraxi) }
     while                    { tok (\p s -> Keyword p KwWhile) }
@@ -177,11 +182,14 @@ tokens :-
     "prerrln!"               { tok (\p s -> Identifier p s) }
     "fix@"                   { tok (\p s -> Keyword p KwFixAt) }
     "lam@"                   { tok (\p s -> Keyword p KwLambdaAt) }
+    "addr"                   { tok (\p s -> Keyword p KwAddr) }
     "addr@"                  { tok (\p s -> Keyword p KwAddrAt) }
     "view@"                  { tok (\p s -> Keyword p KwViewAt) }
     sta                      { tok (\p s -> Keyword p KwSta) }
     symintr                  { tok (\p s -> Keyword p KwSymintr) }
     absview                  { tok (\p s -> Keyword p KwAbsview) }
+    "fold@"                  { tok (\p s -> Identifier p s) }
+    "free@"                  { tok (\p s -> Identifier p s) }
     @double_parens           { tok (\p s -> DoubleParenTok p) }
     @double_braces           { tok (\p s -> DoubleBracesTok p) }
     @double_brackets         { tok (\p s -> DoubleBracketTok p) }
@@ -197,6 +205,7 @@ tokens :-
     @operator                { tok (\p s -> Operator p s) }
     @signature               { tok (\p s -> SignatureTok p (tail s)) }
     $special                 { tok (\p s -> Special p s) }
+    @identifier / " "        { tok (\p s -> IdentifierSpace p s) }
     @identifier              { tok (\p s -> Identifier p s) }
     @string                  { tok (\p s -> StringTok p s) }
 
@@ -258,10 +267,11 @@ data Keyword = KwFun
              | KwChar
              | KwDataview
              | KwDataprop
-             | KwView
+             | KwView Addendum
              | KwAbstype
              | KwType
              | KwAbst0p Addendum
+             | KwAbsvt0p Addendum
              | KwT0p Addendum
              | KwVt0p Addendum
              | KwPrfun
@@ -278,14 +288,17 @@ data Keyword = KwFun
              | KwFixAt
              | KwLambdaAt
              | KwAddrAt
+             | KwAddr
              | KwSta
              | KwViewAt
+             | KwViewdef
              | KwSymintr
              | KwAbsview
              | KwFn
              | KwInfix
              | KwInfixr
              | KwInfixl
+             | KwStacst
              deriving (Eq, Show, Generic, NFData)
 
 data Token = Identifier AlexPosn String
@@ -297,6 +310,7 @@ data Token = Identifier AlexPosn String
            | StringTok AlexPosn String
            | Special AlexPosn String
            | CBlockLex AlexPosn String
+           | IdentifierSpace AlexPosn String
            | Operator AlexPosn String
            | Arrow AlexPosn String
            | FuncType AlexPosn String
@@ -359,11 +373,12 @@ instance Pretty Keyword where
     pretty KwChar = "char"
     pretty KwDataview = "dataview"
     pretty KwDataprop = "dataprop"
-    pretty KwView = "view"
+    pretty (KwView c) = "view" <> pretty c
     pretty KwAbstype = "abstype"
     pretty KwAbsvtype = "absvtype"
     pretty KwType = "type"
     pretty (KwAbst0p c) = "abst@ype" <> pretty c
+    pretty (KwAbsvt0p c) = "absvt@ype" <> pretty c
     pretty (KwT0p c) = "t@ype" <> pretty c
     pretty (KwVt0p c) = "vt@ype" <> pretty c
     pretty KwPrfun = "prfun"
@@ -379,8 +394,11 @@ instance Pretty Keyword where
     pretty KwFixAt = "fix@"
     pretty KwLambdaAt = "lam@"
     pretty KwAddrAt = "addr@"
+    pretty KwAddr = "addr"
     pretty KwSta = "sta"
+    pretty KwStacst = "stacst"
     pretty KwViewAt = "view@"
+    pretty KwViewdef = "viewdef"
     pretty KwSymintr = "symintr"
     pretty KwAbsview = "absview"
     pretty KwFn = "fn"
@@ -390,6 +408,7 @@ instance Pretty Keyword where
 
 instance Pretty Token where
     pretty (Identifier _ s) = string s
+    pretty (IdentifierSpace _ s) = string s
     pretty (Keyword _ kw) = pretty kw
     pretty (BoolTok _ b) = string $ over _head toLower (show b)
     pretty (IntTok _ i) = pretty i
@@ -411,6 +430,7 @@ instance Pretty Token where
     pretty SpecialBracket{} = "{"
 
 token_posn (Identifier p _) = p
+token_posn (IdentifierSpace p _) = p
 token_posn (Keyword p _) = p
 token_posn (BoolTok p _) = p
 token_posn (IntTok p _) = p

@@ -67,7 +67,7 @@ printClang = readCreateProcess (shell "clang-format")
 
 printATS :: ATS -> String
 printATS (ATS x) = g mempty
-    where g = (displayS . renderPretty 0.6 120 . pretty) (ATS $ reverse x)
+    where g = (displayS . renderPretty 0.6 120 . (<> "\n") . pretty) (ATS $ reverse x)
 
 printATSCustom :: Float -> Int -> ATS -> String
 printATSCustom r i (ATS x) = g mempty
@@ -145,8 +145,6 @@ instance Pretty Expression where
         a (UnaryF Negate e)             = "~" <> e
         a (NamedValF name)              = pretty name
         a (CallF name [] [] Nothing []) = pretty name <> "()"
-        a (CallF name [] [] Nothing [x])
-            | startsParens x = pretty name <> pretty x
         a (CallF name [] [] (Just e) xs) = pretty name <> prettyArgsG ("(" <> pretty e <+> "| ") ")" xs -- FIXME split eagerly on "|"
         a (CallF name [] [] Nothing xs) = pretty name <> prettyArgsG "(" ")" xs
         a (CallF name [] us Nothing []) = pretty name <> prettyArgsU "{" "}" us
@@ -188,7 +186,7 @@ instance Pretty Expression where
         a _ = "FIXME"
         prettyCases []              = mempty
         prettyCases [(s, l, t)]     = "|" <+> pretty s <+> pretty l <+> t
-        prettyCases ((s, l, t): xs) = prettyCases xs $$ "|" <+> pretty s <+> pretty l <+> t
+        prettyCases ((s, l, t): xs) = prettyCases xs $$ "|" <+> pretty s <+> pretty l <+> t -- FIXME can leave space with e.g. => \n begin ...
 
 noParens :: Doc -> Bool
 noParens = all (`notElem` ("()" :: String)) . show
@@ -208,6 +206,7 @@ instance Pretty Pattern where
         a (GuardedF _ e p)   = p <+> "when" <+> pretty e
         a (ProofF _ p p')    = parens (patternHelper p <+> "|" <+> patternHelper p')
         a (TuplePatternF ps) = parens (patternHelper ps)
+        a (AtPatternF _ p)   = "@" <> p
 
 instance Pretty Arg where
     pretty (Arg (First s))  = pretty s
@@ -228,10 +227,12 @@ instance Pretty StaticExpression where
             | squish op = se <> pretty op <> se'
             | otherwise = se <+> pretty op <+> se'
         a (StaticIntF i)            = pretty i
+        a StaticVoidF{}             = "()"
         a (SifF e e' e'')           = "sif" <+> e <+> "then" <$> indent 2 e' <$> "else" <$> indent 2 e''
         a (StaticBoolF True)        = "true"
         a (StaticBoolF False)       = "false"
         a (SCallF n cs)             = pretty n <> parens (mconcat (punctuate "," . reverse . fmap pretty $ cs))
+        a (SPrecedeF e e')          = e <> ";" <+> e'
 
 instance Pretty Type where
     pretty = cata a where
@@ -240,6 +241,7 @@ instance Pretty Type where
         a BoolF               = "bool"
         a VoidF               = "void"
         a NatF                = "nat"
+        a AddrF               = "addr"
         a CharF               = "char"
         a (NamedF n)          = string n
         a (ExF e t)           = pretty e <+> t
@@ -264,6 +266,7 @@ instance Pretty Type where
         a (RefTypeF t)        = "&" <> t
         a (ViewTypeF _ t)     = "view@" <> parens t
         a (FunctionTypeF s t t') = t <+> string s <+> t'
+        a (ViewLiteralF c)    = "view" <> pretty c
         a NoneTypeF{} = "()"
         a ImplicitTypeF{} = ".."
 
@@ -277,7 +280,8 @@ instance Pretty Existential where
     pretty (Existential bs ty (Just e)) = lbracket <+> mconcat (punctuate ", " (fmap go (reverse bs))) <> gan ty <+> "|" <+> pretty e <+> rbracket
         where go (Arg (First s))  = pretty s
               go (Arg (Both s t)) = pretty s <+> colon <+> pretty t
-              go _                = "FIXME" -- maybe use a new type? I don't think this should ever happen.
+              go (Arg (Second t)) = pretty t
+              go _                = "FIXME"
 
 instance Pretty Universal where
     pretty (Universal [x@PrfArg{}] Nothing Nothing) = lbrace <+> pretty x <+> rbrace -- FIXME universals can now be length-one arguments
@@ -347,8 +351,10 @@ prettyRecordF x ((s, t):xs) = prettyRecordF x xs $$ indent 1 ("," <+> string s <
 
 prettyDL :: [DataPropLeaf] -> Doc
 prettyDL []                     = mempty
-prettyDL [DataPropLeaf us e]    = indent 2 ("|" <+> foldMap pretty us <+> pretty e)
-prettyDL (DataPropLeaf us e:xs) = prettyDL xs $$ indent 2 ("|" <+> foldMap pretty us <+> pretty e)
+prettyDL [DataPropLeaf us e Nothing]    = indent 2 ("|" <+> foldMap pretty us <+> pretty e)
+prettyDL [DataPropLeaf us e (Just e')]    = indent 2 ("|" <+> foldMap pretty us <+> pretty e <+> "of" <+> pretty e')
+prettyDL (DataPropLeaf us e Nothing:xs) = prettyDL xs $$ indent 2 ("|" <+> foldMap pretty us <+> pretty e)
+prettyDL (DataPropLeaf us e (Just e'):xs) = prettyDL xs $$ indent 2 ("|" <+> foldMap pretty us <+> pretty e <+> "of" <+> pretty e')
 
 prettyLeaf :: [(String, Maybe Type)] -> Doc
 prettyLeaf []                = mempty
@@ -407,12 +413,15 @@ instance Pretty PreFunction where
     pretty _ = "FIXME"
 
 instance Pretty DataPropLeaf where
-    pretty (DataPropLeaf us e) = "|" <+> foldMap pretty (reverse us) <+> pretty e
+    pretty (DataPropLeaf us e Nothing) = "|" <+> foldMap pretty (reverse us) <+> pretty e
+    pretty (DataPropLeaf us e (Just e')) = "|" <+> foldMap pretty (reverse us) <+> pretty e <+> "of" <+> pretty e'
 
 typeHelper :: [(String, Type)] -> Doc
 typeHelper rs = group (flatAlt ("=" <$> indent 2 (prettyRecord rs)) ("=" <+> prettyRecord rs))
 
 instance Pretty Declaration where
+    pretty (AbsType _ s as Nothing)  = "abstype" <+> string s <> prettyArgs as
+    pretty (AbsViewType _ s as Nothing) = "absvtype" <+> string s <> prettyArgs as
     pretty (RecordType s [] [] rs)   = "typedef" <+> string s <+> "=" <+> prettyRecord rs
     pretty (RecordType s as [] rs)   = "typedef" <+> string s <> prettyArgs as <+> "=" <+> prettyRecord rs
     pretty (RecordViewType s [] [] rs) = "vtypedef" <+> string s <+> "=" </> prettyRecord rs
@@ -423,7 +432,6 @@ instance Pretty Declaration where
     pretty (SumType s [] ls)     = "datatype" <+> string s <+> "=" <$> prettyLeaf ls
     pretty (SumType s as ls)     = "datatype" <+> string s <> prettyArgs as <+> "=" <$> prettyLeaf ls
     pretty (Impl [] i)           = pretty i
-    pretty Impl{}                = "FIXME"
     pretty (PrVal p e)           = "prval" <+> pretty p <+> "=" <+> pretty e
     pretty (Val a Nothing p e)   = "val" <> pretty a <+> pretty p <+> "=" <+> pretty e
     pretty (Val a (Just t) p e)  = "val" <> pretty a <+> pretty p <> ":" <+> pretty t <+> "=" <+> pretty e
@@ -436,6 +444,7 @@ instance Pretty Declaration where
     pretty (CBlock s)            = string s
     pretty (Comment s)           = string s
     pretty (OverloadOp _ o n)    = "overload" <+> pretty o <+> "with" <+> pretty n
+    pretty (OverloadIdent _ i n) = "overload" <+> string i <+> "with" <+> pretty n
     pretty (Func _ (Fn pref))    = "fn" </> pretty pref
     pretty (Func _ (Fun pref))   = "fun" </> pretty pref
     pretty (Func _ (CastFn pref)) = "castfn" </> pretty pref
@@ -453,4 +462,7 @@ instance Pretty Declaration where
     pretty (TypeDef _ s as t)    = "typedef" <+> string s <> prettyArgs as <+> "=" <+> pretty t
     pretty (AbsProp _ n as)      = "absprop" <+> string n <+> prettyArgs as
     pretty (Assume n as e)       = "assume" </> pretty n <> prettyArgs as <+> "=" </> pretty e
+    pretty (SymIntr _ n)         = "symintr" <+> pretty n
+    pretty (Stacst _ n t Nothing) = "stacst" </> pretty n <+> ":" </> pretty t
+    pretty (Stacst _ n t (Just e)) = "stacst" </> pretty n <+> ":" </> pretty t <+> "=" </> pretty e
     pretty _                     = "FIXME"

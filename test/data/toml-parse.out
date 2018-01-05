@@ -38,8 +38,8 @@ parser(b) =
           val (y, z): (cstream, a) = g(c)
           val w: b = f(z)
         in
-          ((cloptr_free($UN.castvwtp0(f)
-                       ) ; cloptr_free($UN.castvwtp0(g)) ; (y, w)))
+          (cloptr_free($UN.castvwtp0(f)
+                      ) ; cloptr_free($UN.castvwtp0(g)) ; (y, w))
         end
       end }
   end
@@ -214,8 +214,8 @@ fun consume_quoted() : parser(token) =
                 else
                   loop(xs, false, snoc(data, x))
               end
-            | ~stream_vt_nil() => ((prerr!("Error: missing \""
-                                          ) ; exit(1) ; ($ldelay(stream_vt_nil), "")))
+            | ~stream_vt_nil() => (prerr!("Error: missing \""
+                                         ) ; exit(1) ; ($ldelay(stream_vt_nil), ""))
         
         fun data(input : cstream) : (cstream, string) =
           loop(input, false, "")
@@ -225,8 +225,8 @@ fun consume_quoted() : parser(token) =
 
 fun tokenize(input : cstream) : tstream =
   case+ !input of
-    | ~stream_vt_cons (x, xs) => ((stream_vt_free(xs
-                                                 ) ; $ldelay(stream_vt_nil())))
+    | ~stream_vt_cons (x, xs) => (stream_vt_free(xs
+                                                ) ; $ldelay(stream_vt_nil()))
     | ~stream_vt_nil() => $ldelay(stream_vt_nil())
 
 fun display_token(t : token) : void =
@@ -252,5 +252,5 @@ implement main0 () =
                               , chain(consume_identifier(), chain(consume_eq(), consume_int()))
                               )
   in
-    ((display_token(t1) ; display_token(t2) ; display_token(t3)))
+    (display_token(t1) ; display_token(t2) ; display_token(t3))
   end

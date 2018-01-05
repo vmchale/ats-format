@@ -26,7 +26,7 @@ testFile :: String -> SpecWith ()
 testFile f = it f $ do
     sample <- readFile f
     expected <- readFile (replaceExtension f ".out")
-    (fmap ((++ "\n") . printATS) . parseATS . lexATS) sample `shouldBe` Right expected
+    (fmap printATS . parseATS . lexATS) sample `shouldBe` Right expected
 
 main :: IO ()
 main = hspec $
