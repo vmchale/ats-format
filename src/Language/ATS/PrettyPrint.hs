@@ -356,12 +356,16 @@ prettyDL [DataPropLeaf us e (Just e')]    = indent 2 ("|" <+> foldMap pretty us 
 prettyDL (DataPropLeaf us e Nothing:xs) = prettyDL xs $$ indent 2 ("|" <+> foldMap pretty us <+> pretty e)
 prettyDL (DataPropLeaf us e (Just e'):xs) = prettyDL xs $$ indent 2 ("|" <+> foldMap pretty us <+> pretty e <+> "of" <+> pretty e')
 
-prettyLeaf :: [(String, Maybe Type)] -> Doc
+prettyLeaf :: [(String, [String], Maybe Type)] -> Doc
 prettyLeaf []                = mempty
-prettyLeaf [(s, Nothing)]    = indent 2 ("|" <+> string s)
-prettyLeaf [(s, Just e)]     = indent 2 ("|" <+> string s <+> "of" <+> pretty e)
-prettyLeaf ((s, Nothing):xs) = prettyLeaf xs $$ indent 2 ("|" <+> string s)
-prettyLeaf ((s, Just e):xs)  = prettyLeaf xs $$ indent 2 ("|" <+> string s <+> "of" <+> pretty e)
+prettyLeaf [(s, [], Nothing)]    = indent 2 ("|" <+> string s)
+prettyLeaf [(s, [], Just e)]     = indent 2 ("|" <+> string s <+> "of" <+> pretty e)
+prettyLeaf ((s, [], Nothing):xs) = prettyLeaf xs $$ indent 2 ("|" <+> string s)
+prettyLeaf ((s, [], Just e):xs)  = prettyLeaf xs $$ indent 2 ("|" <+> string s <+> "of" <+> pretty e)
+prettyLeaf [(s, as, Nothing)]    = indent 2 ("|" <+> string s <> prettyArgs as)
+prettyLeaf [(s, as, Just e)]     = indent 2 ("|" <+> string s <> prettyArgs as <+> "of" <+> pretty e)
+prettyLeaf ((s, as, Nothing):xs) = prettyLeaf xs $$ indent 2 ("|" <+> string s <> prettyArgs as)
+prettyLeaf ((s, as, Just e):xs)  = prettyLeaf xs $$ indent 2 ("|" <+> string s <> prettyArgs as <+> "of" <+> pretty e)
 
 prettyHelper :: Doc -> [Doc] -> [Doc]
 prettyHelper _ [x]    = [x]

@@ -448,16 +448,23 @@ Records : identifier eq Type { [($1, $3)] }
         | Records comma identifier eq Type { ($3, $5) : $1 }
         | Records comma identifierSpace eq Type { ($3, $5) : $1 }
 
+IdentifiersIn : identifier { [$1] }
+              | IdentifiersIn comma identifier { $3 : $1 }
+
 -- | Parse a constructor for a sum type
-SumLeaf : vbar identifier { ($2, Nothing) }
-        | vbar identifierSpace of Type { ($2, Just $4) }
+SumLeaf : vbar identifier { ($2, [], Nothing) }
+        | vbar identifierSpace of Type { ($2, [], Just $4) }
+        | vbar IdentifierOr openParen IdentifiersIn closeParen { ($2, $4, Nothing) }
+        | vbar IdentifierOr openParen IdentifiersIn closeParen of Type { ($2, $4, Just $7) }
 
 -- | Parse all constructors of a sum type
 Leaves : SumLeaf { [$1] }
        | Leaves SumLeaf { $2 : $1 }
-       | identifierSpace of Type { [($1, Just $3)] }
-       | identifier { [($1, Nothing)] }
+       | identifierSpace of Type { [($1, [], Just $3)] }
+       | identifier { [($1, [], Nothing)] }
        | dollar {% Left $ Expected $1 "|" "$" }
+       | identifier openParen IdentifiersIn closeParen  { [($1, $3, Nothing)] }
+       | identifier openParen IdentifiersIn closeParen of Type { [($1, $3, Just $6)] }
 
 Universals : { [] }
            | doubleBraces { [] }
