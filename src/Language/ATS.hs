@@ -17,6 +17,7 @@ module Language.ATS ( -- * Functions
                     , UnOp (..)
                     , BinOp (..)
                     , DataPropLeaf (..)
+                    , Leaf (..)
                     , Arg (..)
                     , Addendum (..)
                     , LambdaType (..)

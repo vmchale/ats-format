@@ -34,6 +34,7 @@ module Language.ATS.Types
     , PreFunction (..)
     , Paired (..)
     , Bifurcated (..)
+    , Leaf (..)
     , StaticExpression (..)
     , StaticExpressionF (..)
     , rewriteATS
@@ -53,6 +54,9 @@ data Bifurcated a = Nil
 newtype ATS = ATS { unATS :: [Declaration] }
     deriving (Show, Eq, Generic, NFData)
 
+data Leaf = Leaf [Universal] String [String] (Maybe Type)
+    deriving (Show, Eq, Generic, NFData)
+
 -- | Declare something in a scope (a function, value, action, etc.)
 data Declaration = Func AlexPosn Function
                  | Impl [Arg] Implementation
@@ -69,8 +73,8 @@ data Declaration = Func AlexPosn Function
                  | RecordViewType String [Arg] [Universal] [(String, Type)]
                  | TypeDef AlexPosn String [Arg] Type
                  | ViewTypeDef AlexPosn String [Arg] Type
-                 | SumType String [Arg] [(String, [String], Maybe Type)]
-                 | SumViewType String [Arg] [(String, [String], Maybe Type)]
+                 | SumType String [Arg] [Leaf]
+                 | SumViewType String [Arg] [Leaf]
                  | AbsType AlexPosn String [Arg] (Maybe Type)
                  | AbsViewType AlexPosn String [Arg] (Maybe Type)
                  | AbsView AlexPosn String [Arg] (Maybe Type)
@@ -301,6 +305,7 @@ makeBaseFunctor ''StaticExpression
 makeBaseFunctor ''Type
 
 -- precedence: rewrite n + 2 * x to n + (2 * x)
+-- TODO: rewrite multiple universals when it's the right context?
 rewriteATS :: Expression -> Expression
 rewriteATS = cata a where
     a (PrecedeF e e'@PrecedeList{})        = PrecedeList (e : _exprs e')

@@ -19,6 +19,7 @@
 - [ ] fix ambiguities in what's a tuple vs. function call
 - [ ] Make static expressions only work on integers?
 # Bugs
+- [ ] simplified types for dependent type declarations (i.e. only sorts?)
 - [ ] `absvt@ype`
 - [ ] `propdef`
 - [ ] overloading non-binary operators

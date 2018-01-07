@@ -451,20 +451,21 @@ Records : identifier eq Type { [($1, $3)] }
 IdentifiersIn : identifier { [$1] }
               | IdentifiersIn comma identifier { $3 : $1 }
 
+OfType : { Nothing }
+       | of Type { Just $2 }
+
 -- | Parse a constructor for a sum type
-SumLeaf : vbar identifier { ($2, [], Nothing) }
-        | vbar identifierSpace of Type { ($2, [], Just $4) }
-        | vbar IdentifierOr openParen IdentifiersIn closeParen { ($2, $4, Nothing) }
-        | vbar IdentifierOr openParen IdentifiersIn closeParen of Type { ($2, $4, Just $7) }
+SumLeaf : vbar Universals identifier { Leaf $2 $3 [] Nothing }
+        | vbar Universals identifierSpace of Type { Leaf $2 $3 [] (Just $5) }
+        | vbar Universals IdentifierOr openParen IdentifiersIn closeParen OfType { Leaf $2 $3 $5 $7 }
 
 -- | Parse all constructors of a sum type
 Leaves : SumLeaf { [$1] }
        | Leaves SumLeaf { $2 : $1 }
-       | identifierSpace of Type { [($1, [], Just $3)] }
-       | identifier { [($1, [], Nothing)] }
+       | Universals identifierSpace of Type { [Leaf $1 $2 [] (Just $4)] }
+       | Universals identifier { [Leaf $1 $2 [] Nothing] }
+       | Universals identifier openParen IdentifiersIn closeParen OfType { [Leaf $1 $2 $4 $6] }
        | dollar {% Left $ Expected $1 "|" "$" }
-       | identifier openParen IdentifiersIn closeParen  { [($1, $3, Nothing)] }
-       | identifier openParen IdentifiersIn closeParen of Type { [($1, $3, Just $6)] }
 
 Universals : { [] }
            | doubleBraces { [] }
@@ -589,6 +590,7 @@ TypeDecl : typedef IdentifierOr eq Universals atbrace Records rbrace { RecordTyp
 Declaration : include string { Include $2 }
             | define { Define $1 }
             | define identifierSpace string { Define ($1 ++ $2 ++ $3) } -- FIXME better approach?
+            | define identifierSpace int { Define ($1 ++ $2 ++ " " ++ show $3) }
             | cblock { CBlock $1 }
             | lineComment { Comment $1 }
             | staload underscore eq string { Staload (Just "_") $4 }

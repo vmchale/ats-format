@@ -236,39 +236,39 @@ instance Pretty StaticExpression where
 
 instance Pretty Type where
     pretty = cata a where
-        a IntF                = "int"
-        a StringF             = "string"
-        a BoolF               = "bool"
-        a VoidF               = "void"
-        a NatF                = "nat"
-        a AddrF               = "addr"
-        a CharF               = "char"
-        a (NamedF n)          = string n
-        a (ExF e t)           = pretty e <+> t
-        a (DependentIntF e)   = "int(" <> pretty e <> ")"
-        a (DependentBoolF e)  = "bool(" <> pretty e <> ")"
-        a (DepStringF e)      = "string(" <> pretty e <> ")"
-        a (DependentF n ts)   = pretty n <> parens (mconcat (punctuate ", " (fmap pretty (reverse ts))))
-        a DoubleF             = "double"
-        a FloatF              = "float"
-        a (ForAF u t)         = pretty u <+> t
-        a (UnconsumedF t)     = "!" <> t
+        a IntF                   = "int"
+        a StringF                = "string"
+        a BoolF                  = "bool"
+        a VoidF                  = "void"
+        a NatF                   = "nat"
+        a AddrF                  = "addr"
+        a CharF                  = "char"
+        a (NamedF n)             = string n
+        a (ExF e t)              = pretty e <+> t
+        a (DependentIntF e)      = "int(" <> pretty e <> ")"
+        a (DependentBoolF e)     = "bool(" <> pretty e <> ")"
+        a (DepStringF e)         = "string(" <> pretty e <> ")"
+        a (DependentF n ts)      = pretty n <> parens (mconcat (punctuate ", " (fmap pretty (reverse ts))))
+        a DoubleF                = "double"
+        a FloatF                 = "float"
+        a (ForAF u t)            = pretty u <+> t
+        a (UnconsumedF t)        = "!" <> t
         a (AsProofF t (Just t')) = t <+> ">>" <+> t'
-        a (AsProofF t Nothing) = t <+> ">> _"
-        a (FromVTF t)         = t <> "?!"
-        a (MaybeValF t)       = t <> "?"
-        a (T0pF ad)           = "t@ype" <> pretty ad
-        a (Vt0pF ad)          = "vt@ype" <> pretty ad
-        a (AtF _ t t')        = t <+> "@" <+> t'
-        a (ProofTypeF _ t t') = parens (t <+> "|" <+> t')
-        a (ConcreteTypeF e)   = pretty e
-        a (TupleF _ ts)       = parens (mconcat (punctuate ", " (fmap pretty (reverse ts))))
-        a (RefTypeF t)        = "&" <> t
-        a (ViewTypeF _ t)     = "view@" <> parens t
+        a (AsProofF t Nothing)   = t <+> ">> _"
+        a (FromVTF t)            = t <> "?!"
+        a (MaybeValF t)          = t <> "?"
+        a (T0pF ad)              = "t@ype" <> pretty ad
+        a (Vt0pF ad)             = "vt@ype" <> pretty ad
+        a (AtF _ t t')           = t <+> "@" <+> t'
+        a (ProofTypeF _ t t')    = parens (t <+> "|" <+> t')
+        a (ConcreteTypeF e)      = pretty e
+        a (TupleF _ ts)          = parens (mconcat (punctuate ", " (fmap pretty (reverse ts))))
+        a (RefTypeF t)           = "&" <> t
+        a (ViewTypeF _ t)        = "view@" <> parens t
         a (FunctionTypeF s t t') = t <+> string s <+> t'
-        a (ViewLiteralF c)    = "view" <> pretty c
-        a NoneTypeF{} = "()"
-        a ImplicitTypeF{} = ".."
+        a (ViewLiteralF c)       = "view" <> pretty c
+        a NoneTypeF{}            = "()"
+        a ImplicitTypeF{}        = ".."
 
 gan :: Maybe Type -> Doc
 gan (Just t) = " : " <> pretty t <> " "
@@ -336,36 +336,47 @@ prettyRecord :: (Pretty a) => [(String, a)] -> Doc
 prettyRecord es = group (flatAlt (prettyRecordF True es) (prettyRecordS True es))
 
 prettyRecordS :: (Pretty a) => Bool -> [(String, a)] -> Doc
-prettyRecordS _ [] = mempty
-prettyRecordS True [(s, t)] = "@{" <+> string s <+> "=" <+> pretty t <+> "}"
-prettyRecordS _ [(s, t)] = "@{" <+> string s <+> "=" <+> pretty t
+prettyRecordS _ []             = mempty
+prettyRecordS True [(s, t)]    = "@{" <+> string s <+> "=" <+> pretty t <+> "}"
+prettyRecordS _ [(s, t)]       = "@{" <+> string s <+> "=" <+> pretty t
 prettyRecordS True ((s, t):xs) = prettyRecordS False xs <> ("," <+> string s <+> "=" <+> pretty t <+> "}")
-prettyRecordS x ((s, t):xs) = prettyRecordS x xs <> ("," <+> string s <+> "=" <+> pretty t)
+prettyRecordS x ((s, t):xs)    = prettyRecordS x xs <> ("," <+> string s <+> "=" <+> pretty t)
 
 prettyRecordF :: (Pretty a) => Bool -> [(String, a)] -> Doc
-prettyRecordF _ [] = mempty
-prettyRecordF True [(s, t)] = "@{" <+> string s <+> "=" <+> pretty t <+> "}"
-prettyRecordF _ [(s, t)] = "@{" <+> string s <+> "=" <+> pretty t
+prettyRecordF _ []             = mempty
+prettyRecordF True [(s, t)]    = "@{" <+> string s <+> "=" <+> pretty t <+> "}"
+prettyRecordF _ [(s, t)]       = "@{" <+> string s <+> "=" <+> pretty t
 prettyRecordF True ((s, t):xs) = prettyRecordF False xs $$ indent 1 ("," <+> string s <+> "=" <+> pretty t <$> "}")
-prettyRecordF x ((s, t):xs) = prettyRecordF x xs $$ indent 1 ("," <+> string s <+> "=" <+> pretty t)
+prettyRecordF x ((s, t):xs)    = prettyRecordF x xs $$ indent 1 ("," <+> string s <+> "=" <+> pretty t)
 
 prettyDL :: [DataPropLeaf] -> Doc
-prettyDL []                     = mempty
-prettyDL [DataPropLeaf us e Nothing]    = indent 2 ("|" <+> foldMap pretty us <+> pretty e)
+prettyDL []                               = mempty
+prettyDL [DataPropLeaf us e Nothing]      = indent 2 ("|" <+> foldMap pretty us <+> pretty e)
 prettyDL [DataPropLeaf us e (Just e')]    = indent 2 ("|" <+> foldMap pretty us <+> pretty e <+> "of" <+> pretty e')
-prettyDL (DataPropLeaf us e Nothing:xs) = prettyDL xs $$ indent 2 ("|" <+> foldMap pretty us <+> pretty e)
+prettyDL (DataPropLeaf us e Nothing:xs)   = prettyDL xs $$ indent 2 ("|" <+> foldMap pretty us <+> pretty e)
 prettyDL (DataPropLeaf us e (Just e'):xs) = prettyDL xs $$ indent 2 ("|" <+> foldMap pretty us <+> pretty e <+> "of" <+> pretty e')
 
-prettyLeaf :: [(String, [String], Maybe Type)] -> Doc
-prettyLeaf []                = mempty
-prettyLeaf [(s, [], Nothing)]    = indent 2 ("|" <+> string s)
-prettyLeaf [(s, [], Just e)]     = indent 2 ("|" <+> string s <+> "of" <+> pretty e)
-prettyLeaf ((s, [], Nothing):xs) = prettyLeaf xs $$ indent 2 ("|" <+> string s)
-prettyLeaf ((s, [], Just e):xs)  = prettyLeaf xs $$ indent 2 ("|" <+> string s <+> "of" <+> pretty e)
-prettyLeaf [(s, as, Nothing)]    = indent 2 ("|" <+> string s <> prettyArgs as)
-prettyLeaf [(s, as, Just e)]     = indent 2 ("|" <+> string s <> prettyArgs as <+> "of" <+> pretty e)
-prettyLeaf ((s, as, Nothing):xs) = prettyLeaf xs $$ indent 2 ("|" <+> string s <> prettyArgs as)
-prettyLeaf ((s, as, Just e):xs)  = prettyLeaf xs $$ indent 2 ("|" <+> string s <> prettyArgs as <+> "of" <+> pretty e)
+universalHelper :: [Universal] -> Doc
+universalHelper = mconcat . fmap pretty . reverse
+
+prettyLeaf :: [Leaf] -> Doc
+prettyLeaf []                         = mempty
+prettyLeaf [Leaf [] s [] Nothing]     = indent 2 ("|" <+> string s)
+prettyLeaf [Leaf [] s [] (Just e)]    = indent 2 ("|" <+> string s <+> "of" <+> pretty e)
+prettyLeaf (Leaf [] s [] Nothing:xs)  = prettyLeaf xs $$ indent 2 ("|" <+> string s)
+prettyLeaf (Leaf [] s [] (Just e):xs) = prettyLeaf xs $$ indent 2 ("|" <+> string s <+> "of" <+> pretty e)
+prettyLeaf [Leaf [] s as Nothing]     = indent 2 ("|" <+> string s <> prettyArgs as)
+prettyLeaf [Leaf [] s as (Just e)]    = indent 2 ("|" <+> string s <> prettyArgs as <+> "of" <+> pretty e)
+prettyLeaf (Leaf [] s as Nothing:xs)  = prettyLeaf xs $$ indent 2 ("|" <+> string s <> prettyArgs as)
+prettyLeaf (Leaf [] s as (Just e):xs) = prettyLeaf xs $$ indent 2 ("|" <+> string s <> prettyArgs as <+> "of" <+> pretty e)
+prettyLeaf [Leaf us s [] Nothing]     = indent 2 ("|" <+> universalHelper us <+> string s)
+prettyLeaf [Leaf us s [] (Just e)]    = indent 2 ("|" <+> universalHelper us <+> string s <+> "of" <+> pretty e)
+prettyLeaf (Leaf us s [] Nothing:xs)  = prettyLeaf xs $$ indent 2 ("|" <+> universalHelper us <+> string s)
+prettyLeaf (Leaf us s [] (Just e):xs) = prettyLeaf xs $$ indent 2 ("|" <+> universalHelper us <+> string s <+> "of" <+> pretty e)
+prettyLeaf [Leaf us s as Nothing]     = indent 2 ("|" <+> universalHelper us <+> string s <> prettyArgs as)
+prettyLeaf [Leaf us s as (Just e)]    = indent 2 ("|" <+> universalHelper us <+> string s <> prettyArgs as <+> "of" <+> pretty e)
+prettyLeaf (Leaf us s as Nothing:xs)  = prettyLeaf xs $$ indent 2 ("|" <+> universalHelper us <+> string s <> prettyArgs as)
+prettyLeaf (Leaf us s as (Just e):xs) = prettyLeaf xs $$ indent 2 ("|" <+> universalHelper us <+> string s <> prettyArgs as <+> "of" <+> pretty e)
 
 prettyHelper :: Doc -> [Doc] -> [Doc]
 prettyHelper _ [x]    = [x]
@@ -417,56 +428,56 @@ instance Pretty PreFunction where
     pretty _ = "FIXME"
 
 instance Pretty DataPropLeaf where
-    pretty (DataPropLeaf us e Nothing) = "|" <+> foldMap pretty (reverse us) <+> pretty e
+    pretty (DataPropLeaf us e Nothing)   = "|" <+> foldMap pretty (reverse us) <+> pretty e
     pretty (DataPropLeaf us e (Just e')) = "|" <+> foldMap pretty (reverse us) <+> pretty e <+> "of" <+> pretty e'
 
 typeHelper :: [(String, Type)] -> Doc
 typeHelper rs = group (flatAlt ("=" <$> indent 2 (prettyRecord rs)) ("=" <+> prettyRecord rs))
 
 instance Pretty Declaration where
-    pretty (AbsType _ s as Nothing)  = "abstype" <+> string s <> prettyArgs as
+    pretty (AbsType _ s as Nothing)     = "abstype" <+> string s <> prettyArgs as
     pretty (AbsViewType _ s as Nothing) = "absvtype" <+> string s <> prettyArgs as
-    pretty (RecordType s [] [] rs)   = "typedef" <+> string s <+> "=" <+> prettyRecord rs
-    pretty (RecordType s as [] rs)   = "typedef" <+> string s <> prettyArgs as <+> "=" <+> prettyRecord rs
-    pretty (RecordViewType s [] [] rs) = "vtypedef" <+> string s <+> "=" </> prettyRecord rs
-    pretty (RecordViewType s as [] rs) = "vtypedef" <+> string s <> prettyArgs as <+> typeHelper rs
-    pretty (RecordViewType s as us rs) = "vtypedef" <+> string s <> prettyArgs as <+> "=" </> fancyU us </> prettyRecord rs
-    pretty (SumViewType s [] ls) = "datavtype" <+> string s <+> "=" <$> prettyLeaf ls
-    pretty (SumViewType s as ls) = "datavtype" <+> string s <> prettyArgs as <+> "=" <$> prettyLeaf ls
-    pretty (SumType s [] ls)     = "datatype" <+> string s <+> "=" <$> prettyLeaf ls
-    pretty (SumType s as ls)     = "datatype" <+> string s <> prettyArgs as <+> "=" <$> prettyLeaf ls
-    pretty (Impl [] i)           = pretty i
-    pretty (PrVal p e)           = "prval" <+> pretty p <+> "=" <+> pretty e
-    pretty (Val a Nothing p e)   = "val" <> pretty a <+> pretty p <+> "=" <+> pretty e
-    pretty (Val a (Just t) p e)  = "val" <> pretty a <+> pretty p <> ":" <+> pretty t <+> "=" <+> pretty e
-    pretty (Var (Just t) p Nothing e) = "var" <+> pretty p <> ":" <+> pretty t <+> "with" <+> pretty e
-    pretty (Var Nothing p e Nothing)  = "var" <+> pretty p <+> "=" <+> pretty e
-    pretty (Var (Just t) p e Nothing) = "var" <+> pretty p <> ":" <+> pretty t <+> "=" <+> pretty e
-    pretty (Include s)           = "#include" <+> pretty s
-    pretty (Staload Nothing s)   = "staload" <+> pretty s
-    pretty (Staload (Just q) s)  = "staload" <+> pretty q <+> "=" <+> pretty s
-    pretty (CBlock s)            = string s
-    pretty (Comment s)           = string s
-    pretty (OverloadOp _ o n)    = "overload" <+> pretty o <+> "with" <+> pretty n
-    pretty (OverloadIdent _ i n) = "overload" <+> string i <+> "with" <+> pretty n
-    pretty (Func _ (Fn pref))    = "fn" </> pretty pref
-    pretty (Func _ (Fun pref))   = "fun" </> pretty pref
-    pretty (Func _ (CastFn pref)) = "castfn" </> pretty pref
-    pretty (Func _ (Fnx pref))   = "fnx" </> pretty pref
-    pretty (Func _ (And pref))   = "and" </> pretty pref
-    pretty (Func _ (Praxi pref)) = "praxi" </> pretty pref
-    pretty (Func _ (PrFun pref)) = "prfun" </> pretty pref
-    pretty (Func _ (PrFn pref))  = "prfn" </> pretty pref
-    pretty (Extern _ d)          = "extern" <$> pretty d
-    pretty (Define s)            = string s
-    pretty (DataProp _ s as ls)  = "dataprop" <+> string s <> prettyArgs as <+> "=" <$> prettyDL ls
-    pretty (ViewTypeDef _ s [] t) = "vtypedef" <+> string s <+> "=" </> pretty t
-    pretty (ViewTypeDef _ s as t) = "vtypedef" <+> string s <> prettyArgs as <+> "=" </> pretty t
-    pretty (TypeDef _ s [] t)    = "typedef" <+> string s <+> "=" <+> pretty t
-    pretty (TypeDef _ s as t)    = "typedef" <+> string s <> prettyArgs as <+> "=" <+> pretty t
-    pretty (AbsProp _ n as)      = "absprop" <+> string n <+> prettyArgs as
-    pretty (Assume n as e)       = "assume" </> pretty n <> prettyArgs as <+> "=" </> pretty e
-    pretty (SymIntr _ n)         = "symintr" <+> pretty n
-    pretty (Stacst _ n t Nothing) = "stacst" </> pretty n <+> ":" </> pretty t
-    pretty (Stacst _ n t (Just e)) = "stacst" </> pretty n <+> ":" </> pretty t <+> "=" </> pretty e
-    pretty _                     = "FIXME"
+    pretty (RecordType s [] [] rs)      = "typedef" <+> string s <+> "=" <+> prettyRecord rs
+    pretty (RecordType s as [] rs)      = "typedef" <+> string s <> prettyArgs as <+> "=" <+> prettyRecord rs
+    pretty (RecordViewType s [] [] rs)  = "vtypedef" <+> string s <+> "=" </> prettyRecord rs
+    pretty (RecordViewType s as [] rs)  = "vtypedef" <+> string s <> prettyArgs as <+> typeHelper rs
+    pretty (RecordViewType s as us rs)  = "vtypedef" <+> string s <> prettyArgs as <+> "=" </> fancyU us </> prettyRecord rs
+    pretty (SumViewType s [] ls)        = "datavtype" <+> string s <+> "=" <$> prettyLeaf ls
+    pretty (SumViewType s as ls)        = "datavtype" <+> string s <> prettyArgs as <+> "=" <$> prettyLeaf ls
+    pretty (SumType s [] ls)            = "datatype" <+> string s <+> "=" <$> prettyLeaf ls
+    pretty (SumType s as ls)            = "datatype" <+> string s <> prettyArgs as <+> "=" <$> prettyLeaf ls
+    pretty (Impl [] i)                  = pretty i
+    pretty (PrVal p e)                  = "prval" <+> pretty p <+> "=" <+> pretty e
+    pretty (Val a Nothing p e)          = "val" <> pretty a <+> pretty p <+> "=" <+> pretty e
+    pretty (Val a (Just t) p e)         = "val" <> pretty a <+> pretty p <> ":" <+> pretty t <+> "=" <+> pretty e
+    pretty (Var (Just t) p Nothing e)   = "var" <+> pretty p <> ":" <+> pretty t <+> "with" <+> pretty e
+    pretty (Var Nothing p e Nothing)    = "var" <+> pretty p <+> "=" <+> pretty e
+    pretty (Var (Just t) p e Nothing)   = "var" <+> pretty p <> ":" <+> pretty t <+> "=" <+> pretty e
+    pretty (Include s)                  = "#include" <+> pretty s
+    pretty (Staload Nothing s)          = "staload" <+> pretty s
+    pretty (Staload (Just q) s)         = "staload" <+> pretty q <+> "=" <+> pretty s
+    pretty (CBlock s)                   = string s
+    pretty (Comment s)                  = string s
+    pretty (OverloadOp _ o n)           = "overload" <+> pretty o <+> "with" <+> pretty n
+    pretty (OverloadIdent _ i n)        = "overload" <+> string i <+> "with" <+> pretty n
+    pretty (Func _ (Fn pref))           = "fn" </> pretty pref
+    pretty (Func _ (Fun pref))          = "fun" </> pretty pref
+    pretty (Func _ (CastFn pref))       = "castfn" </> pretty pref
+    pretty (Func _ (Fnx pref))          = "fnx" </> pretty pref
+    pretty (Func _ (And pref))          = "and" </> pretty pref
+    pretty (Func _ (Praxi pref))        = "praxi" </> pretty pref
+    pretty (Func _ (PrFun pref))        = "prfun" </> pretty pref
+    pretty (Func _ (PrFn pref))         = "prfn" </> pretty pref
+    pretty (Extern _ d)                 = "extern" <$> pretty d
+    pretty (Define s)                   = string s
+    pretty (DataProp _ s as ls)         = "dataprop" <+> string s <> prettyArgs as <+> "=" <$> prettyDL ls
+    pretty (ViewTypeDef _ s [] t)       = "vtypedef" <+> string s <+> "=" </> pretty t
+    pretty (ViewTypeDef _ s as t)       = "vtypedef" <+> string s <> prettyArgs as <+> "=" </> pretty t
+    pretty (TypeDef _ s [] t)           = "typedef" <+> string s <+> "=" <+> pretty t
+    pretty (TypeDef _ s as t)           = "typedef" <+> string s <> prettyArgs as <+> "=" <+> pretty t
+    pretty (AbsProp _ n as)             = "absprop" <+> string n <+> prettyArgs as
+    pretty (Assume n as e)              = "assume" </> pretty n <> prettyArgs as <+> "=" </> pretty e
+    pretty (SymIntr _ n)                = "symintr" <+> pretty n
+    pretty (Stacst _ n t Nothing)       = "stacst" </> pretty n <+> ":" </> pretty t
+    pretty (Stacst _ n t (Just e))      = "stacst" </> pretty n <+> ":" </> pretty t <+> "=" </> pretty e
+    pretty _                            = "FIXME"
