@@ -135,7 +135,7 @@ instance Pretty Expression where
         a (LambdaF _ lt p e)            = "lam" <+> pretty p <+> pretty lt <+> e
         a (LinearLambdaF _ lt p e)      = "llam" <+> pretty p <+> pretty lt <+> e
         a (FloatLitF f)                 = pretty f
-        a (StringLitF s)                = string s
+        a (StringLitF s)                = string s -- FIXME escape indentation in multi-line strings.
         a (ParenExprF _ e)              = parens e
         a (BinListF op@Add es)          = prettyBinary (pretty op) es
         a (BinaryF op e e')
@@ -143,15 +143,15 @@ instance Pretty Expression where
             | otherwise = e <+> pretty op <+> e'
         a (IndexF _ n e)                = pretty n <> "[" <> e <> "]"
         a (UnaryF Negate e)             = "~" <> e
-        a (NamedValF name)              = pretty name
-        a (CallF name [] [] Nothing []) = pretty name <> "()"
-        a (CallF name [] [] (Just e) xs) = pretty name <> prettyArgsG ("(" <> pretty e <+> "| ") ")" xs -- FIXME split eagerly on "|"
-        a (CallF name [] [] Nothing xs) = pretty name <> prettyArgsG "(" ")" xs
-        a (CallF name [] us Nothing []) = pretty name <> prettyArgsU "{" "}" us
-        a (CallF name is [] Nothing []) = pretty name <> prettyArgsU "<" ">" is
-        a (CallF name is [] Nothing [x])
-            | startsParens x = pretty name <> prettyArgsU "<" ">" is <> pretty x
-        a (CallF name is [] Nothing xs) = pretty name <> prettyArgsU "<" ">" is <> prettyArgsG "(" ")" xs
+        a (NamedValF nam)              = pretty nam
+        a (CallF nam [] [] Nothing []) = pretty nam <> "()"
+        a (CallF nam [] [] (Just e) xs) = pretty nam <> prettyArgsG ("(" <> pretty e <+> "| ") ")" xs -- FIXME split eagerly on "|"
+        a (CallF nam [] [] Nothing xs) = pretty nam <> prettyArgsG "(" ")" xs
+        a (CallF nam [] us Nothing []) = pretty nam <> prettyArgsU "{" "}" us
+        a (CallF nam is [] Nothing []) = pretty nam <> prettyArgsU "<" ">" is
+        a (CallF nam is [] Nothing [x])
+            | startsParens x = pretty nam <> prettyArgsU "<" ">" is <> pretty x
+        a (CallF nam is [] Nothing xs) = pretty nam <> prettyArgsU "<" ">" is <> prettyArgsG "(" ")" xs
         a (CaseF _ add e cs)            = "case" <> pretty add <+> e <+> "of" <$> indent 2 (prettyCases cs)
         a (VoidLiteralF _)              = "()"
         a (RecordValueF _ es Nothing)   = prettyRecord es
@@ -183,6 +183,7 @@ instance Pretty Expression where
         a (LambdaAtF (PreF Unnamed{} s [] [] as t Nothing (Just e))) = "lam@" <+> prettyArgs as <+> ":" <> pretty s <+> pretty t <+> "=>" </> pretty e
         a (AddrAtF _ e)                = "addr@" <> e
         a (ViewAtF _ e)                = "view@" <> e
+        a (ListLiteralF _ s t es)      = "list" <> string s <> "{" <> pretty t <> "}" <> prettyArgs es
         a _ = "FIXME"
         prettyCases []              = mempty
         prettyCases [(s, l, t)]     = "|" <+> pretty s <+> pretty l <+> t
@@ -294,7 +295,7 @@ instance Pretty Universal where
               go _                = "FIXME"
 
 instance Pretty ATS where
-    pretty (ATS xs) = concatSame xs
+    pretty (ATS xs) = concatSame (fmap rewriteDecl xs)
 
 instance Pretty Implementation where
     pretty (Implement _ [] [] n [] e)  = "implement" <+> pretty n <+> "() =" <$> indent 2 (pretty e)
@@ -480,4 +481,5 @@ instance Pretty Declaration where
     pretty (SymIntr _ n)                = "symintr" <+> pretty n
     pretty (Stacst _ n t Nothing)       = "stacst" </> pretty n <+> ":" </> pretty t
     pretty (Stacst _ n t (Just e))      = "stacst" </> pretty n <+> ":" </> pretty t <+> "=" </> pretty e
+    pretty (PropDef _ s as t)           = "propdef" </> string s <+> prettyArgs as <+> "=" </> pretty t
     pretty _                            = "FIXME"

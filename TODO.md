@@ -20,8 +20,6 @@
 - [ ] Make static expressions only work on integers?
 # Bugs
 - [ ] simplified types for dependent type declarations (i.e. only sorts?)
-- [ ] `absvt@ype`
-- [ ] `propdef`
 - [ ] overloading non-binary operators
 - [ ] `@` at the beginning of a type (??)
 - [ ] fix parsing of `|` and make arguments list make sense
@@ -45,20 +43,10 @@
 - [ ] macdef
 - [ ] `assume`
 - [ ] `castfn`
-- [ ] `propdef`
 - [ ] `abstype`
 - [ ] `absvtype`
-- [ ] `view`
-- [ ] `prfn`
-- [ ] `tkindef` / `typekindef`?
-- [ ] `prfun`
 - [ ] `<>` (aka not-equals)
-- [ ] `propdef`
-- [ ] `stacst`
-- [ ] `primplmnt'
-- [ ] `implmnt`
 - [ ] `infixr`
-- [ ] `absvt@ype`
 - [ ] `$effmask\_wrt` and the like
 - [ ] everything in this list: https://github.com/githwxi/ATS-Postiats/blob/d28486e9fb1954f41521a464d37f6bfba57b7a91/utils/emacs/ats2-mode.el#L270
 - [ ] `list\_vt{int}(0, 1, 2, 3, 4)` (list/array literals)

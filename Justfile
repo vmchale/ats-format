@@ -29,7 +29,7 @@ polyglot:
     @poly . -e data/
 
 bench:
-    bench "atsfmt test/data/polyglot.dats" "atsfmt test/data/left-pad.dats" "atsfmt ~/programming/ats/toml-parse/src/toml-parse.dats"
+    bench "atsfmt test/data/polyglot.dats" "atsfmt test/data/left-pad.dats" "atsfmt ~/programming/ats/toml-parse/src/vml-parse.dats"
 
 manpages:
     pandoc man/MANPAGE.md -s -t man -o man/atsfmt.1

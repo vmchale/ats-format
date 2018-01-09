@@ -1,14 +1,14 @@
 name:                ats-format
-version:             0.1.0.19
+version:             0.1.0.21
 synopsis:            A source-code formatter for ATS
-description:         An opinionated source-code formatter for ATS (http://www.ats-lang.org/).
+description:         An opinionated source-code formatter for [ATS](http://www.ats-lang.org/).
 homepage:            https://hub.darcs.net/vmchale/ats-format#readme
 license:             BSD3
 license-file:        LICENSE
 author:              Vanessa McHale
 maintainer:          vamchale@gmail.com
 copyright:           Copyright: (c) 2017 Vanessa McHale
-category:            Parser, Language
+category:            Parser, Language, ATS, Development
 build-type:          Custom
 extra-doc-files:     README.md
 data-files:          .travis.yml
@@ -41,7 +41,6 @@ library
                      , Language.ATS.Parser
                      , Language.ATS.PrettyPrint
                      , Language.ATS.Exec
-                     , Language.ATS.Doc
                      , Paths_ats_format
   build-depends:       base >= 4.8 && < 5
                      , array
@@ -56,8 +55,6 @@ library
                      , megaparsec
                      , unordered-containers
                      , text
-                     , blaze-markup
-                     , blaze-html
                      , directory
                      , process
                      , file-embed
@@ -89,12 +86,8 @@ test-suite ats-format-test
   build-depends:       base
                      , ats-format
                      , hspec
-                     , dirstream
-                     , pipes
+                     , hspec-dirstream
                      , system-filepath
-                     , pipes-safe
-                     , filepath
-                     , hspec-core
   if flag(development)
     ghc-options:       -Werror
   if impl(ghc >= 8.0)

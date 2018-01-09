@@ -3,8 +3,6 @@ module Language.ATS ( -- * Functions
                       lexATS
                     , parseATS
                     , printATS
-                    -- * Documentation generation
-                    , generateATSDocs
                     -- * Syntax Tree
                     , ATS (..)
                     , Declaration (..)
@@ -32,11 +30,13 @@ module Language.ATS ( -- * Functions
                     , Keyword (..)
                     -- * Error types
                     , ATSError
+                    -- * Lenses
+                    , leaves
+                    , constructorUniversals
                     -- * Executable
                     , exec
                     ) where
 
-import           Language.ATS.Doc
 import           Language.ATS.Exec
 import           Language.ATS.Lexer
 import           Language.ATS.Parser

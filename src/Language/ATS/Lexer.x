@@ -142,9 +142,12 @@ tokens :-
     void                     { tok (\p s -> Keyword p KwVoid) }
     nat                      { tok (\p s -> Keyword p KwNat) }
     implement                { tok (\p s -> Keyword p KwImplement) }
+    implmnt                  { tok (\p s -> Keyword p KwImplement) }
     primplmnt                { tok (\p s -> Keyword p KwProofImplement) }
-    primplement              { tok (\p s -> Keyword p KwProofImplement) } -- TODO does this squash too much?
+    primplement              { tok (\p s -> Keyword p KwProofImplement) }
     abst"@"ype               { tok (\p s -> Keyword p (KwAbst0p None)) }
+    abst"@ype+"              { tok (\p s -> Keyword p (KwAbst0p Plus)) }
+    abst"@type-"             { tok (\p s -> Keyword p (KwAbst0p Minus)) }
     abs@view"t@ype"          { tok (\p s -> Keyword p (KwAbsvt0p None)) }
     t"@"ype"+"               { tok (\p s -> Keyword p (KwT0p Plus)) }
     t"@"ype"-"               { tok (\p s -> Keyword p (KwT0p Minus)) }
@@ -176,6 +179,7 @@ tokens :-
     sortdef                  { tok (\p s -> Keyword p KwSortdef) }
     propdef                  { tok (\p s -> Keyword p KwPropdef) }
     tkindef                  { tok (\p s -> Keyword p KwTKind) }
+    typekindef               { tok (\p s -> Keyword p KwTKind) }
     "$raise"                 { tok (\p s -> Keyword p KwRaise) }
     mod                      { tok (\p s -> Keyword p KwMod) }
     "println!"               { tok (\p s -> Identifier p s) }
@@ -188,6 +192,8 @@ tokens :-
     sta                      { tok (\p s -> Keyword p KwSta) }
     symintr                  { tok (\p s -> Keyword p KwSymintr) }
     absview                  { tok (\p s -> Keyword p KwAbsview) }
+    "$list"                  { tok (\p s -> Keyword p (KwListLit "")) }
+    "$list_vt"               { tok (\p s -> Keyword p (KwListLit "_vt")) }
     "fold@"                  { tok (\p s -> Identifier p s) }
     "free@"                  { tok (\p s -> Identifier p s) }
     @double_parens           { tok (\p s -> DoubleParenTok p) }
@@ -299,6 +305,7 @@ data Keyword = KwFun
              | KwInfixr
              | KwInfixl
              | KwStacst
+             | KwListLit String
              deriving (Eq, Show, Generic, NFData)
 
 data Token = Identifier AlexPosn String
@@ -405,6 +412,7 @@ instance Pretty Keyword where
     pretty KwInfix = "infix"
     pretty KwInfixr = "infixr"
     pretty KwInfixl = "infixl"
+    pretty (KwListLit s) = "list" <> string s
 
 instance Pretty Token where
     pretty (Identifier _ s) = string s

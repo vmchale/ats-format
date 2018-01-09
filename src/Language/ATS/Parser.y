@@ -100,6 +100,9 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     viewAt { Keyword $$ KwViewAt }
     symintr { Keyword $$ KwSymintr }
     stacst { Keyword $$ KwStacst }
+    propdef { Keyword $$ KwPropdef }
+    list { Keyword $$ (KwListLit "") }
+    list_vt { Keyword $$ (KwListLit "_vt") }
     boolLit { BoolTok _ $$ }
     timeLit { TimeTok _ $$ }
     intLit { IntTok _ $$ }
@@ -109,7 +112,6 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     extfcall { Identifier $$ "extfcall" }
     ldelay { Identifier $$ "ldelay" }
     listVT { Identifier $$ "list_vt" }
-    -- TODO token? raise { Identifier $$ "raise" }
     identifier { Identifier _ $$ }
     identifierSpace { IdentifierSpace _ $$ }
     closeParen { Special $$ ")" }
@@ -322,6 +324,8 @@ Expression : PreExpression { $1 }
            | openParen Expression closeParen { $2 }
            | Expression signature Type { TypeSignature $1 $3 }
            | openParen Expression vbar Expression closeParen { ProofExpr $1 $2 $4 }
+           | list_vt lbrace Type rbrace openParen ExpressionIn closeParen { ListLiteral $1 "vt" $3 $6 }
+           | list lbrace Type rbrace openParen ExpressionIn closeParen { ListLiteral $1 "" $3 $6 }
 
 TypeArgs : lbrace Type rbrace { [$2] }
          | lbrace TypeIn rbrace { $2 }
@@ -339,7 +343,7 @@ Call : Name doubleParens { Call $1 [] [] Nothing [] }
      | Name TypeArgs { Call $1 [] $2 Nothing [] }
      | Name lspecial TypeIn rbracket openParen ExpressionPrf closeParen { Call $1 $3 [] (fst $6) (snd $6) }
      | Name lspecial TypeIn rbracket { Call $1 $3 [] Nothing [] }
-     | dollar raise PreExpression { Call (SpecialName $1 "raise") [] [] Nothing [$3] } -- $raise can have at most one argument
+     | raise PreExpression { Call (SpecialName $1 "raise") [] [] Nothing [$2] } -- $raise can have at most one argument
 
 StaticArgs : StaticExpression { [$1] }
            | StaticArgs comma StaticExpression { $3 : $1 }
@@ -464,7 +468,7 @@ Leaves : SumLeaf { [$1] }
        | Leaves SumLeaf { $2 : $1 }
        | Universals identifierSpace of Type { [Leaf $1 $2 [] (Just $4)] }
        | Universals identifier { [Leaf $1 $2 [] Nothing] }
-       | Universals identifier openParen IdentifiersIn closeParen OfType { [Leaf $1 $2 $4 $6] }
+       | Universals identifier openParen IdentifiersIn closeParen OfType { [Leaf $1 $2 $4 $6] } -- FIXME should take any static expression.
        | dollar {% Left $ Expected $1 "|" "$" }
 
 Universals : { [] }
@@ -617,6 +621,7 @@ Declaration : include string { Include $2 }
             | TypeDecl { $1 }
             | symintr Name { SymIntr $1 $2 }
             | stacst IdentifierOr signature Type OptExpression { Stacst $1 (Unqualified $2) $4 $5 }
+            | propdef IdentifierOr openParen Args closeParen eq Type { PropDef $1 $2 $4 $7 }
             | lambda {% Left $ Expected $1 "Declaration" "lam" }
             | llambda {% Left $ Expected $1 "Declaration" "llam" }
             | minus {% Left $ Expected $1 "Declaration" "-" }
@@ -624,6 +629,7 @@ Declaration : include string { Include $2 }
             | fromVT {% Left $ Expected $1 "Declaration" "?!" }
             | prfTransform {% Left $ Expected $1 "Declaration" ">>" }
             | maybeProof {% Left $ Expected $1 "Declaration" "?" }
+            | end {% Left $ Expected $1 "Declaration" "end" }
 
 {
 

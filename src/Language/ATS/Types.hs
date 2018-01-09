@@ -38,11 +38,17 @@ module Language.ATS.Types
     , StaticExpression (..)
     , StaticExpressionF (..)
     , rewriteATS
+    , rewriteDecl
+    -- * Lenses
+    , leaves
+    , constructorUniversals
     ) where
 
 import           Control.DeepSeq          (NFData)
-import           Data.Functor.Foldable    (cata, embed)
+import           Control.Lens
+import           Data.Functor.Foldable    (ListF (Cons), ana, cata, embed, project)
 import           Data.Functor.Foldable.TH (makeBaseFunctor)
+import           Data.Maybe               (isJust)
 import           GHC.Generics             (Generic)
 import           Language.ATS.Lexer       (Addendum (..), AlexPosn)
 
@@ -54,7 +60,7 @@ data Bifurcated a = Nil
 newtype ATS = ATS { unATS :: [Declaration] }
     deriving (Show, Eq, Generic, NFData)
 
-data Leaf = Leaf [Universal] String [String] (Maybe Type)
+data Leaf = Leaf { _constructorUniversals :: [Universal], name :: String, constructorArgs :: [String], maybeType :: Maybe Type }
     deriving (Show, Eq, Generic, NFData)
 
 -- | Declare something in a scope (a function, value, action, etc.)
@@ -73,8 +79,8 @@ data Declaration = Func AlexPosn Function
                  | RecordViewType String [Arg] [Universal] [(String, Type)]
                  | TypeDef AlexPosn String [Arg] Type
                  | ViewTypeDef AlexPosn String [Arg] Type
-                 | SumType String [Arg] [Leaf]
-                 | SumViewType String [Arg] [Leaf]
+                 | SumType { typeName :: String, typeArgs :: [Arg], _leaves :: [Leaf] }
+                 | SumViewType { typeName :: String, typeArgs :: [Arg], _leaves :: [Leaf] }
                  | AbsType AlexPosn String [Arg] (Maybe Type)
                  | AbsViewType AlexPosn String [Arg] (Maybe Type)
                  | AbsView AlexPosn String [Arg] (Maybe Type)
@@ -95,6 +101,7 @@ data Declaration = Func AlexPosn Function
                  | TKind AlexPosn Name String
                  | SymIntr AlexPosn Name
                  | Stacst AlexPosn Name Type (Maybe Expression)
+                 | PropDef AlexPosn String [Arg] Type
                  deriving (Show, Eq, Generic, NFData)
 
 data DataPropLeaf = DataPropLeaf [Universal] Expression (Maybe Expression)
@@ -135,13 +142,13 @@ data Type = Bool
           | ViewLiteral Addendum
           deriving (Show, Eq, Generic, NFData)
 
--- | A type for the various lambda arrows (`=>`, `=<cloref1>`, etc.)
+-- | A type for the various lambda arrows (@=>@, @=<cloref1>@, etc.)
 data LambdaType = Plain AlexPosn
                 | Full AlexPosn String
                 | Spear AlexPosn
                 deriving (Show, Eq, Generic, NFData)
 
--- | A name can be qualified (`$UN.unsafefn`) or not
+-- | A name can be qualified (@$UN.unsafefn@) or not
 data Name = Unqualified String
           | Qualified AlexPosn String String
           | SpecialName AlexPosn String
@@ -173,14 +180,14 @@ data Arg = Arg (Paired String Type)
     deriving (Show, Eq, Generic, NFData)
 
 -- | Wrapper for universal quantifiers (refinement types)
-data Universal = Universal { bound :: [Arg], typeU :: Maybe Type, prop :: Maybe StaticExpression }
+data Universal = Universal { bound :: [Arg], typeU :: Maybe Type, prop :: Maybe StaticExpression } -- TODO NonEmpty type?
     deriving (Show, Eq, Generic, NFData)
 
 -- | Wrapper for existential quantifiers/types
 data Existential = Existential { boundE :: [Arg], typeE :: Maybe Type, propE :: Maybe Expression } -- TODO #[id:int] existentials
     deriving (Show, Eq, Generic, NFData)
 
--- | `~` is used to negate numbers in ATS
+-- | @~@ is used to negate numbers in ATS
 data UnOp = Negate
     deriving (Show, Eq, Generic, NFData)
 
@@ -218,6 +225,7 @@ data Expression = Let AlexPosn ATS (Maybe Expression)
                 -- function call: <a>, then {n}
                 | Call Name [Type] [Type] (Maybe Expression) [Expression]
                 | NamedVal Name
+                | ListLiteral AlexPosn String Type [Expression]
                 | If { cond     :: Expression -- ^ Expression evaluating to a boolean value
                      , whenTrue :: Expression -- ^ Expression to be returned when true
                      , elseExpr :: Maybe Expression -- ^ Expression to be returned when false
@@ -241,7 +249,7 @@ data Expression = Let AlexPosn ATS (Maybe Expression)
                 | Case { posE :: AlexPosn
                        , kind :: Addendum
                        , val  :: Expression
-                       , arms :: [(Pattern, LambdaType, Expression)] -- ^ Each `(Pattern, Expression)` pair corresponds to a branch of the 'case' statement
+                       , arms :: [(Pattern, LambdaType, Expression)] -- ^ Each @(Pattern, Expression)@ pair corresponds to a branch of the 'case' statement
                        }
                 | RecordValue AlexPosn [(String, Expression)] (Maybe Type)
                 | Precede Expression Expression
@@ -303,6 +311,19 @@ makeBaseFunctor ''Pattern
 makeBaseFunctor ''Expression
 makeBaseFunctor ''StaticExpression
 makeBaseFunctor ''Type
+makeLenses ''Leaf
+makeLenses ''Declaration
+
+rewriteDecl :: Declaration -> Declaration
+rewriteDecl x@SumViewType{} = g x
+    where g = over (leaves.mapped.constructorUniversals) h
+          h :: [Universal] -> [Universal]
+          h = ana c where
+            c (y:y':ys)
+                | typeU y == typeU y' && isJust (typeU y) =
+                    Cons (Universal (bound y ++ bound y') (typeU y) (StaticBinary LogicalAnd <$> prop y <*> prop y')) ys
+            c y = project y
+rewriteDecl x = x
 
 -- precedence: rewrite n + 2 * x to n + (2 * x)
 -- TODO: rewrite multiple universals when it's the right context?
