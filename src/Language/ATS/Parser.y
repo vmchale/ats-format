@@ -212,8 +212,8 @@ Type : Name openParen TypeInExpr closeParen { Dependent $1 $3 }
      | stringType StaticExpression { DepString $2 }
      | int openParen StaticExpression closeParen { DependentInt $3 }
      | bool openParen StaticExpression closeParen { DependentBool $3 }
-     | identifier { Named $1 }
-     | identifierSpace { Named $1 }
+     | identifierSpace { Named (Unqualified $1) }
+     | Name { Named $1 }
      | exclamation Type { Unconsumed $2 }
      | Type mutateArrow Type { FunctionType "->" $1 $3 }
      | Type funcArrow Type { FunctionType $2 $1 $3 }
@@ -229,7 +229,7 @@ Type : Name openParen TypeInExpr closeParen { Dependent $1 $3 }
      | Universal Type { ForA $1 $2 }
      | Type at Type { At $2 $1 $3 }
      | openParen Type vbar Type closeParen { ProofType $1 $2 $4 }
-     | identifierSpace identifier { Dependent (Unqualified $1) [Named $2] }
+     | identifierSpace identifier { Dependent (Unqualified $1) [Named (Unqualified $2)] }
      | openParen TypeIn closeParen { Tuple $1 $2 }
      | openParen Type closeParen { $2 }
      | int StaticExpression { DependentInt $2 }
@@ -342,6 +342,7 @@ Call : Name doubleParens { Call $1 [] [] Nothing [] }
      | Name openParen ExpressionPrf closeParen { Call $1 [] [] (fst $3) (snd $3) }
      | Name TypeArgs openParen ExpressionPrf closeParen { Call $1 [] $2 (fst $4) (snd $4) }
      | Name TypeArgs { Call $1 [] $2 Nothing [] }
+     | Name lspecial TypeIn rbracket doubleParens { Call $1 $3 [] Nothing [VoidLiteral $5] }
      | Name lspecial TypeIn rbracket openParen ExpressionPrf closeParen { Call $1 $3 [] (fst $6) (snd $6) }
      | Name lspecial TypeIn rbracket { Call $1 $3 [] Nothing [] }
      | raise PreExpression { Call (SpecialName $1 "raise") [] [] Nothing [$2] } -- $raise can have at most one argument
@@ -369,6 +370,7 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | PreExpression BinOp PreExpression { Binary $2 $1 $3 }
               | UnOp PreExpression { Unary $1 $2 } -- FIXME throw error when we try to negate a string literal/time
               | PreExpression dot Name { Access $2 $1 $3 }
+              | PreExpression dot intLit { Access $2 $1 (Unqualified $ show $3) }
               | PreExpression dot identifierSpace { Access $2 $1 (Unqualified $3) }
               | if Expression then Expression { If $2 $4 Nothing}
               | if Expression then Expression else Expression { If $2 $4 (Just $6) }

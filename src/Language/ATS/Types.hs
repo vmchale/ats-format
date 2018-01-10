@@ -121,7 +121,7 @@ data Type = Bool
           | Double
           | Float
           | Tuple AlexPosn [Type]
-          | Named String
+          | Named Name
           | Ex Existential Type
           | ForA Universal Type
           | Dependent Name [Type]

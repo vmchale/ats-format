@@ -248,7 +248,7 @@ instance Pretty Type where
         a NatF                   = "nat"
         a AddrF                  = "addr"
         a CharF                  = "char"
-        a (NamedF n)             = string n
+        a (NamedF n)             = pretty n
         a (ExF e t)              = pretty e <+> t
         a (DependentIntF e)      = "int(" <> pretty e <> ")"
         a (DependentBoolF e)     = "bool(" <> pretty e <> ")"
