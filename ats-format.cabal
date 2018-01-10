@@ -1,5 +1,5 @@
 name:                ats-format
-version:             0.1.0.21
+version:             0.1.0.22
 synopsis:            A source-code formatter for ATS
 description:         An opinionated source-code formatter for [ATS](http://www.ats-lang.org/).
 homepage:            https://hub.darcs.net/vmchale/ats-format#readme

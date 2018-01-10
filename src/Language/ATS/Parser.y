@@ -15,6 +15,7 @@ import Language.ATS.Lexer ( Token (..)
                           , Keyword (..)
                           , Addendum (..)
                           , token_posn
+                          , to_string
                           )
 
 import Data.Char (toLower)
@@ -166,7 +167,7 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     openExistential { Operator $$ "#[" } -- Same as `[` in ATS2
     cblock { CBlockLex _ $$ }
     define { MacroBlock _ $$ }
-    lineComment { CommentLex _ $$ }
+    lineComment { $$@CommentLex{} }
     lspecial { SpecialBracket $$ }
     atbrace { Operator $$ "@{" }
     mod { Keyword $$ KwMod }
@@ -398,6 +399,7 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | prfTransform {% Left $ Expected $1 "Expression" ">>" }
               | maybeProof {% Left $ Expected $1 "Expression" "?" }
               | let openParen {% Left $ Expected $1 "Expression" "let (" }
+              | let ATS in Expression lineComment {% Left $ Expected (token_posn $5) "end" (take 2 $ to_string $5) }
 
 -- | Parse a termetric
 Termetric : openTermetric StaticExpression closeTermetric { ($1, $2) }
@@ -596,7 +598,7 @@ Declaration : include string { Include $2 }
             | define identifierSpace string { Define ($1 ++ $2 ++ $3) } -- FIXME better approach?
             | define identifierSpace int { Define ($1 ++ $2 ++ " " ++ show $3) }
             | cblock { CBlock $1 }
-            | lineComment { Comment $1 }
+            | lineComment { Comment (to_string $1) }
             | staload underscore eq string { Staload (Just "_") $4 }
             | staload string { Staload Nothing $2 }
             | staload IdentifierOr eq string { Staload (Just $2) $4 }

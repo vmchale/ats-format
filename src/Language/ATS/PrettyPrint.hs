@@ -126,8 +126,12 @@ instance Pretty Expression where
     pretty = cata a . rewriteATS where
         a (IfF e e' (Just e''))         = "if" <+> e <+> "then" <$> indent 2 e' <$> "else" <$> indent 2 e''
         a (IfF e e' Nothing)            = "if" <+> e <+> "then" <$> indent 2 e'
-        a (LetF _ e (Just e'))          = "let" <$> indent 2 (pretty ((\(ATS x) -> ATS $ reverse x) e)) <$> "in" <$> indent 2 e' <$> "end" -- TODO soft linebreak?
-        a (LetF _ e Nothing)            = "let" <$> indent 2 (pretty ((\(ATS x) -> ATS $ reverse x) e)) <$> "in end"
+        a (LetF _ e (Just e'))          = flatAlt
+            ("let" <$> indent 2 (pretty ((\(ATS x) -> ATS $ reverse x) e)) <$> "in" <$> indent 2 e' <$> "end")
+            ("let" <+> pretty ((\(ATS x) -> ATS $ reverse x) e) <$> "in" <+> e' <$> "end")
+        a (LetF _ e Nothing)            = flatAlt
+            ("let" <$> indent 2 (pretty ((\(ATS x) -> ATS $ reverse x) e)) <$> "in end")
+            ("let" <+> pretty ((\(ATS x) -> ATS $ reverse x) e) <$> "in end")
         a (BoolLitF True)               = "true"
         a (BoolLitF False)              = "false"
         a (TimeLitF s)                  = string s
@@ -170,7 +174,7 @@ instance Pretty Expression where
         a (CharLitF c)                 = "'" <> char c <> "'"
         a (ProofExprF _ e e')          = "(" <> e <+> "|" <+> e' <> ")"
         a (TypeSignatureF e t)         = e <+> ":" <+> pretty t
-        a (WhereExpF e d)              = e <+> "where" <$> braces (" " <> nest 2 (pretty (ATS d)) <> " ")
+        a (WhereExpF e d)              = e <+> "where" <$> braces (" " <> nest 2 (pretty (ATS $ reverse d)) <> " ")
         a (TupleExF _ es)              = prettyArgs es -- parens (mconcat $ punctuate ", " (reverse es))
         a (WhileF _ e e')              = "while" <> parens e <> e'
         a (ActionsF as)                = "{" <$> indent 2 (pretty ((\(ATS x) -> ATS $ reverse x) as)) <$> "}"

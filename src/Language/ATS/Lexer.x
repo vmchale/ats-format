@@ -15,6 +15,7 @@
                               , Addendum (..)
                               , lexATS
                               , token_posn
+                              , to_string
                               ) where
 
 import Data.Data (Typeable, Data)
@@ -436,6 +437,9 @@ instance Pretty Token where
     pretty DoubleBracesTok{} = "{}"
     pretty DoubleBracketTok{} = "<>"
     pretty SpecialBracket{} = "{"
+
+to_string (CommentLex _ s) = s
+to_string _ = mempty
 
 token_posn (Identifier p _) = p
 token_posn (IdentifierSpace p _) = p
