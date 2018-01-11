@@ -42,7 +42,7 @@ file = Program
         <> help "Ignore configuration file")
     <*> switch
         (long "default-config"
-        <> help "Ignore configuration file")
+        <> help "Generate default configuration file in the current directory")
 
 versionInfo :: Parser (a -> a)
 versionInfo = infoOption ("madlang version: " ++ showVersion version) (short 'V' <> long "version" <> help "Show version")
