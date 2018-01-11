@@ -1,5 +1,5 @@
 name:                ats-format
-version:             0.1.0.23
+version:             0.1.0.24
 synopsis:            A source-code formatter for ATS
 description:         An opinionated source-code formatter for [ATS](http://www.ats-lang.org/).
 homepage:            https://hub.darcs.net/vmchale/ats-format#readme
@@ -14,6 +14,9 @@ extra-doc-files:     README.md
 data-files:          .travis.yml
                    , appveyor.yml
                    , Justfile
+                   , test/data/*.dats
+                   , test/data/*.sats
+                   , test/data/*.out
 extra-source-files:  stack.yaml
                    , cabal.project.local
                    , .atsfmt.toml

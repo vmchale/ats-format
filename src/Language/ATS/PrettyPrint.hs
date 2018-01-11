@@ -6,6 +6,7 @@
 {-# LANGUAGE FlexibleContexts     #-}
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE OverloadedStrings    #-}
+{-# LANGUAGE PatternSynonyms      #-}
 {-# LANGUAGE StandaloneDeriving   #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
@@ -120,7 +121,7 @@ prettyBinary :: Doc -> [Doc] -> Doc
 prettyBinary _ []       = mempty
 prettyBinary _ [e]      = e
 prettyBinary op [e, e'] = e <+> op <+> e'
-prettyBinary _ _        = "FIXME"
+prettyBinary _ _        = undefined
 
 instance Pretty Expression where
     pretty = cata a . rewriteATS where
@@ -160,8 +161,8 @@ instance Pretty Expression where
         a (VoidLiteralF _)              = "()"
         a (RecordValueF _ es Nothing)   = prettyRecord es
         a (RecordValueF _ es (Just x))  = prettyRecord es <+> ":" <+> pretty x
-        a (PrecedeF e e')               = parens (e <+> ";" </> e') -- TODO use plated + write this like arguments with commas
-        a (PrecedeListF es)             = prettyArgsList " ; " "(" ")" es
+        a (PrecedeF e e')               = parens (e <+> ";" </> e')
+        a (PrecedeListF es)             = lineAlt (prettyArgsList "; " "(" ")" es) ("(" <> mconcat (punctuate " ; " es) <> ")")
         a (FieldMutateF _ o f v)        = pretty o <> "->" <> string f <+> ":=" <+> v
         a (MutateF e e')                = e <+> ":=" <+> e'
         a (DerefF _ e)                  = "!" <> e
@@ -175,7 +176,7 @@ instance Pretty Expression where
         a (ProofExprF _ e e')          = "(" <> e <+> "|" <+> e' <> ")"
         a (TypeSignatureF e t)         = e <+> ":" <+> pretty t
         a (WhereExpF e d)              = e <+> "where" <$> braces (" " <> nest 2 (pretty (ATS $ reverse d)) <> " ")
-        a (TupleExF _ es)              = prettyArgs es -- parens (mconcat $ punctuate ", " (reverse es))
+        a (TupleExF _ es)              = parens (mconcat $ punctuate ", " (reverse es))
         a (WhileF _ e e')              = "while" <> parens e <> e'
         a (ActionsF as)                = "{" <$> indent 2 (pretty ((\(ATS x) -> ATS $ reverse x) as)) <$> "}"
         a UnderscoreLitF{}             = "_"
@@ -188,7 +189,7 @@ instance Pretty Expression where
         a (AddrAtF _ e)                = "addr@" <> e
         a (ViewAtF _ e)                = "view@" <> e
         a (ListLiteralF _ s t es)      = "list" <> string s <> "{" <> pretty t <> "}" <> prettyArgs es
-        a _ = "FIXME"
+        a _                            = undefined
         prettyCases []              = mempty
         prettyCases [(s, l, t)]     = "|" <+> pretty s <+> pretty l <+> t
         prettyCases ((s, l, t): xs) = prettyCases xs $$ "|" <+> pretty s <+> pretty l <+> t -- FIXME can leave space with e.g. => \n begin ...
@@ -218,7 +219,7 @@ instance Pretty Arg where
     pretty (Arg (Second t)) = pretty t
     pretty (Arg (Both s t)) = pretty s <+> colon <+> pretty t
     pretty (PrfArg a a')    = pretty a <+> "|" <+> pretty a'
-    pretty NoArgs           = "FIXME"
+    pretty NoArgs           = undefined
 
 squish :: BinOp -> Bool
 squish Add = True
@@ -264,7 +265,8 @@ instance Pretty Type where
         a (MaybeValF t)          = t <> "?"
         a (T0pF ad)              = "t@ype" <> pretty ad
         a (Vt0pF ad)             = "vt@ype" <> pretty ad
-        a (AtF _ t t')           = t <+> "@" <+> t'
+        a (AtF _ (Just t) t')    = t <+> "@" <+> t'
+        a (AtF _ Nothing t)      = "@" <> t
         a (ProofTypeF _ t t')    = parens (t <+> "|" <+> t')
         a (ConcreteTypeF e)      = pretty e
         a (TupleF _ ts)          = parens (mconcat (punctuate ", " (fmap pretty (reverse ts))))
@@ -286,7 +288,7 @@ instance Pretty Existential where
         where go (Arg (First s))  = pretty s
               go (Arg (Both s t)) = pretty s <+> colon <+> pretty t
               go (Arg (Second t)) = pretty t
-              go _                = "FIXME"
+              go _                = undefined
 
 instance Pretty Universal where
     pretty (Universal [x@PrfArg{}] Nothing Nothing) = lbrace <+> pretty x <+> rbrace -- FIXME universals can now be length-one arguments
@@ -296,7 +298,7 @@ instance Pretty Universal where
         where go (Arg (First s))  = pretty s
               go (Arg (Both s t)) = pretty s <+> colon <+> pretty t
               go (Arg (Second t)) = pretty t
-              go _                = "FIXME"
+              go _                = undefined
 
 instance Pretty ATS where
     pretty (ATS xs) = concatSame (fmap rewriteDecl xs)
@@ -337,8 +339,11 @@ concatSame (x:x':xs)
 ($$) :: Doc -> Doc -> Doc
 x $$ y = align (x <$> y)
 
+lineAlt :: Doc -> Doc -> Doc
+lineAlt = group .* flatAlt
+
 prettyRecord :: (Pretty a) => [(String, a)] -> Doc
-prettyRecord es = group (flatAlt (prettyRecordF True es) (prettyRecordS True es))
+prettyRecord es = lineAlt (prettyRecordF True es) (prettyRecordS True es)
 
 prettyRecordS :: (Pretty a) => Bool -> [(String, a)] -> Doc
 prettyRecordS _ []             = mempty
@@ -356,6 +361,10 @@ prettyRecordF x ((s, t):xs)    = prettyRecordF x xs $$ indent 1 ("," <+> string 
 
 prettyDL :: [DataPropLeaf] -> Doc
 prettyDL []                               = mempty
+prettyDL [DataPropLeaf [] e Nothing]      = indent 2 ("|" <+> pretty e)
+prettyDL [DataPropLeaf [] e (Just e')]    = indent 2 ("|" <+> pretty e <+> "of" <+> pretty e')
+prettyDL (DataPropLeaf [] e Nothing:xs)   = prettyDL xs $$ indent 2 ("|" <+> pretty e)
+prettyDL (DataPropLeaf [] e (Just e'):xs) = prettyDL xs $$ indent 2 ("|" <+> pretty e <+> "of" <+> pretty e')
 prettyDL [DataPropLeaf us e Nothing]      = indent 2 ("|" <+> foldMap pretty us <+> pretty e)
 prettyDL [DataPropLeaf us e (Just e')]    = indent 2 ("|" <+> foldMap pretty us <+> pretty e <+> "of" <+> pretty e')
 prettyDL (DataPropLeaf us e Nothing:xs)   = prettyDL xs $$ indent 2 ("|" <+> foldMap pretty us <+> pretty e)
@@ -389,7 +398,8 @@ prettyHelper c (x:xs) = flatAlt (" " <> x) x : fmap (c <>) xs
 prettyHelper _ x      = x
 
 prettyBody :: Doc -> Doc -> [Doc] -> Doc
-prettyBody c1 c2 = (c1 <>) . align . indent (-1) . cat . (<> pure c2)
+prettyBody c1 c2 [d] = c1 <> d <> c2
+prettyBody c1 c2 ds  = (c1 <>) . align . indent (-1) . cat . (<> pure c2) $ ds
 
 prettyArgsG' :: Doc -> Doc -> Doc -> [Doc] -> Doc
 prettyArgsG' c3 c1 c2 = prettyBody c1 c2 . prettyHelper c3 . reverse
@@ -430,14 +440,14 @@ instance Pretty PreFunction where
     pretty (PreF i si [] us [] rt Nothing Nothing) = pretty i </> fancyU us <+> ":" <> string si </> pretty rt
     pretty (PreF i si [] us as rt Nothing Nothing) = pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si </> pretty rt
     pretty (PreF i si pus us as rt Nothing Nothing) = fancyU pus </> pretty i </> fancyU us </> prettyArgs as <+> ":" <> string si </> pretty rt
-    pretty _ = "FIXME"
+    pretty _ = undefined
 
 instance Pretty DataPropLeaf where
     pretty (DataPropLeaf us e Nothing)   = "|" <+> foldMap pretty (reverse us) <+> pretty e
     pretty (DataPropLeaf us e (Just e')) = "|" <+> foldMap pretty (reverse us) <+> pretty e <+> "of" <+> pretty e'
 
 typeHelper :: [(String, Type)] -> Doc
-typeHelper rs = group (flatAlt ("=" <$> indent 2 (prettyRecord rs)) ("=" <+> prettyRecord rs))
+typeHelper rs = lineAlt ("=" <$> indent 2 (prettyRecord rs)) ("=" <+> prettyRecord rs)
 
 instance Pretty Declaration where
     pretty (AbsType _ s as Nothing)     = "abstype" <+> string s <> prettyArgs as
@@ -486,4 +496,4 @@ instance Pretty Declaration where
     pretty (Stacst _ n t Nothing)       = "stacst" </> pretty n <+> ":" </> pretty t
     pretty (Stacst _ n t (Just e))      = "stacst" </> pretty n <+> ":" </> pretty t <+> "=" </> pretty e
     pretty (PropDef _ s as t)           = "propdef" </> string s <+> prettyArgs as <+> "=" </> pretty t
-    pretty _                            = "FIXME"
+    pretty _                            = undefined

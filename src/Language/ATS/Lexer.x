@@ -16,6 +16,7 @@
                               , lexATS
                               , token_posn
                               , to_string
+                              , get_addendum
                               ) where
 
 import Data.Data (Typeable, Data)
@@ -60,7 +61,7 @@ $br = [\<\>]
 @string = \" ($printable # [\"\\] | @escape_str | $esc_char | \n)* \"
 
 -- Identifiers
-@identifier = $alpha ($alpha | $digit | _ | ! | ')*
+@identifier = ($alpha | _) ($alpha | $digit | _ | ! | ' | \$)*
 
 -- Multi-line comments
 @not_close_paren = (\*+ [^\)] | [^\*] \))
@@ -86,13 +87,15 @@ $br = [\<\>]
 
 @at_brace = \@ ($white | @block_comment)* \{
 
-@operator = "+" | "-" | "*" | "/" | ".." | "!=" | ">=" | "<=" | "==" | "=" | "~" | "%" | "&&" | "||" | ":=" | ".<" | ">." | "<" | ">" | ">>" | "?" | "?!" | "#[" -- TODO context so tilde doesn't follow |
+@operator = "**" | "+" | "-" | "*" | "/" | ".." | "!=" | ">=" | "<=" | "==" | "=" | "~" | "%" | "&&" | "||" | ":=" | ".<" | ">." | "<" | ">" | ">>" | "?" | "?!" | "#[" -- TODO context so tilde doesn't follow
 
 @double_parens = "(" @block_comment ")" | "()"
 @double_braces = "{" @block_comment "}" | "{}"
 @double_brackets = "<" @block_comment ">" | "<>"
 
 @view = v | view
+
+@fixity_decl = "infixr" | "infixl" | "prefix" | "postfix"
 
 tokens :-
 
@@ -197,6 +200,7 @@ tokens :-
     "$list_vt"               { tok (\p s -> Keyword p (KwListLit "_vt")) }
     "fold@"                  { tok (\p s -> Identifier p s) }
     "free@"                  { tok (\p s -> Identifier p s) }
+    @fixity_decl             { tok (\p s -> FixityTok p s) }
     @double_parens           { tok (\p s -> DoubleParenTok p) }
     @double_braces           { tok (\p s -> DoubleBracesTok p) }
     @double_brackets         { tok (\p s -> DoubleBracketTok p) }
@@ -205,13 +209,15 @@ tokens :-
     @func_type               { tok (\p s -> FuncType p s) }
     @bool                    { tok (\p s -> BoolTok p (read (over _head toUpper s)))}
     @time_lit                { tok (\p s -> TimeTok p s) }
-    @integer                 { tok (\p s -> IntTok p (read s)) }
+    @integer                 { tok (\p s -> IntTok p (read s)) } -- FIXME shouldn't fail silenty on overflow
     @float                   { tok (\p s -> FloatTok p (read s)) }
     $br / @ref_call          { tok (\p s -> SpecialBracket p) }
     @at_brace                { tok (\p s -> Operator p "@{") } -- FIXME this is kinda sloppy
     @operator                { tok (\p s -> Operator p s) }
     @signature               { tok (\p s -> SignatureTok p (tail s)) }
     $special                 { tok (\p s -> Special p s) }
+    "effmask_all"            { tok (\p s -> Identifier p s) }
+    "effmask_wrt"            { tok (\p s -> Identifier p s) }
     @identifier / " "        { tok (\p s -> IdentifierSpace p s) }
     @identifier              { tok (\p s -> Identifier p s) }
     @string                  { tok (\p s -> StringTok p s) }
@@ -230,6 +236,9 @@ data Addendum = None
               | Plus
               | Minus
               deriving (Eq, Show, Generic, NFData, Data, Typeable)
+
+get_addendum (Keyword _ (KwVal a)) = a
+get_addendum _ = None
 
 data Keyword = KwFun
              | KwFnx
@@ -330,6 +339,7 @@ data Token = Identifier AlexPosn String
            | DoubleBracesTok AlexPosn
            | DoubleBracketTok AlexPosn
            | SpecialBracket AlexPosn
+           | FixityTok AlexPosn String
            deriving (Eq, Show, Generic, NFData)
 
 instance Pretty Addendum where
@@ -436,7 +446,8 @@ instance Pretty Token where
     pretty DoubleParenTok{} = "()"
     pretty DoubleBracesTok{} = "{}"
     pretty DoubleBracketTok{} = "<>"
-    pretty SpecialBracket{} = "{"
+    pretty SpecialBracket{} = "<"
+    pretty (FixityTok _ s) = string s
 
 to_string (CommentLex _ s) = s
 to_string _ = mempty
@@ -462,6 +473,7 @@ token_posn (DoubleParenTok p) = p
 token_posn (DoubleBracesTok p) = p
 token_posn (DoubleBracketTok p) = p
 token_posn (SpecialBracket p) = p
+token_posn (FixityTok p _) = p
 
 toChar :: String -> Char
 toChar "'\\n'" = '\n'

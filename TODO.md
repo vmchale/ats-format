@@ -19,9 +19,8 @@
 - [ ] fix ambiguities in what's a tuple vs. function call
 - [ ] Make static expressions only work on integers?
 # Bugs
+- [ ] ugly output for `toml-parse.dats`.
 - [ ] simplified types for dependent type declarations (i.e. only sorts?)
-- [ ] overloading non-binary operators
-- [ ] `@` at the beginning of a type (??)
 - [ ] fix parsing of `|` and make arguments list make sense
 - [ ] fixity (`infixr 40 :: @`, `prefix 99 !`)
 - [ ] nasty bug with string indentation
@@ -35,18 +34,16 @@
     val _ = cloptr_free($UN.castvwtp0(g))
   in
 ```
-- [ ] `lam@`
-- [ ] `fix@`
 - [ ] `{i:nat;j:int}`
 - [ ] break on eq rather than `(` in `vtypedef parser(a : vt@ype+) = @{ modify = cstream -<lincloptr1> (cstream, a) }`
 - [ ] `Arg` should include proofs, e.g. `ptr_get0<a> (pf1 | p1)`.
 - [ ] macdef
 - [ ] `assume`
 - [ ] `castfn`
+- [ ] everything [here](https://github.com/githwxi/ATS-Postiats/wiki/type)
 - [ ] `abstype`
 - [ ] `absvtype`
 - [ ] `<>` (aka not-equals)
-- [ ] `infixr`
 - [ ] `$effmask\_wrt` and the like
 - [ ] everything in this list: https://github.com/githwxi/ATS-Postiats/blob/d28486e9fb1954f41521a464d37f6bfba57b7a91/utils/emacs/ats2-mode.el#L270
 - [ ] `list\_vt{int}(0, 1, 2, 3, 4)` (list/array literals)

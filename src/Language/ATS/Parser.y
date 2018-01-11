@@ -16,6 +16,7 @@ import Language.ATS.Lexer ( Token (..)
                           , Addendum (..)
                           , token_posn
                           , to_string
+                          , get_addendum
                           )
 
 import Data.Char (toLower)
@@ -45,7 +46,7 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     if { Keyword $$ KwIf }
     sif { Keyword $$ KwSif }
     stadef { Keyword $$ KwStadef }
-    val { Keyword _ (KwVal $$) }
+    val { $$@(Keyword _ (KwVal _)) }
     prval { Keyword $$ KwPrval }
     var { Keyword $$ KwVar }
     then { Keyword $$ KwThen }
@@ -160,6 +161,7 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     doubleDot { Operator $$ ".." }
     doubleParens { DoubleParenTok $$ }
     doubleBraces { DoubleBracesTok $$ }
+    doubleBrackets { DoubleBracketTok $$ }
     prfTransform { Operator $$ ">>" } -- For types like &a >> a?!
     refType { Special $$ "&" } -- For types like &a
     maybeProof { Operator $$ "?" } -- For types like a?
@@ -170,9 +172,14 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     lineComment { $$@CommentLex{} }
     lspecial { SpecialBracket $$ }
     atbrace { Operator $$ "@{" }
+    exp { Operator $$ "**" }
     mod { Keyword $$ KwMod }
     fixAt { Keyword $$ KwFixAt }
     lambdaAt { Keyword $$ KwLambdaAt }
+    infixr { FixityTok $$ "infixr" }
+    infixl { FixityTok $$ "infixr" }
+    prefix { FixityTok $$ "prefix" }
+    postfix { FixityTok $$ "postfix" }
 
 %%
 
@@ -227,7 +234,8 @@ Type : Name openParen TypeInExpr closeParen { Dependent $1 $3 }
      | view { ViewLiteral None }
      | Existential Type { Ex $1 $2 }
      | Universal Type { ForA $1 $2 }
-     | Type at Type { At $2 $1 $3 }
+     | Type at Type { At $2 (Just $1) $3 }
+     | at Type { At $1 Nothing $2 }
      | openParen Type vbar Type closeParen { ProofType $1 $2 $4 }
      | identifierSpace identifier { Dependent (Unqualified $1) [Named (Unqualified $2)] }
      | openParen TypeIn closeParen { Tuple $1 $2 }
@@ -238,10 +246,6 @@ Type : Name openParen TypeInExpr closeParen { Dependent $1 $3 }
      | dollar {% Left $ Expected $1 "Type" "$" }
 
 FullArgs : Args { $1 }
-
-FunArgs : Arg { Comma $1 Nil }
-        | FunArgs comma Arg { Comma $3 $1 }
-        | FunArgs vbar Arg { Bar $3 $1 }
 
 -- | A comma-separated list of arguments
 Args : Arg { [$1] }
@@ -518,6 +522,7 @@ DataPropLeaves : DataPropLeaf { [$1] }
                | DataPropLeaves DataPropLeaf { $2 : $1 }
                | prval {% Left $ Expected $1 "Constructor" "prval" }
                | var {% Left $ Expected $1 "Constructor" "var" }
+               | val {% Left $ Expected (token_posn $1) "Constructor" "val" }
                | lambda {% Left $ Expected $1 "Constructor" "lam" }
                | llambda {% Left $ Expected $1 "Constructor" "llam" }
                | minus {% Left $ Expected $1 "Constructor" "-" }
@@ -535,6 +540,7 @@ PreFunction : FunName openParen FullArgs closeParen signature Type OptExpression
             | Universals FunName Universals OptTermetric signature Type OptExpression { PreF $2 $5 $1 $3 [] $6 $4 $7 }
             | prval {% Left $ Expected $1 "Function signature" "prval" }
             | var {% Left $ Expected $1 "Function signature" "var" }
+            | val {% Left $ Expected (token_posn $1) "Function signature" "val" }
             | lambda {% Left $ Expected $1 "Function signature" "lam" }
             | llambda {% Left $ Expected $1 "Function signature" "llam" }
             | lsqbracket {% Left $ Expected $1 "Function signature" "[" }
@@ -559,6 +565,8 @@ FunDecl : fun PreFunction { [ Func $1 (Fun $2) ] }
         | extern prfn PreFunction eq {% Left $ Expected $1 "Declaration" "Function body" }
         | lambda {% Left $ Expected $1 "Function declaration" "lam" }
         | llambda {% Left $ Expected $1 "Function declaration" "llam" }
+        | fun fn {% Left $ Expected $2 "Function name" "fn" }
+        | fn fun {% Left $ Expected $2 "Function name" "fun" }
 
 IdentifierOr : identifier { $1 }
              | identifierSpace { $1 }
@@ -594,11 +602,23 @@ TypeDecl : typedef IdentifierOr eq Universals atbrace Records rbrace { RecordTyp
          | sortdef IdentifierOr eq Type { SortDef $1 $2 $4 }
          | AndSort { $1 }
 
+Fixity : infixr { RightFix $1 }
+       | infixl { LeftFix $1 }
+       | prefix { Pre $1 }
+       | postfix { Post $1 }
+
+Operator : identifierSpace { $1 }
+         | exp { "**" }
+
+Operators : Operator { [$1] }
+          | Operators Operator { $2 : $1 }
+          | Operators identifier { $2 : $1 }
+
 -- | Parse a declaration
 Declaration : include string { Include $2 }
             | define { Define $1 }
             | define identifierSpace string { Define ($1 ++ $2 ++ $3) } -- FIXME better approach?
-            | define identifierSpace int { Define ($1 ++ $2 ++ " " ++ show $3) }
+            | define identifierSpace intLit { Define ($1 ++ $2 ++ " " ++ show $3) }
             | cblock { CBlock $1 }
             | lineComment { Comment (to_string $1) }
             | staload underscore eq string { Staload (Just "_") $4 }
@@ -607,8 +627,8 @@ Declaration : include string { Include $2 }
             | extern Declaration { Extern $1 $2 }
             | var Pattern signature Type with PreExpression { Var (Just $4) $2 Nothing (Just $6) } -- FIXME signature is too general.
             | var Pattern signature Type eq PreExpression { Var (Just $4) $2 (Just $6) Nothing }
-            | val Pattern signature Type eq PreExpression { Val $1 (Just $4) $2 $6 }
-            | val Pattern eq Expression { Val $1 Nothing $2 $4 }
+            | val Pattern signature Type eq PreExpression { Val (get_addendum $1) (Just $4) $2 $6 }
+            | val Pattern eq Expression { Val (get_addendum $1) Nothing $2 $4 }
             | var Pattern eq Expression { Var Nothing $2 (Just $4) Nothing }
             | var Pattern signature Type { Var (Just $4) $2 Nothing Nothing }
             | var Pattern eq fixAt IdentifierOr openParen Args closeParen signature Type plainArrow Expression { Var Nothing $2 (Just $ FixAt (PreF (Unqualified $5) $9 [] [] $7 $10 Nothing (Just $12))) Nothing }
@@ -626,6 +646,7 @@ Declaration : include string { Include $2 }
             | symintr Name { SymIntr $1 $2 }
             | stacst IdentifierOr signature Type OptExpression { Stacst $1 (Unqualified $2) $4 $5 }
             | propdef IdentifierOr openParen Args closeParen eq Type { PropDef $1 $2 $4 $7 }
+            | Fixity intLit Operators { FixityDecl $1 (Just $2) $3 }
             | lambda {% Left $ Expected $1 "Declaration" "lam" }
             | llambda {% Left $ Expected $1 "Declaration" "llam" }
             | minus {% Left $ Expected $1 "Declaration" "-" }

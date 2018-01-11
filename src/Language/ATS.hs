@@ -24,6 +24,7 @@ module Language.ATS ( -- * Functions
                     , PreFunction (..)
                     , StaticExpression (..)
                     , Paired (..)
+                    , Fixity (..)
                     -- * Lexical types
                     , Token (..)
                     , AlexPosn (..)

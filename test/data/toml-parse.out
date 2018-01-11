@@ -38,8 +38,7 @@ parser(b) =
           val (y, z): (cstream, a) = g(c)
           val w: b = f(z)
         in
-          (cloptr_free($UN.castvwtp0(f)
-                      ) ; cloptr_free($UN.castvwtp0(g)) ; (y, w))
+          (cloptr_free($UN.castvwtp0(f)); cloptr_free($UN.castvwtp0(g)); (y, w))
         end
       end }
   end
@@ -180,8 +179,9 @@ fun consume_eq() : parser(token) =
       end }
 
 fun consume_identifier() : parser(token) =
-  map(llam x =<lincloptr1> string_tok(x
-                                     ), pre_consume_identifier()) where
+  map( llam x =<lincloptr1> string_tok(x)
+     , pre_consume_identifier()
+     ) where
   { fun pre_consume_identifier() : parser(string) =
       let
         fun loop(input : cstream, data : string) : (cstream, string) =
@@ -214,8 +214,10 @@ fun consume_quoted() : parser(token) =
                 else
                   loop(xs, false, snoc(data, x))
               end
-            | ~stream_vt_nil() => (prerr!("Error: missing \""
-                                         ) ; exit(1) ; ($ldelay(stream_vt_nil), ""))
+            | ~stream_vt_nil() => ( prerr!("Error: missing \"")
+                                  ; exit(1)
+                                  ; ($ldelay(stream_vt_nil), "")
+                                  )
         
         fun data(input : cstream) : (cstream, string) =
           loop(input, false, "")
@@ -225,8 +227,9 @@ fun consume_quoted() : parser(token) =
 
 fun tokenize(input : cstream) : tstream =
   case+ !input of
-    | ~stream_vt_cons (x, xs) => (stream_vt_free(xs
-                                                ) ; $ldelay(stream_vt_nil()))
+    | ~stream_vt_cons (x, xs) => ( stream_vt_free(xs)
+                                 ; $ldelay(stream_vt_nil())
+                                 )
     | ~stream_vt_nil() => $ldelay(stream_vt_nil())
 
 fun display_token(t : token) : void =

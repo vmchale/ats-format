@@ -41,6 +41,8 @@ install:
 
 ci: test
     cabal new-build
+    cabal new-build -w ghc-8.0.2
+    cabal new-build -w ghc-7.10.3
     cabal new-haddock
     cabal new-test
     hlint src app bench test

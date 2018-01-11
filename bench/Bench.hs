@@ -16,5 +16,5 @@ main =
                       ]
                 ]
     where large = readFile "test/data/polyglot.dats"
-          medium = readFile "test/data/filetype.sats"
+          medium = readFile "test/data/toml-parse.dats"
           envFiles = (,) <$> large <*> medium

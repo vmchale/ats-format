@@ -33,10 +33,10 @@ module Language.ATS.Types
     , DataPropLeaf (..)
     , PreFunction (..)
     , Paired (..)
-    , Bifurcated (..)
     , Leaf (..)
     , StaticExpression (..)
     , StaticExpressionF (..)
+    , Fixity (..)
     , rewriteATS
     , rewriteDecl
     -- * Lenses
@@ -52,9 +52,11 @@ import           Data.Maybe               (isJust)
 import           GHC.Generics             (Generic)
 import           Language.ATS.Lexer       (Addendum (..), AlexPosn)
 
-data Bifurcated a = Nil
-                  | Comma a (Bifurcated a)
-                  | Bar a (Bifurcated a)
+data Fixity = RightFix AlexPosn
+            | LeftFix AlexPosn
+            | Pre AlexPosn
+            | Post AlexPosn
+            deriving (Show, Eq, Generic, NFData)
 
 -- | Newtype wrapper containing a list of declarations
 newtype ATS = ATS { unATS :: [Declaration] }
@@ -102,6 +104,9 @@ data Declaration = Func AlexPosn Function
                  | SymIntr AlexPosn Name
                  | Stacst AlexPosn Name Type (Maybe Expression)
                  | PropDef AlexPosn String [Arg] Type
+                 -- uses an 'Int' because you fully deserve what you get if your
+                 -- fixity declarations overflow.
+                 | FixityDecl Fixity (Maybe Int) [String]
                  deriving (Show, Eq, Generic, NFData)
 
 data DataPropLeaf = DataPropLeaf [Universal] Expression (Maybe Expression)
@@ -131,7 +136,7 @@ data Type = Bool
           | MaybeVal Type -- This is just `a?` or the like
           | T0p Addendum -- t@ype
           | Vt0p Addendum -- vt@ype
-          | At AlexPosn Type Type
+          | At AlexPosn (Maybe Type) Type
           | ProofType AlexPosn Type Type -- Aka (prf | val)
           | ConcreteType Expression
           | RefType Type
