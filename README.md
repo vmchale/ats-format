@@ -40,7 +40,7 @@ To install, first install [GHC](https://www.haskell.org/ghc/download.html), then
 
 ```bash
  $ cabal update
- $ cabal new-install ats-format --happy-options='-gcsa' --alex-options='-g' --symlink-bindir ~/.cabal/bin
+ $ cabal new-install ats-format --happy-options='-gcsa' --alex-options='-g' --symlink-bindir ~/.cabal/bin -O2
 ```
 
 ## License

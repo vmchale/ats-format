@@ -450,6 +450,8 @@ instance Pretty Token where
     pretty (FixityTok _ s) = string s
 
 to_string (CommentLex _ s) = s
+to_string (Identifier _ s) = s
+to_string (IdentifierSpace _ s) = s
 to_string _ = mempty
 
 token_posn (Identifier p _) = p

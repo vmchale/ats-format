@@ -32,15 +32,16 @@ parser(b) =
   let
     val g = x.modify
   in
-    @{ modify = llam c =<lincloptr1> 
-      begin
-        let
-          val (y, z): (cstream, a) = g(c)
-          val w: b = f(z)
-        in
-          (cloptr_free($UN.castvwtp0(f)); cloptr_free($UN.castvwtp0(g)); (y, w))
-        end
-      end }
+    @{ modify = llam c =<lincloptr1>
+        
+          begin
+            let
+              val (y, z): (cstream, a) = g(c)
+              val w: b = f(z)
+            in
+              (cloptr_free($UN.castvwtp0(f)); cloptr_free($UN.castvwtp0(g)); (y, w))
+            end
+          end }
   end
 
 extern
@@ -53,16 +54,17 @@ fun pure {a : vtype} (x : a) : parser(a) =
 
 fun chain {a : vtype}{b : vtype} (x : parser(a), y : parser(b)) :
 parser(b) =
-  @{ modify = llam c =<lincloptr1> let
-    val f = x.modify
-    val g = y.modify
-    val (pre_res, _) = f(c)
-    val (res, y) = g(pre_res)
-    val _ = cloptr_free($UN.castvwtp0(f))
-    val _ = cloptr_free($UN.castvwtp0(g))
-  in
-    (res, y)
-  end }
+  @{ modify = llam c =<lincloptr1>
+      let
+        val f = x.modify
+        val g = y.modify
+        val (pre_res, _) = f(c)
+        val (res, y) = g(pre_res)
+        val _ = cloptr_free($UN.castvwtp0(f))
+        val _ = cloptr_free($UN.castvwtp0(g))
+      in
+        (res, y)
+      end }
 
 fun run_parser {a : vtype} (in_stream : cstream, parser : parser(a)) :
 a =

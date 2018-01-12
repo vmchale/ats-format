@@ -1112,20 +1112,20 @@ fun version() : void =
 
 fun help() : void =
   print("polyglot - Count lines of code quickly.
-              
-              \33[36mUSAGE:\33[0m poly [DIRECTORY] ... [OPTION] ...
-              
-              \33[36mFLAGS:\33[0m
-                  -V, --version            show version information
-                  -h, --help               display this help and exit
-                  -e, --exclude            exclude a directory
-                  -p, --parallel           execute in parallel
-                  -t, --no-table           display results in alternate format
-              
-              When no directory is provided poly will execute in the
-              current directory.
-              
-              Bug reports and updates: nest.pijul.com/vamchale/polyglot\n"
+
+\33[36mUSAGE:\33[0m poly [DIRECTORY] ... [OPTION] ...
+
+\33[36mFLAGS:\33[0m
+    -V, --version            show version information
+    -h, --help               display this help and exit
+    -e, --exclude            exclude a directory
+    -p, --parallel           execute in parallel
+    -t, --no-table           display results in alternate format
+
+When no directory is provided poly will execute in the
+current directory.
+
+Bug reports and updates: nest.pijul.com/vamchale/polyglot\n"
        )
 
 fun head(xs : List0(string)) : string =

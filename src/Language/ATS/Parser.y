@@ -114,8 +114,8 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     extfcall { Identifier $$ "extfcall" }
     ldelay { Identifier $$ "ldelay" }
     listVT { Identifier $$ "list_vt" }
-    identifier { Identifier _ $$ }
-    identifierSpace { IdentifierSpace _ $$ }
+    identifier { $$@Identifier{} }
+    identifierSpace { $$@IdentifierSpace{} }
     closeParen { Special $$ ")" }
     openParen { Special $$ "(" }
     signature { SignatureTok _ $$ }
@@ -203,7 +203,7 @@ TypeInExpr : TypeIn { $1 }
 
 -- | Parse a type
 Type : Name openParen TypeInExpr closeParen { Dependent $1 $3 }
-     | identifierSpace openParen TypeInExpr closeParen { Dependent (Unqualified $1) $3 }
+     | identifierSpace openParen TypeInExpr closeParen { Dependent (Unqualified $ to_string $1) $3 }
      | bool { Bool }
      | int { Int }
      | nat { Nat }
@@ -219,7 +219,7 @@ Type : Name openParen TypeInExpr closeParen { Dependent $1 $3 }
      | stringType StaticExpression { DepString $2 }
      | int openParen StaticExpression closeParen { DependentInt $3 }
      | bool openParen StaticExpression closeParen { DependentBool $3 }
-     | identifierSpace { Named (Unqualified $1) }
+     | identifierSpace { Named (Unqualified $ to_string $1) }
      | Name { Named $1 }
      | exclamation Type { Unconsumed $2 }
      | Type mutateArrow Type { FunctionType "->" $1 $3 }
@@ -237,13 +237,14 @@ Type : Name openParen TypeInExpr closeParen { Dependent $1 $3 }
      | Type at Type { At $2 (Just $1) $3 }
      | at Type { At $1 Nothing $2 }
      | openParen Type vbar Type closeParen { ProofType $1 $2 $4 }
-     | identifierSpace identifier { Dependent (Unqualified $1) [Named (Unqualified $2)] }
+     | identifierSpace identifier { Dependent (Unqualified $ to_string $1) [Named (Unqualified $ to_string $2)] }
      | openParen TypeIn closeParen { Tuple $1 $2 }
      | openParen Type closeParen { $2 }
      | int StaticExpression { DependentInt $2 }
      | doubleParens { NoneType $1 }
      | minus {% Left $ Expected $1 "Type" "-" }
      | dollar {% Left $ Expected $1 "Type" "$" }
+     | int identifier openParen {% Left $ Expected (token_posn $2) "Static integer expression" (to_string $2) }
 
 FullArgs : Args { $1 }
 
@@ -253,8 +254,8 @@ Args : Arg { [$1] }
      | Args comma Arg { $3 : $1 }
      | Arg vbar Arg { [ PrfArg $1 $3 ] }
 
-Arg : identifier { Arg (First $1) }
-    | identifier signature Type { Arg (Both $1 $3) }
+Arg : identifier { Arg (First $ to_string $1) }
+    | identifier signature Type { Arg (Both (to_string $1) $3) }
     | underscore { Arg (First "_") }
     | Type { Arg (Second $1) }
     | Expression { Arg (Second (ConcreteType $1)) }
@@ -273,14 +274,14 @@ PatternIn : Pattern { [$1] }
           | PatternIn comma Pattern { $3 : $1 }
 
 -- | Parse a pattern match
-Pattern : identifier { PName $1 [] }
-        | identifierSpace { PName $1 [] }
+Pattern : identifier { PName (to_string $1) [] }
+        | identifierSpace { PName (to_string $1) [] }
         | underscore { Wildcard $1 }
-        | identifier doubleParens { PName ($1 ++ "()") [] }
+        | identifier doubleParens { PName (to_string $1 ++ "()") [] }
         | tilde Pattern { Free $2 }
-        | identifier openParen PatternIn closeParen { PName $1 $3 }
-        | identifier Pattern { PSum $1 $2 }
-        | identifierSpace Pattern { PSum $1 $2 }
+        | identifier openParen PatternIn closeParen { PName (to_string $1) $3 }
+        | identifier Pattern { PSum (to_string $1) $2 }
+        | identifierSpace Pattern { PSum (to_string $1) $2 }
         | openParen PatternIn vbar PatternIn closeParen { Proof $1 $2 $4 }
         | openParen PatternIn closeParen { TuplePattern $2 }
         | Literal { PLiteral $1 }
@@ -322,7 +323,7 @@ LambdaArrow : plainArrow { Plain $1 }
 -- | Expression or named call to an expression
 Expression : PreExpression { $1 }
            | openParen Tuple closeParen { TupleEx $1 $2 }
-           | identifierSpace PreExpression { Call (Unqualified $1) [] [] Nothing [$2] }
+           | identifierSpace PreExpression { Call (Unqualified $ to_string $1) [] [] Nothing [$2] }
            | begin Expression end { Begin $1 $2 }
            | Expression semicolon Expression { Precede $1 $3 }
            | Expression semicolon { $1 }
@@ -331,6 +332,7 @@ Expression : PreExpression { $1 }
            | openParen Expression vbar Expression closeParen { ProofExpr $1 $2 $4 }
            | list_vt lbrace Type rbrace openParen ExpressionIn closeParen { ListLiteral $1 "vt" $3 $6 }
            | list lbrace Type rbrace openParen ExpressionIn closeParen { ListLiteral $1 "" $3 $6 }
+           | begin Expression extern {% Left $ Expected $3 "end" "extern" }
 
 TypeArgs : lbrace Type rbrace { [$2] }
          | lbrace TypeIn rbrace { $2 }
@@ -342,7 +344,7 @@ BracketedArgs : lbracket Type rbracket { [$2] }
               | lbracket TypeIn rbrace { $2 }
 
 Call : Name doubleParens { Call $1 [] [] Nothing [] }
-     | identifierSpace openParen ExpressionPrf closeParen { Call (Unqualified $1) [] [] (fst $3) (snd $3) }
+     | identifierSpace openParen ExpressionPrf closeParen { Call (Unqualified $ to_string $1) [] [] (fst $3) (snd $3) }
      | Name openParen ExpressionPrf closeParen { Call $1 [] [] (fst $3) (snd $3) }
      | Name TypeArgs openParen ExpressionPrf closeParen { Call $1 [] $2 (fst $4) (snd $4) }
      | Name TypeArgs { Call $1 [] $2 Nothing [] }
@@ -350,6 +352,8 @@ Call : Name doubleParens { Call $1 [] [] Nothing [] }
      | Name lspecial TypeIn rbracket openParen ExpressionPrf closeParen { Call $1 $3 [] (fst $6) (snd $6) }
      | Name lspecial TypeIn rbracket { Call $1 $3 [] Nothing [] }
      | raise PreExpression { Call (SpecialName $1 "raise") [] [] Nothing [$2] } -- $raise can have at most one argument
+     | Name openParen ExpressionPrf end {% Left $ Expected $4 ")" "end"}
+     | Name openParen ExpressionPrf else {% Left $ Expected $4 ")" "else"}
 
 StaticArgs : StaticExpression { [$1] }
            | StaticArgs comma StaticExpression { $3 : $1 }
@@ -360,13 +364,13 @@ StaticExpression : Name { StaticVal $1 }
                  | doubleParens { StaticVoid $1 }
                  | boolLit { StaticBool $1 }
                  | sif StaticExpression then StaticExpression else StaticExpression { Sif $2 $4 $6 } -- TODO separate type for static expressions
-                 | identifierSpace { StaticVal (Unqualified $1) }
+                 | identifierSpace { StaticVal (Unqualified $ to_string $1) }
                  | Name openParen StaticArgs closeParen { SCall $1 $3 }
-                 | identifierSpace openParen StaticArgs closeParen { SCall (Unqualified $1) $3 }
+                 | identifierSpace openParen StaticArgs closeParen { SCall (Unqualified $ to_string $1) $3 }
                  | StaticExpression semicolon StaticExpression { SPrecede $1 $3 }
     
 -- | Parse an expression that can be called without parentheses
-PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqualified $1) $3 }
+PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqualified $ to_string $1) $3 }
               | Literal { $1 }
               | Call { $1 }
               | case PreExpression of Case { Case $3 $1 $2 $4 }
@@ -375,7 +379,7 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | UnOp PreExpression { Unary $1 $2 } -- FIXME throw error when we try to negate a string literal/time
               | PreExpression dot Name { Access $2 $1 $3 }
               | PreExpression dot intLit { Access $2 $1 (Unqualified $ show $3) }
-              | PreExpression dot identifierSpace { Access $2 $1 (Unqualified $3) }
+              | PreExpression dot identifierSpace { Access $2 $1 (Unqualified $ to_string $3) }
               | if Expression then Expression { If $2 $4 Nothing}
               | if Expression then Expression else Expression { If $2 $4 (Just $6) }
               | let ATS in end { Let $1 $2 Nothing }
@@ -388,11 +392,11 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | atbrace RecordVal rbrace { RecordValue $1 $2 Nothing }
               | atbrace RecordVal rbrace signature Type { RecordValue $1 $2 (Just $5) }
               | exclamation PreExpression { Deref $1 $2 }
-              | PreExpression mutateArrow identifierSpace mutateEq PreExpression { FieldMutate $2 $1 $3 $5 }
-              | PreExpression mutateArrow identifier mutateEq PreExpression { FieldMutate $2 $1 $3 $5 }
+              | PreExpression mutateArrow identifierSpace mutateEq PreExpression { FieldMutate $2 $1 (to_string $3) $5 }
+              | PreExpression mutateArrow identifier mutateEq PreExpression { FieldMutate $2 $1 (to_string $3) $5 }
               | PreExpression mutateEq PreExpression { Mutate $1 $3 }
               | PreExpression where lbrace Declarations rbrace { WhereExp $1 $4 }
-              | identifierSpace { NamedVal (Unqualified $1) }
+              | identifierSpace { NamedVal (Unqualified $ to_string $1) }
               | Name { NamedVal $1 }
               | lbrace ATS rbrace { Actions $2 }
               | while openParen PreExpression closeParen PreExpression { While $1 $3 $5 }
@@ -406,6 +410,8 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | maybeProof {% Left $ Expected $1 "Expression" "?" }
               | let openParen {% Left $ Expected $1 "Expression" "let (" }
               | let ATS in Expression lineComment {% Left $ Expected (token_posn $5) "end" (take 2 $ to_string $5) }
+              | let ATS in Expression extern {% Left $ Expected $5 "end" "extern" }
+              | let ATS in Expression fun {% Left $ Expected $5 "end" "fun" }
 
 -- | Parse a termetric
 Termetric : openTermetric StaticExpression closeTermetric { ($1, $2) }
@@ -432,15 +438,14 @@ Implementation : FunName doubleParens eq Expression { Implement $2 [] [] $1 [] $
                | Universals FunName Universals openParen FullArgs closeParen eq Expression { Implement $4 $1 $3 $2 $5 $8 }
 
 -- | Parse a function name
-FunName : identifier { Unqualified $1 }
-        | identifier dollar identifier { Functorial $1 $3 }
-        | identifierSpace { Unqualified $1 }
+FunName : IdentifierOr { Unqualified $1 }
+        | identifier dollar identifier { Functorial (to_string $1) (to_string $3) }
 
 -- | Parse a general name
-Name : identifier { Unqualified $1 }
+Name : identifier { Unqualified (to_string $1) }
      | listVT { Unqualified "list_vt" }
-     | dollar identifier dot identifier { Qualified $1 $4 $2 }
-     | dollar identifier dot identifierSpace { Qualified $1 $4 $2 }
+     | dollar identifier dot identifier { Qualified $1 (to_string $4) (to_string $2) }
+     | dollar identifier dot identifierSpace { Qualified $1 (to_string $4) (to_string $2) }
      | dollar effmaskWrt { SpecialName $1 "effmask_wrt" }
      | dollar effmaskAll { SpecialName $1 "effmask_all" }
      | dollar listVT { SpecialName $1 "list_vt" }
@@ -449,34 +454,30 @@ Name : identifier { Unqualified $1 }
      | dollar {% Left $ Expected $1 "Name" "$" }
 
 -- | Parse a list of values in a record
-RecordVal : identifier eq Expression { [($1, $3)] }
-          | identifierSpace eq Expression { [($1, $3)] }
-          | RecordVal comma identifier eq Expression { ($3, $5) : $1 }
-          | RecordVal comma identifierSpace eq Expression { ($3, $5) : $1 }
+RecordVal : IdentifierOr eq Expression { [($1, $3)] }
+          | RecordVal comma IdentifierOr eq Expression { ($3, $5) : $1 }
 
 -- | Parse a list of types in a record
-Records : identifier eq Type { [($1, $3)] }
-        | identifierSpace eq Type { [($1, $3)] }
-        | Records comma identifier eq Type { ($3, $5) : $1 }
-        | Records comma identifierSpace eq Type { ($3, $5) : $1 }
+Records : IdentifierOr eq Type { [($1, $3)] }
+        | Records comma IdentifierOr eq Type { ($3, $5) : $1 }
 
-IdentifiersIn : identifier { [$1] }
-              | IdentifiersIn comma identifier { $3 : $1 }
+IdentifiersIn : IdentifierOr { [$1] }
+              | IdentifiersIn comma IdentifierOr { $3 : $1 }
 
 OfType : { Nothing }
        | of Type { Just $2 }
 
 -- | Parse a constructor for a sum type
-SumLeaf : vbar Universals identifier { Leaf $2 $3 [] Nothing }
-        | vbar Universals identifierSpace of Type { Leaf $2 $3 [] (Just $5) }
+SumLeaf : vbar Universals identifier { Leaf $2 (to_string $3) [] Nothing }
+        | vbar Universals identifierSpace of Type { Leaf $2 (to_string $3) [] (Just $5) }
         | vbar Universals IdentifierOr openParen IdentifiersIn closeParen OfType { Leaf $2 $3 $5 $7 }
 
 -- | Parse all constructors of a sum type
 Leaves : SumLeaf { [$1] }
        | Leaves SumLeaf { $2 : $1 }
-       | Universals identifierSpace of Type { [Leaf $1 $2 [] (Just $4)] }
-       | Universals identifier { [Leaf $1 $2 [] Nothing] }
-       | Universals identifier openParen IdentifiersIn closeParen OfType { [Leaf $1 $2 $4 $6] } -- FIXME should take any static expression.
+       | Universals identifierSpace of Type { [Leaf $1 (to_string $2) [] (Just $4)] }
+       | Universals identifier { [Leaf $1 (to_string $2) [] Nothing] }
+       | Universals identifier openParen IdentifiersIn closeParen OfType { [Leaf $1 (to_string $2) $4 $6] } -- FIXME should take any static expression.
        | dollar {% Left $ Expected $1 "|" "$" }
 
 Universals : { [] }
@@ -567,9 +568,10 @@ FunDecl : fun PreFunction { [ Func $1 (Fun $2) ] }
         | llambda {% Left $ Expected $1 "Function declaration" "llam" }
         | fun fn {% Left $ Expected $2 "Function name" "fn" }
         | fn fun {% Left $ Expected $2 "Function name" "fun" }
+        | extern FunDecl identifier openParen {% Left $ Expected (token_posn $3) "Static integer expression" (to_string $3) }
 
-IdentifierOr : identifier { $1 }
-             | identifierSpace { $1 }
+IdentifierOr : identifier { to_string $1 }
+             | identifierSpace { to_string $1 }
 
 MaybeType : eq Type { Just $2 }
           | { Nothing }
@@ -607,18 +609,18 @@ Fixity : infixr { RightFix $1 }
        | prefix { Pre $1 }
        | postfix { Post $1 }
 
-Operator : identifierSpace { $1 }
+Operator : identifierSpace { to_string $1 }
          | exp { "**" }
 
 Operators : Operator { [$1] }
           | Operators Operator { $2 : $1 }
-          | Operators identifier { $2 : $1 }
+          | Operators identifier { to_string $2 : $1 }
 
 -- | Parse a declaration
 Declaration : include string { Include $2 }
             | define { Define $1 }
-            | define identifierSpace string { Define ($1 ++ $2 ++ $3) } -- FIXME better approach?
-            | define identifierSpace intLit { Define ($1 ++ $2 ++ " " ++ show $3) }
+            | define identifierSpace string { Define ($1 ++ to_string $2 ++ $3) } -- FIXME better approach?
+            | define identifierSpace intLit { Define ($1 ++ to_string $2 ++ " " ++ show $3) }
             | cblock { CBlock $1 }
             | lineComment { Comment (to_string $1) }
             | staload underscore eq string { Staload (Just "_") $4 }
@@ -639,7 +641,7 @@ Declaration : include string { Include $2 }
             | implement Implementation { Impl [] $2 }
             | implement openParen Args closeParen Implementation { Impl $3 $5 }
             | overload BinOp with Name { OverloadOp $1 $2 $4 }
-            | overload identifierSpace with Name { OverloadIdent $1 $2 $4 }
+            | overload identifierSpace with Name { OverloadIdent $1 (to_string $2) $4 }
             | assume Name openParen Args closeParen eq Expression { Assume $2 $4 $7 }
             | tkindef IdentifierOr eq string { TKind $1 (Unqualified $2) $4 }
             | TypeDecl { $1 }
@@ -655,11 +657,12 @@ Declaration : include string { Include $2 }
             | prfTransform {% Left $ Expected $1 "Declaration" ">>" }
             | maybeProof {% Left $ Expected $1 "Declaration" "?" }
             | end {% Left $ Expected $1 "Declaration" "end" }
+            | identifier {% Left $ Expected (token_posn $1) "Declaration" (to_string $1) }
 
 {
 
 data ATSError a = Expected AlexPosn a a
-                | Unknown Token
+                | Unknown Token -- FIXME error type for expression when a static expression was expected (?)
                 deriving (Eq, Show, Generic, NFData)
 
 instance Pretty AlexPosn where

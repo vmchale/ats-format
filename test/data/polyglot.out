@@ -264,21 +264,18 @@ fun make_table(isc : source_contents) : string =
   + maybe_table("Ion", isc.ion) + maybe_table("Java", isc.java)
   + maybe_table("JavaScript", isc.javascript) + maybe_table( "Julius"
                                                            , isc.julius
-                                                           ) + maybe_table("Julia", isc.julia) + maybe_table( "Jupyter"
-                                                                                                            , isc.jupyter
-                                                                                                            )
-  + maybe_table("Justfile", isc.justfile) + maybe_table( "Kotlin"
-                                                       , isc.kotlin
-                                                       ) + maybe_table("LALRPOP", isc.lalrpop) + maybe_table( "Lex"
-                                                                                                            , isc.lex
-                                                                                                            )
-  + maybe_table("LLVM", isc.llvm) + maybe_table("Lua", isc.lua)
-  + maybe_table("Lucius", isc.lucius) + maybe_table("M4", isc.m4)
-  + maybe_table("Madlang", isc.madlang) + maybe_table( "Makefile"
-                                                     , isc.makefile
-                                                     ) + maybe_table("Margaret", isc.margaret) + maybe_table( "Markdown"
-                                                                                                            , isc.markdown
-                                                                                                            )
+                                                           ) + maybe_table("Julia", isc.julia)
+  + maybe_table("Jupyter", isc.jupyter) + maybe_table( "Justfile"
+                                                     , isc.justfile
+                                                     ) + maybe_table("Kotlin", isc.kotlin) + maybe_table( "LALRPOP"
+                                                                                                        , isc.lalrpop
+                                                                                                        )
+  + maybe_table("Lex", isc.lex) + maybe_table("LLVM", isc.llvm)
+  + maybe_table("Lua", isc.lua) + maybe_table("Lucius", isc.lucius)
+  + maybe_table("M4", isc.m4) + maybe_table("Madlang", isc.madlang)
+  + maybe_table("Makefile", isc.makefile) + maybe_table( "Margaret"
+                                                       , isc.margaret
+                                                       ) + maybe_table("Markdown", isc.markdown)
   + maybe_table("Mercury", isc.mercury) + maybe_table("Nim", isc.nim)
   + maybe_table("Nix", isc.nix) + maybe_table( "Objective C"
                                              , isc.objective_c
@@ -310,32 +307,30 @@ fun make_output(isc : source_contents) : string =
                                                                               , isc.c.lines
                                                                               ) + maybe_string( "C Header"
                                                                                               , isc.header.lines
-                                                                                              ) + maybe_string( "C++"
-                                                                                                              , isc.cpp.lines
-                                                                                                              )
-               + maybe_string("C++ Header", isc.cpp_header.lines) + maybe_string( "C#"
-                                                                                , isc.csharp.lines
-                                                                                ) + maybe_string( "COBOL"
-                                                                                                , isc.cobol.lines
-                                                                                                ) + maybe_string( "Coq"
-                                                                                                                , isc.coq.lines
-                                                                                                                )
-               + maybe_string("Elixir", isc.elixir.lines) + maybe_string( "Elm"
-                                                                        , isc.elm.lines
-                                                                        ) + maybe_string("Erlang", isc.erlang.lines)
-               + maybe_string("F#", isc.fsharp.lines) + maybe_string( "Fortran"
-                                                                    , isc.fortran.lines
-                                                                    ) + maybe_string("Go", isc.go.lines)
-               + maybe_string("Haskell", isc.haskell.lines) + maybe_string( "Idris"
-                                                                          , isc.idris.lines
-                                                                          ) + maybe_string("Kotline", isc.kotlin.lines)
-               + maybe_string("Java", isc.java.lines) + maybe_string( "Julia"
-                                                                    , isc.julia.lines
-                                                                    ) + maybe_string("Lua", isc.lua.lines)
-               + maybe_string("Margaret", isc.margaret.lines) + maybe_string( "Mercury"
-                                                                            , isc.mercury.lines
-                                                                            ) + maybe_string("Nim", isc.nim.lines)
-               + maybe_string("Objective C", isc.objective_c.lines)
+                                                                                              )
+               + maybe_string("C++", isc.cpp.lines) + maybe_string( "C++ Header"
+                                                                  , isc.cpp_header.lines
+                                                                  ) + maybe_string("C#", isc.csharp.lines)
+               + maybe_string("COBOL", isc.cobol.lines) + maybe_string( "Coq"
+                                                                      , isc.coq.lines
+                                                                      ) + maybe_string("Elixir", isc.elixir.lines)
+               + maybe_string("Elm", isc.elm.lines) + maybe_string( "Erlang"
+                                                                  , isc.erlang.lines
+                                                                  ) + maybe_string("F#", isc.fsharp.lines)
+               + maybe_string("Fortran", isc.fortran.lines) + maybe_string( "Go"
+                                                                          , isc.go.lines
+                                                                          ) + maybe_string("Haskell", isc.haskell.lines)
+               + maybe_string("Idris", isc.idris.lines) + maybe_string( "Kotline"
+                                                                      , isc.kotlin.lines
+                                                                      ) + maybe_string("Java", isc.java.lines)
+               + maybe_string("Julia", isc.julia.lines) + maybe_string( "Lua"
+                                                                      , isc.lua.lines
+                                                                      ) + maybe_string("Margaret", isc.margaret.lines)
+               + maybe_string("Mercury", isc.mercury.lines) + maybe_string( "Nim"
+                                                                          , isc.nim.lines
+                                                                          ) + maybe_string( "Objective C"
+                                                                                          , isc.objective_c.lines
+                                                                                          )
                + maybe_string("OCaml", isc.ocaml.lines) + maybe_string( "Perl"
                                                                       , isc.perl.lines
                                                                       ) + maybe_string("Pony", isc.pony.lines)
@@ -354,18 +349,16 @@ fun make_output(isc : source_contents) : string =
                                 + maybe_string("Vimscript", isc.vimscript.lines)
                                 ) + with_nonempty( "\n\33[33mDocumentation:\33[0m\n"
                                                  , maybe_string("Markdown", isc.markdown.lines)
-                                                 + maybe_string("Plaintext", isc.plaintext.lines) + maybe_string( "TeX"
-                                                                                                                , isc.tex.lines
-                                                                                                                )
+                                                 + maybe_string("Plaintext", isc.plaintext.lines)
+                                                 + maybe_string("TeX", isc.tex.lines)
                                                  ) + with_nonempty( "\n\33[33mConfiguration:\33[0m\n"
                                                                   , maybe_string("Cabal", isc.cabal.lines)
                                                                   + maybe_string( "Cabal Project"
                                                                                 , isc.cabal_project.lines
                                                                                 ) + maybe_string( "Dhall"
                                                                                                 , isc.dhall.lines
-                                                                                                ) + maybe_string( "iPKG"
-                                                                                                                , isc.ipkg.lines
-                                                                                                                )
+                                                                                                )
+                                                                  + maybe_string("iPKG", isc.ipkg.lines)
                                                                   + maybe_string("TOML", isc.toml.lines)
                                                                   + maybe_string("YAML", isc.yaml.lines)
                                                                   ) + with_nonempty( "\n\33[33mShell:\33[0m\n"
@@ -374,9 +367,8 @@ fun make_output(isc : source_contents) : string =
                                                                                                  )
                                                                                    + maybe_string( "Batch"
                                                                                                  , isc.batch.lines
-                                                                                                 ) + maybe_string( "Ion"
-                                                                                                                 , isc.ion.lines
-                                                                                                                 )
+                                                                                                 )
+                                                                                   + maybe_string("Ion", isc.ion.lines)
                                                                                    + maybe_string( "PowerShell"
                                                                                                  , isc.powershell.lines
                                                                                                  )
@@ -391,19 +383,17 @@ fun make_output(isc : source_contents) : string =
                  ) + with_nonempty( "\n\33[33mWeb:\33[0m\n"
                                   , maybe_string("Cassius", isc.cassius.lines) + maybe_string( "CSS"
                                                                                              , isc.css.lines
-                                                                                             ) + maybe_string( "Hamlet"
-                                                                                                             , isc.hamlet.lines
-                                                                                                             )
-                                  + maybe_string("HTML", isc.html.lines) + maybe_string( "JavaScript"
-                                                                                       , isc.javascript.lines
-                                                                                       ) + maybe_string( "Julius"
-                                                                                                       , isc.julius.lines
-                                                                                                       )
-                                  + maybe_string("Lucius", isc.lucius.lines)
+                                                                                             )
+                                  + maybe_string("Hamlet", isc.hamlet.lines) + maybe_string( "HTML"
+                                                                                           , isc.html.lines
+                                                                                           )
+                                  + maybe_string("JavaScript", isc.javascript.lines)
+                                  + maybe_string("Julius", isc.julius.lines) + maybe_string( "Lucius"
+                                                                                           , isc.lucius.lines
+                                                                                           )
                                   ) + with_nonempty( "\n\33[33mHardware:\33[0m\n"
-                                                   , maybe_string("Verilog", isc.verilog.lines) + maybe_string( "VHDL"
-                                                                                                              , isc.vhdl.lines
-                                                                                                              )
+                                                   , maybe_string("Verilog", isc.verilog.lines)
+                                                   + maybe_string("VHDL", isc.vhdl.lines)
                                                    ) + with_nonempty( "\n\33[33mNotebooks:\33[0m\n"
                                                                     , maybe_string("Jupyter", isc.jupyter.lines)
                                                                     ) + with_nonempty( "\n\33[33mOther:\33[0m\n"
@@ -659,10 +649,8 @@ fun free_pl(pl : pl_type) : void =
 fun match_keywords { m : nat | m <= 10 } ( keys : list(string, m)
                                          , word : string
                                          ) : bool =
-  list_foldright_cloref( keys
-                       , lam (next, acc) =<cloref1> acc || eq_string_string(next, word)
-                       , false
-                       )
+  list_foldright_cloref(keys, lam (next, acc) =<cloref1> acc
+                       || eq_string_string(next, word), false)
 
 // TODO use list_vt{int}(0, 1, 2, 3, 4) instead?
 // helper function for check_keywords
@@ -704,7 +692,9 @@ fun step_keyword( size : file
                                                      )
                                           )
         in
-          if match_keywords(verilog_keywords, word) then
+          if match_keywords( verilog_keywords
+                           , word
+                           ) then
             verilog(size)
           else
             if let
@@ -771,7 +761,8 @@ fun check_keywords(s : string, size : file, ext : string) : pl_type =
         var viewstream = $EXTRA.streamize_fileref_word(x)
         val result = stream_vt_foldleft_cloptr( viewstream
                                               , init
-                                              , lam (acc, next) => step_keyword(size, acc, next, ext)
+                                              , lam (acc, next) =>
+                                                  step_keyword(size, acc, next, ext)
                                               )
         val _ = fileref_close(x)
       in
@@ -1007,13 +998,14 @@ and flow_stream( s : string
                ) : source_contents =
   let
     var files = streamize_dirname_fname(s)
-    var ffiles = stream_vt_filter_cloptr( files
-                                        , lam x => not(bad_dir(x, excludes))
-                                        )
+    var ffiles = stream_vt_filter_cloptr(files, lam x => not(bad_dir( x
+                                                                    , excludes
+                                                                    )))
   in
     stream_vt_foldleft_cloptr( ffiles
                              , init
-                             , lam (acc, next) => step_stream(acc, s + "/" + next, next, excludes)
+                             , lam (acc, next) =>
+                                 step_stream(acc, s + "/" + next, next, excludes)
                              )
   end
 
@@ -1111,11 +1103,12 @@ fun map_stream( acc : source_contents
               ) : source_contents =
   list_foldleft_cloref( includes
                       , acc
-                      , lam (acc, next) => if test_file_exists(next) || next = "" then
-                        step_stream(acc, next, next, excludes)
-                      else
-                        (prerr("\33[31mError:\33[0m directory '" + next
-                        + "' does not exist\n") ; exit(1) ; acc)
+                      , lam (acc, next) =>
+                          if test_file_exists(next) || next = "" then
+                            step_stream(acc, next, next, excludes)
+                          else
+                            (prerr("\33[31mError:\33[0m directory '" + next
+                            + "' does not exist\n") ; exit(1) ; acc)
                       )
 
 fun is_flag(s : string) : bool =
@@ -1211,20 +1204,20 @@ fun version() : void =
 
 fun help() : void =
   print("polyglot - Count lines of code quickly.
-                
-                \33[36mUSAGE:\33[0m poly [DIRECTORY] ... [OPTION] ...
-                
-                \33[36mFLAGS:\33[0m
-                    -V, --version            show version information
-                    -h, --help               display this help and exit
-                    -e, --exclude            exclude a directory
-                    -p, --parallel           execute in parallel
-                    -t, --no-table           display results in alternate format
-                
-                When no directory is provided poly will execute in the
-                current directory.
-                
-                Bug reports and updates: nest.pijul.com/vamchale/polyglot\n")
+
+\33[36mUSAGE:\33[0m poly [DIRECTORY] ... [OPTION] ...
+
+\33[36mFLAGS:\33[0m
+    -V, --version            show version information
+    -h, --help               display this help and exit
+    -e, --exclude            exclude a directory
+    -p, --parallel           execute in parallel
+    -t, --no-table           display results in alternate format
+
+When no directory is provided poly will execute in the
+current directory.
+
+Bug reports and updates: nest.pijul.com/vamchale/polyglot\n")
 
 fun head(xs : List0(string)) : string =
   case+ xs of
