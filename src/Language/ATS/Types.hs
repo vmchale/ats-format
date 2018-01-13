@@ -69,7 +69,8 @@ data Leaf = Leaf { _constructorUniversals :: [Universal], name :: String, constr
 data Declaration = Func AlexPosn Function
                  | Impl [Arg] Implementation
                  | ProofImpl Implementation -- primplmnt -- TODO add args
-                 | Val Addendum (Maybe Type) Pattern Expression -- TODO expression should be optional?
+                 | Val Addendum (Maybe Type) Pattern Expression
+                 | StaVal [Universal] String Type
                  | PrVal Pattern Expression
                  | Var (Maybe Type) Pattern (Maybe Expression) (Maybe Expression) -- TODO AlexPosn
                  | AndDecl (Maybe Type) Pattern Expression

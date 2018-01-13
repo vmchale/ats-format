@@ -92,14 +92,14 @@ fun line_count(s : string, pre : Option(string)) : file =
 
 // Pad a string of bounded length on the right by adding spaces.
 fnx right_pad { k : int | k >= 0 }{ m : int | m <= k } .<k>.
-(s : string(m), n : int(k)) : string =
+  (s : string(m), n : int(k)) : string =
   case+ length(s) < n of
     | true when n > 0 => right_pad(s, n - 1) + " "
     | _ => s
 
 // Pad a string on the left by adding spaces.
 fnx left_pad { k : int | k >= 0 } .<k>. (s : string, n : int(k)) :
-string =
+  string =
   case+ length(s) < n of
     | true when n > 0 => " " + left_pad(s, n - 1)
     | _ => s
@@ -422,7 +422,7 @@ fun make_output(isc : source_contents) : string =
                                                                                      )
 
 fun add_contents(x : source_contents, y : source_contents) :
-source_contents =
+  source_contents =
   let
     var next = @{ rust = x.rust + y.rust, haskell = x.haskell
     + y.haskell, ats = x.ats + y.ats, python = x.python
@@ -470,7 +470,7 @@ source_contents =
 
 // This is the step function used when streaming directory contents. 
 fun adjust_contents(prev : source_contents, scf : pl_type) :
-source_contents =
+  source_contents =
   let
     val sc_r = ref<source_contents>(prev)
     val _ = case+ scf of
@@ -1127,7 +1127,7 @@ fun process_excludes(s : string, acc : command_line) : command_line =
   end
 
 fun process(s : string, acc : command_line, is_first : bool) :
-command_line =
+  command_line =
   let
     val acc_r = ref<command_line>(acc)
     val () = if is_flag(s) then
@@ -1164,12 +1164,12 @@ command_line =
   end
 
 fnx get_cli { n : int | n >= 1 }{ m : nat | m < n } .<n-m>.
-( argc : int(n)
-, argv : !argv(n)
-, current : int(m)
-, prev_is_exclude : bool
-, acc : command_line
-) : command_line =
+  ( argc : int(n)
+  , argv : !argv(n)
+  , current : int(m)
+  , prev_is_exclude : bool
+  , acc : command_line
+  ) : command_line =
   let
     var arg = argv[current]
   in
@@ -1253,7 +1253,7 @@ int ncpu() {
 #define NCPU 4
 
 fun apportion(includes : List0(string)) :
-(List0(string), List0(string)) =
+  (List0(string), List0(string)) =
   let
     var n = length(includes) / 2
     val (p, q) = list_split_at(includes, n)
@@ -1263,7 +1263,7 @@ fun apportion(includes : List0(string)) :
 
 // TODO maybe make a parallel fold?
 fun threads(includes : List0(string), excludes : List0(string)) :
-source_contents =
+  source_contents =
   let
     val chan = channel_make<source_contents>(2)
     val chan2 = channel_ref(chan)

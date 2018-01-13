@@ -28,7 +28,7 @@ fun stop_plain_string(c : char) : bool =
     | _ => false
 
 fun map {a : vtype}{b : vtype} (f : a -<lincloptr1> b, x : parser(a)) :
-parser(b) =
+  parser(b) =
   let
     val g = x.modify
   in
@@ -53,7 +53,7 @@ fun pure {a : vtype} (x : a) : parser(a) =
   @{ modify = llam c =<lincloptr1> (c, x) }
 
 fun chain {a : vtype}{b : vtype} (x : parser(a), y : parser(b)) :
-parser(b) =
+  parser(b) =
   @{ modify = llam c =<lincloptr1>
       let
         val f = x.modify
@@ -67,7 +67,7 @@ parser(b) =
       end }
 
 fun run_parser {a : vtype} (in_stream : cstream, parser : parser(a)) :
-a =
+  a =
   let
     val g = parser.modify
     val (s, z) = g(in_stream)
@@ -203,7 +203,7 @@ fun consume_quoted() : parser(token) =
   { fun pre_consume_quoted() : parser(string) =
       let
         fun loop(input : cstream, is_escaped : bool, data : string) :
-        (cstream, string) =
+          (cstream, string) =
           case+ !input of
             | ~stream_vt_cons ('\\', xs) => loop(xs, true, data)
             | ~stream_vt_cons (x, xs) => 

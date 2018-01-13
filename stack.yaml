@@ -1,10 +1,10 @@
 ---
-resolver: lts-10.2
+resolver: lts-10.3
 packages:
   - '.'
 extra-deps:
   - ansi-wl-pprint-0.6.8.1
-  - htoml-megaparsec-1.0.1.12
+  - htoml-megaparsec-1.1.0.1
   - composition-prelude-0.1.1.4
   - dirstream-1.0.3
   - hspec-dirstream-0.1.0.1

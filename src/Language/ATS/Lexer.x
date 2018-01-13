@@ -426,28 +426,28 @@ instance Pretty Keyword where
     pretty (KwListLit s) = "list" <> string s
 
 instance Pretty Token where
-    pretty (Identifier _ s) = string s
-    pretty (IdentifierSpace _ s) = string s
+    pretty (Identifier _ s) = text s
+    pretty (IdentifierSpace _ s) = text s
     pretty (Keyword _ kw) = pretty kw
-    pretty (BoolTok _ b) = string $ over _head toLower (show b)
+    pretty (BoolTok _ b) = text $ over _head toLower (show b)
     pretty (IntTok _ i) = pretty i
     pretty (FloatTok _ x) = pretty x
     pretty (CharTok _ c) = squotes (pretty c)
-    pretty (StringTok _ s) = dquotes (string s)
-    pretty (Special _ s) = string s
+    pretty (StringTok _ s) = dquotes (text s)
+    pretty (Special _ s) = text s
     pretty CBlockLex{} = "%{"
-    pretty (Arrow _ s) = string s
-    pretty (CommentLex _ s) = string $ take 2 s
-    pretty (FuncType _ s) = string s
-    pretty (TimeTok _ s) = string s
-    pretty (SignatureTok _ s) = string s
-    pretty (Operator _ s) = string s
+    pretty (Arrow _ s) = text s
+    pretty (CommentLex _ s) = text $ take 2 s
+    pretty (FuncType _ s) = text s
+    pretty (TimeTok _ s) = text s
+    pretty (SignatureTok _ s) = ":" <> text s
+    pretty (Operator _ s) = text s
     pretty (MacroBlock _ s) = "#"
     pretty DoubleParenTok{} = "()"
     pretty DoubleBracesTok{} = "{}"
     pretty DoubleBracketTok{} = "<>"
     pretty SpecialBracket{} = "<"
-    pretty (FixityTok _ s) = string s
+    pretty (FixityTok _ s) = text s
 
 to_string (CommentLex _ s) = s
 to_string (Identifier _ s) = s

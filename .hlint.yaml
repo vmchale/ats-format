@@ -13,6 +13,7 @@
 - error: {lhs: "concatMap", rhs: "(=<<)", name: "Generalize concatMap"}
 - error: {lhs: "f >> pure ()", rhs: "void f", name: "Use void"}
 - error: {lhs: "group (flatAlt a b)", rhs: "lineAlt a b", name: "Use lineAlt"}
+- error: {lhs: "lineAlt (a <$> indent 2 b) (a <+> b)", rhs: "a <#> b", name: "Use <#>"}
 - ignore: {name: Use <$>, within: [Language.ATS.PrettyPrint]}
 - ignore: {name: Unused LANGUAGE pragma, within: [Language.ATS.PrettyPrint]}
 - ignore: {name: Functor law, within: [Language.ATS.PrettyPrint]}

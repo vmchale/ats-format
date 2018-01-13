@@ -1,5 +1,5 @@
 name:                ats-format
-version:             0.1.0.26
+version:             0.1.0.27
 synopsis:            A source-code formatter for ATS
 description:         An opinionated source-code formatter for [ATS](http://www.ats-lang.org/).
 homepage:            https://hub.darcs.net/vmchale/ats-format#readme
@@ -54,8 +54,7 @@ library
                      , optparse-applicative
                      , ansi-terminal
                      , composition-prelude >= 0.1.1.2
-                     , htoml-megaparsec
-                     , megaparsec
+                     , htoml-megaparsec >= 1.1.0.0
                      , unordered-containers
                      , text
                      , directory

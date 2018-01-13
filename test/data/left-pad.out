@@ -12,7 +12,7 @@ fun left_pad { p, l : nat | p > 0 && l > 0 } ( pad : ssize_t(p)
 
 extern
 fun {t : t@ype} fill_list {n : nat} (size : ssize_t(n), c : t) :
-list_vt(t, n)
+  list_vt(t, n)
 
 implement {t} fill_list {n} (size, c) =
   let

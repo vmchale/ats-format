@@ -118,6 +118,7 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     identifierSpace { $$@IdentifierSpace{} }
     closeParen { Special $$ ")" }
     openParen { Special $$ "(" }
+    colon { SignatureTok $$ "" }
     signature { SignatureTok _ $$ }
     comma { Special $$ "," }
     percent { Operator $$ "%" }
@@ -255,7 +256,7 @@ Args : Arg { [$1] }
      | Arg vbar Arg { [ PrfArg $1 $3 ] }
 
 Arg : identifier { Arg (First $ to_string $1) }
-    | identifier signature Type { Arg (Both (to_string $1) $3) }
+    | identifier colon Type { Arg (Both (to_string $1) $3) }
     | underscore { Arg (First "_") }
     | Type { Arg (Second $1) }
     | Expression { Arg (Second (ConcreteType $1)) }
@@ -328,7 +329,7 @@ Expression : PreExpression { $1 }
            | Expression semicolon Expression { Precede $1 $3 }
            | Expression semicolon { $1 }
            | openParen Expression closeParen { $2 }
-           | Expression signature Type { TypeSignature $1 $3 }
+           | Expression colon Type { TypeSignature $1 $3 } -- TODO is a more general expression sensible?
            | openParen Expression vbar Expression closeParen { ProofExpr $1 $2 $4 }
            | list_vt lbrace Type rbrace openParen ExpressionIn closeParen { ListLiteral $1 "vt" $3 $6 }
            | list lbrace Type rbrace openParen ExpressionIn closeParen { ListLiteral $1 "" $3 $6 }
@@ -390,7 +391,7 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | viewAt PreExpression { ViewAt $1 $2 }
               | PreExpression at PreExpression { AtExpr $1 $3 }
               | atbrace RecordVal rbrace { RecordValue $1 $2 Nothing }
-              | atbrace RecordVal rbrace signature Type { RecordValue $1 $2 (Just $5) }
+              | atbrace RecordVal rbrace colon Type { RecordValue $1 $2 (Just $5) }
               | exclamation PreExpression { Deref $1 $2 }
               | PreExpression mutateArrow identifierSpace mutateEq PreExpression { FieldMutate $2 $1 (to_string $3) $5 }
               | PreExpression mutateArrow identifier mutateEq PreExpression { FieldMutate $2 $1 (to_string $3) $5 }
@@ -423,7 +424,7 @@ Existential : lsqbracket Args vbar Expression rsqbracket { Existential $2 Nothin
             | lsqbracket Args rsqbracket { Existential $2 Nothing Nothing }
             | openExistential Args rsqbracket { Existential $2 Nothing Nothing }
             | openExistential Args vbar Expression rsqbracket { Existential $2 Nothing (Just $4) }
-            | lsqbracket Args signature Type rsqbracket { Existential $2 (Just $4) Nothing } -- FIXME arguments should include more than just ':'
+            | lsqbracket Args colon Type rsqbracket { Existential $2 (Just $4) Nothing } -- FIXME arguments should include more than just ':'
             | lsqbracket Expression rsqbracket { Existential [] Nothing (Just $2) }
             
 -- | Parse a universal quantifier on a type
@@ -532,13 +533,16 @@ DataPropLeaves : DataPropLeaf { [$1] }
                | prfTransform {% Left $ Expected $1 "Constructor" ">>" }
                | maybeProof {% Left $ Expected $1 "Constructor" "?" }
 
+Signature : signature { $1 }
+          | colon { "" }
+
 -- | Parse a type signature and optional function body
-PreFunction : FunName openParen FullArgs closeParen signature Type OptExpression { (PreF $1 $5 [] [] $3 $6 Nothing $7) }
-            | FunName Universals OptTermetric signature Type OptExpression { PreF $1 $4 [] $2 [NoArgs] $5 $3 $6 }
-            | FunName Universals OptTermetric doubleParens signature Type OptExpression { PreF $1 $5 [] $2 [] $6 $3 $7 }
-            | FunName Universals OptTermetric openParen FullArgs closeParen signature Type OptExpression { PreF $1 $7 [] $2 $5 $8 $3 $9 }
-            | Universals FunName Universals OptTermetric openParen FullArgs closeParen signature Type OptExpression { PreF $2 $8 $1 $3 $6 $9 $4 $10 }
-            | Universals FunName Universals OptTermetric signature Type OptExpression { PreF $2 $5 $1 $3 [] $6 $4 $7 }
+PreFunction : FunName openParen FullArgs closeParen Signature Type OptExpression { (PreF $1 $5 [] [] $3 $6 Nothing $7) }
+            | FunName Universals OptTermetric Signature Type OptExpression { PreF $1 $4 [] $2 [NoArgs] $5 $3 $6 }
+            | FunName Universals OptTermetric doubleParens Signature Type OptExpression { PreF $1 $5 [] $2 [] $6 $3 $7 }
+            | FunName Universals OptTermetric openParen FullArgs closeParen Signature Type OptExpression { PreF $1 $7 [] $2 $5 $8 $3 $9 }
+            | Universals FunName Universals OptTermetric openParen FullArgs closeParen Signature Type OptExpression { PreF $2 $8 $1 $3 $6 $9 $4 $10 }
+            | Universals FunName Universals OptTermetric Signature Type OptExpression { PreF $2 $5 $1 $3 [] $6 $4 $7 }
             | prval {% Left $ Expected $1 "Function signature" "prval" }
             | var {% Left $ Expected $1 "Function signature" "var" }
             | val {% Left $ Expected (token_posn $1) "Function signature" "val" }
@@ -627,14 +631,14 @@ Declaration : include string { Include $2 }
             | staload string { Staload Nothing $2 }
             | staload IdentifierOr eq string { Staload (Just $2) $4 }
             | extern Declaration { Extern $1 $2 }
-            | var Pattern signature Type with PreExpression { Var (Just $4) $2 Nothing (Just $6) } -- FIXME signature is too general.
-            | var Pattern signature Type eq PreExpression { Var (Just $4) $2 (Just $6) Nothing }
-            | val Pattern signature Type eq PreExpression { Val (get_addendum $1) (Just $4) $2 $6 }
+            | var Pattern colon Type with PreExpression { Var (Just $4) $2 Nothing (Just $6) } -- FIXME signature is too general.
+            | var Pattern colon Type eq PreExpression { Var (Just $4) $2 (Just $6) Nothing }
+            | val Pattern colon Type eq PreExpression { Val (get_addendum $1) (Just $4) $2 $6 }
             | val Pattern eq Expression { Val (get_addendum $1) Nothing $2 $4 }
             | var Pattern eq Expression { Var Nothing $2 (Just $4) Nothing }
-            | var Pattern signature Type { Var (Just $4) $2 Nothing Nothing }
-            | var Pattern eq fixAt IdentifierOr openParen Args closeParen signature Type plainArrow Expression { Var Nothing $2 (Just $ FixAt (PreF (Unqualified $5) $9 [] [] $7 $10 Nothing (Just $12))) Nothing }
-            | var Pattern eq lambdaAt openParen Args closeParen signature Type plainArrow Expression { Var Nothing $2 (Just $ LambdaAt (PreF (Unnamed $4) $8 [] [] $6 $9 Nothing (Just $11))) Nothing }
+            | var Pattern colon Type { Var (Just $4) $2 Nothing Nothing }
+            | var Pattern eq fixAt IdentifierOr openParen Args closeParen Signature Type plainArrow Expression { Var Nothing $2 (Just $ FixAt (PreF (Unqualified $5) $9 [] [] $7 $10 Nothing (Just $12))) Nothing }
+            | var Pattern eq lambdaAt openParen Args closeParen Signature Type plainArrow Expression { Var Nothing $2 (Just $ LambdaAt (PreF (Unnamed $4) $8 [] [] $6 $9 Nothing (Just $11))) Nothing }
             | prval Pattern eq PreExpression { PrVal $2 $4 }
             | praxi PreFunction { Func $1 (Praxi $2) }
             | primplmnt Implementation { ProofImpl $2 }
@@ -646,9 +650,10 @@ Declaration : include string { Include $2 }
             | tkindef IdentifierOr eq string { TKind $1 (Unqualified $2) $4 }
             | TypeDecl { $1 }
             | symintr Name { SymIntr $1 $2 }
-            | stacst IdentifierOr signature Type OptExpression { Stacst $1 (Unqualified $2) $4 $5 }
+            | stacst IdentifierOr colon Type OptExpression { Stacst $1 (Unqualified $2) $4 $5 }
             | propdef IdentifierOr openParen Args closeParen eq Type { PropDef $1 $2 $4 $7 }
             | Fixity intLit Operators { FixityDecl $1 (Just $2) $3 }
+            | val lbrace Universals rbrace IdentifierOr colon Type { StaVal $3 $5 $7 }
             | lambda {% Left $ Expected $1 "Declaration" "lam" }
             | llambda {% Left $ Expected $1 "Declaration" "llam" }
             | minus {% Left $ Expected $1 "Declaration" "-" }

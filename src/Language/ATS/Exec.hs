@@ -20,7 +20,6 @@ import           Paths_ats_format
 import           System.Directory             (doesFileExist)
 import           System.Exit                  (exitFailure)
 import           System.IO                    (hPutStr, stderr)
-import           Text.Megaparsec              (parseErrorPretty)
 import           Text.PrettyPrint.ANSI.Leijen (pretty)
 import           Text.Toml
 import           Text.Toml.Types              hiding (Parser)
