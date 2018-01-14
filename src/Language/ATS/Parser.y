@@ -413,6 +413,7 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | let ATS in Expression lineComment {% Left $ Expected (token_posn $5) "end" (take 2 $ to_string $5) }
               | let ATS in Expression extern {% Left $ Expected $5 "end" "extern" }
               | let ATS in Expression fun {% Left $ Expected $5 "end" "fun" }
+              | if Expression then Expression else else {% Left $ Expected $6 "Expression" "else" }
 
 -- | Parse a termetric
 Termetric : openTermetric StaticExpression closeTermetric { ($1, $2) }
@@ -560,6 +561,7 @@ FunDecl : fun PreFunction { [ Func $1 (Fun $2) ] }
         | prfn PreFunction { [ Func $1 (PrFn $2) ] }
         | fnx PreFunction { [ Func $1 (Fnx $2) ] }
         | castfn PreFunction { [ Func $1 (CastFn $2) ] }
+        | fn PreFunction identifier {% Left $ Expected (token_posn $3) "=" (to_string $3) }
         | fn PreFunction { [ Func $1 (Fn $2) ] }
         | FunDecl and PreFunction { Func $2 (And $3) : $1 }
         | extern FunDecl { over _head (Extern $1) $2 }
@@ -604,7 +606,7 @@ TypeDecl : typedef IdentifierOr eq Universals atbrace Records rbrace { RecordTyp
          | absprop IdentifierOr openParen FullArgs closeParen { AbsProp $1 $2 [] }
          | stadef IdentifierOr eq Name { Stadef $2 $4 [] }
          | stadef IdentifierOr eq Name openParen TypeIn closeParen { Stadef $2 $4 $6 }
-         | stadef boolLit eq Name { Stadef (over _head toLower (show $2)) $4 [] }
+         | stadef boolLit eq Name { Stadef (over _head toLower (show $2)) $4 [] } -- TODO identifierSpace
          | sortdef IdentifierOr eq Type { SortDef $1 $2 $4 }
          | AndSort { $1 }
 
@@ -645,7 +647,8 @@ Declaration : include string { Include $2 }
             | implement Implementation { Impl [] $2 }
             | implement openParen Args closeParen Implementation { Impl $3 $5 }
             | overload BinOp with Name { OverloadOp $1 $2 $4 }
-            | overload identifierSpace with Name { OverloadIdent $1 (to_string $2) $4 }
+            | overload identifierSpace with Name { OverloadIdent $1 (to_string $2) $4 Nothing }
+            | overload tilde with identifierSpace of intLit { OverloadIdent $1 "~" (Unqualified $ to_string $4) (Just $6) } -- FIXME figure out a general solution.
             | assume Name openParen Args closeParen eq Expression { Assume $2 $4 $7 }
             | tkindef IdentifierOr eq string { TKind $1 (Unqualified $2) $4 }
             | TypeDecl { $1 }
@@ -653,7 +656,7 @@ Declaration : include string { Include $2 }
             | stacst IdentifierOr colon Type OptExpression { Stacst $1 (Unqualified $2) $4 $5 }
             | propdef IdentifierOr openParen Args closeParen eq Type { PropDef $1 $2 $4 $7 }
             | Fixity intLit Operators { FixityDecl $1 (Just $2) $3 }
-            | val lbrace Universals rbrace IdentifierOr colon Type { StaVal $3 $5 $7 }
+            | val Universals IdentifierOr colon Type { StaVal $2 $3 $5 }
             | lambda {% Left $ Expected $1 "Declaration" "lam" }
             | llambda {% Left $ Expected $1 "Declaration" "llam" }
             | minus {% Left $ Expected $1 "Declaration" "-" }

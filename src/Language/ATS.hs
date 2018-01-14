@@ -3,6 +3,8 @@ module Language.ATS ( -- * Functions
                       lexATS
                     , parseATS
                     , printATS
+                    , printATSCustom
+                    , printATSFast
                     -- * Syntax Tree
                     , ATS (..)
                     , Declaration (..)

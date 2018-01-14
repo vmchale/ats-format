@@ -12,6 +12,7 @@
 
 module Language.ATS.PrettyPrint ( printATS
                                 , printATSCustom
+                                , printATSFast
                                 , processClang
                                 ) where
 
@@ -66,14 +67,20 @@ processClang []               = pure []
 printClang :: String -> IO String
 printClang = readCreateProcess (shell "clang-format")
 
+-- | Pretty-print with sensible defaults.
 printATS :: ATS -> String
-printATS (ATS x) = g mempty
-    where g = (displayS . renderSmart 0.6 120 . (<> "\n") . pretty) (ATS $ reverse x)
+printATS = (<> "\n") . printATSCustom 0.6 120
 
-printATSCustom :: Float -> Int -> ATS -> String
+printATSCustom :: Float -- ^ Ribbon fraction
+               -> Int -- ^ Ribbon width
+               -> ATS -> String
 printATSCustom r i (ATS x) = g mempty
     where g = (displayS . renderSmart r i . pretty) (ATS $ reverse x)
 
+-- | Fast pretty-printer without indendation. Useful for generating code.
+printATSFast :: ATS -> String
+printATSFast (ATS x) = g mempty
+    where g = (displayS . renderCompact . (<> "\n") . pretty) (ATS $ reverse x)
 
 instance Pretty Name where
     pretty (Unqualified n)   = text n
@@ -485,7 +492,8 @@ instance Pretty Declaration where
     pretty (CBlock s)                   = string s
     pretty (Comment s)                  = string s
     pretty (OverloadOp _ o n)           = "overload" <+> pretty o <+> "with" <+> pretty n
-    pretty (OverloadIdent _ i n)        = "overload" <+> text i <+> "with" <+> pretty n
+    pretty (OverloadIdent _ i n Nothing) = "overload" <+> text i <+> "with" <+> pretty n
+    pretty (OverloadIdent _ i n (Just n')) = "overload" <+> text i <+> "with" <+> pretty n <+> "of" <+> pretty n'
     -- We use 'text' here, which means indentation might get fucked up for
     -- C preprocessor macros, but you absolutely deserve it if you indent your
     -- macros.

@@ -91,7 +91,7 @@ data Declaration = Func AlexPosn Function
                  | AbsT0p AlexPosn String Type
                  | ViewDef AlexPosn String [Arg] Type
                  | OverloadOp AlexPosn BinOp Name
-                 | OverloadIdent AlexPosn String Name
+                 | OverloadIdent AlexPosn String Name (Maybe Int)
                  | Comment String
                  | DataProp AlexPosn String [Arg] [DataPropLeaf]
                  | Extern AlexPosn Declaration
@@ -148,7 +148,7 @@ data Type = Bool
           | ViewLiteral Addendum
           deriving (Show, Eq, Generic, NFData)
 
--- | A type for the various lambda arrows (@=>@, @=<cloref1>@, etc.)
+-- | A type for the various lambda arrows (@=>@, @=\<cloref1>@, etc.)
 data LambdaType = Plain AlexPosn
                 | Full AlexPosn String
                 | Spear AlexPosn
@@ -214,6 +214,7 @@ data BinOp = Add
            | Mod
            deriving (Show, Eq, Generic, NFData)
 
+-- FIXME add position information?
 data StaticExpression = StaticVal Name
                       | StaticBinary BinOp StaticExpression StaticExpression
                       | StaticInt Int
@@ -303,7 +304,7 @@ data Function = Fun PreFunction
               deriving (Show, Eq, Generic, NFData)
 
 data PreFunction = PreF { fname         :: Name -- ^ Function name
-                        , sig           :: String -- ^ e.g. <> or <!wrt>
+                        , sig           :: String -- ^ e.g. <> or \<!wrt>
                         , preUniversals :: [Universal] -- ^ Universal quantifiers making a function generic
                         , universals    :: [Universal] -- ^ Universal quantifiers/refinement type
                         , args          :: [Arg] -- ^ Actual function arguments

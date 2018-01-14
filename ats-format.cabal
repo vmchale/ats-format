@@ -1,5 +1,5 @@
 name:                ats-format
-version:             0.1.0.27
+version:             0.1.0.28
 synopsis:            A source-code formatter for ATS
 description:         An opinionated source-code formatter for [ATS](http://www.ats-lang.org/).
 homepage:            https://hub.darcs.net/vmchale/ats-format#readme
@@ -33,6 +33,11 @@ custom-setup
 Flag development {
   Description: Enable `-Werror`
   manual: True
+  default: False
+}
+
+Flag library {
+  Description: Do not build executable
   default: False
 }
 
@@ -70,6 +75,8 @@ library
   ghc-options:         -Wall
 
 executable atsfmt
+  if flag(library)
+    buildable:         False
   hs-source-dirs:      app
   main-is:             Main.hs
   build-depends:       base
