@@ -1035,8 +1035,7 @@ fun check_keywords(s : string, size : file, ext : string) : pl_type =
         var viewstream = $EXTRA.streamize_fileref_word(x)
         val result = stream_vt_foldleft_cloptr( viewstream
                                               , init
-                                              , lam (acc, next) =>
-                                                  step_keyword(size, acc, next, ext)
+                                              , lam (acc, next) => step_keyword(size, acc, next, ext)
                                               )
         val _ = fileref_close(x)
       in

@@ -131,7 +131,7 @@ prettySmall op es = mconcat (punctuate (" " <> op <> " ") es)
 
 prettyBinary :: Doc -> [Doc] -> Doc
 prettyBinary op es
-    | length (show $ mconcat es) < 80 = prettySmall op es
+    | length (showFast $ mconcat es) < 80 = prettySmall op es
     | otherwise = prettyLarge op es
 
 prettyLarge :: Doc -> [Doc] -> Doc
@@ -141,7 +141,7 @@ prettyLarge op (e:es) = e <$> vsep (fmap (op <+>) es)
 -- FIXME we really need a monadic pretty printer lol.
 lengthAlt :: Doc -> Doc -> Doc
 lengthAlt d1 d2
-    | length (show d2) >= 40 = d1 <$> indent 4 d2
+    | length (showFast d2) >= 40 = d1 <$> indent 4 d2
     | otherwise = d1 <+> d2
 
 instance Pretty Expression where
@@ -365,9 +365,12 @@ x $$ y = align (x <$> y)
 lineAlt :: Doc -> Doc -> Doc
 lineAlt = group .* flatAlt
 
+showFast :: Doc -> String
+showFast d = displayS (renderCompact d) mempty
+
 prettyRecord :: (Pretty a) => [(String, a)] -> Doc
 prettyRecord es
-    | any ((>40) . length . show . pretty) es = prettyRecordF True es
+    | any ((>40) . length . showFast . pretty) es = prettyRecordF True es
     | otherwise = lineAlt (prettyRecordF True es) (prettyRecordS True es)
 
 prettyRecordS :: (Pretty a) => Bool -> [(String, a)] -> Doc
