@@ -111,6 +111,7 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     floatLit { FloatTok _ $$ }
     effmaskWrt { Identifier $$ "effmask_wrt" }
     effmaskAll { Identifier $$ "effmask_all" }
+    extype { Identifier $$ "extype" }
     extfcall { Identifier $$ "extfcall" }
     ldelay { Identifier $$ "ldelay" }
     listVT { Identifier $$ "list_vt" }
@@ -450,6 +451,7 @@ Name : identifier { Unqualified (to_string $1) }
      | dollar identifier dot identifierSpace { Qualified $1 (to_string $4) (to_string $2) }
      | dollar effmaskWrt { SpecialName $1 "effmask_wrt" }
      | dollar effmaskAll { SpecialName $1 "effmask_all" }
+     | dollar extype { SpecialName $1 "effmask_all" }
      | dollar listVT { SpecialName $1 "list_vt" }
      | dollar ldelay { SpecialName $1 "ldelay" } -- FIXME there is probably a better/more efficient way of doing this
      | underscore {% Left $ Expected $1 "Name" "_" }
@@ -599,6 +601,7 @@ TypeDecl : typedef IdentifierOr eq Universals atbrace Records rbrace { RecordTyp
          | abst0p IdentifierOr eq Type { AbsT0p $1 $2 $4 }
          | viewdef IdentifierOr openParen FullArgs closeParen eq Type { ViewDef $1 $2 $4 $7 }
          | absvt0p IdentifierOr openParen FullArgs closeParen MaybeType { AbsVT0p $1 $2 $4 $6 }
+         | absvt0p IdentifierOr eq Type { AbsVT0p $1 $2 [] (Just $4) }
          | absview IdentifierOr openParen FullArgs closeParen MaybeType { AbsView $1 $2 $4 $6 }
          | abstype IdentifierOr openParen FullArgs closeParen MaybeType { AbsType $1 $2 $4 $6 }
          | absvtype IdentifierOr openParen FullArgs closeParen MaybeType { AbsViewType $1 $2 $4 $6 }
@@ -625,8 +628,8 @@ Operators : Operator { [$1] }
 -- | Parse a declaration
 Declaration : include string { Include $2 }
             | define { Define $1 }
-            | define identifierSpace string { Define ($1 ++ to_string $2 ++ $3) } -- FIXME better approach?
-            | define identifierSpace intLit { Define ($1 ++ to_string $2 ++ " " ++ show $3) }
+            | define identifierSpace string { Define ($1 ++ " " ++ to_string $2 ++ $3) } -- FIXME better approach?
+            | define identifierSpace intLit { Define ($1 ++ " " ++ to_string $2 ++ " " ++ show $3) }
             | cblock { CBlock $1 }
             | lineComment { Comment (to_string $1) }
             | staload underscore eq string { Staload (Just "_") $4 }

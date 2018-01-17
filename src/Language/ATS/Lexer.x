@@ -218,6 +218,7 @@ tokens :-
     $special                 { tok (\p s -> Special p s) }
     "effmask_all"            { tok (\p s -> Identifier p s) }
     "effmask_wrt"            { tok (\p s -> Identifier p s) }
+    "extype"                 { tok (\p s -> Identifier p s) }
     @identifier / " "        { tok (\p s -> IdentifierSpace p s) }
     @identifier              { tok (\p s -> Identifier p s) }
     @string                  { tok (\p s -> StringTok p s) }

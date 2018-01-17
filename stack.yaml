@@ -3,11 +3,12 @@ resolver: lts-10.3
 packages:
   - '.'
 extra-deps:
-  - ansi-wl-pprint-0.6.8.1
+  - ansi-wl-pprint-0.6.8.2
   - htoml-megaparsec-1.1.0.1
-  - composition-prelude-0.1.1.4
+  - composition-prelude-1.1.0.0
   - dirstream-1.0.3
-  - hspec-dirstream-0.1.0.1
+  - hspec-dirstream-0.3.0.0
+  - cli-setup-0.1.0.2
 flags:
   ats-format:
     development: false

@@ -32,6 +32,8 @@ import           System.Process                        (readCreateProcess, shell
 import           Text.PrettyPrint.ANSI.Leijen
 import           Text.PrettyPrint.ANSI.Leijen.Internal
 
+infixr 5 $$
+
 deriving instance Generic Underlining
 deriving instance NFData Underlining
 deriving instance Generic ConsoleIntensity
@@ -124,12 +126,19 @@ startsParens d = f (show d) where
     f ('(':_) = True
     f _       = False
 
-prettyBinary :: Doc -> [Doc] -> Doc
-prettyBinary _ []       = mempty
-prettyBinary _ [e]      = e
-prettyBinary op [e, e'] = e <+> op <+> e'
-prettyBinary _ _        = undefined
+prettySmall :: Doc -> [Doc] -> Doc
+prettySmall op es = mconcat (punctuate (" " <> op <> " ") es)
 
+prettyBinary :: Doc -> [Doc] -> Doc
+prettyBinary op es
+    | length (show $ mconcat es) < 80 = prettySmall op es
+    | otherwise = prettyLarge op es
+
+prettyLarge :: Doc -> [Doc] -> Doc
+prettyLarge _ []      = mempty
+prettyLarge op (e:es) = e <$> vsep (fmap (op <+>) es)
+
+-- FIXME we really need a monadic pretty printer lol.
 lengthAlt :: Doc -> Doc -> Doc
 lengthAlt d1 d2
     | length (show d2) >= 40 = d1 <$> indent 4 d2
@@ -357,21 +366,23 @@ lineAlt :: Doc -> Doc -> Doc
 lineAlt = group .* flatAlt
 
 prettyRecord :: (Pretty a) => [(String, a)] -> Doc
-prettyRecord es = lineAlt (prettyRecordF True es) (prettyRecordS True es)
+prettyRecord es
+    | any ((>40) . length . show . pretty) es = prettyRecordF True es
+    | otherwise = lineAlt (prettyRecordF True es) (prettyRecordS True es)
 
 prettyRecordS :: (Pretty a) => Bool -> [(String, a)] -> Doc
 prettyRecordS _ []             = mempty
 prettyRecordS True [(s, t)]    = "@{" <+> text s <+> "=" <+> pretty t <+> "}"
 prettyRecordS _ [(s, t)]       = "@{" <+> text s <+> "=" <+> pretty t
-prettyRecordS True ((s, t):xs) = prettyRecordS False xs <> ("," <+> text s <+> "=" <+> pretty t <+> "}")
-prettyRecordS x ((s, t):xs)    = prettyRecordS x xs <> ("," <+> text s <+> "=" <+> pretty t)
+prettyRecordS True ((s, t):xs) = prettyRecordS False xs <> "," <+> text s <+> ("=" <+> pretty t) <+> "}"
+prettyRecordS x ((s, t):xs)    = prettyRecordS x xs <> "," <+> text s <+> ("=" <+> pretty t)
 
 prettyRecordF :: (Pretty a) => Bool -> [(String, a)] -> Doc
 prettyRecordF _ []             = mempty
-prettyRecordF True [(s, t)]    = "@{" <+> text s <+> "=" <+> pretty t <+> "}"
-prettyRecordF _ [(s, t)]       = "@{" <+> text s <+> "=" <+> pretty t
-prettyRecordF True ((s, t):xs) = prettyRecordF False xs $$ indent 1 ("," <+> text s <+> "=" <+> pretty t <$> "}")
-prettyRecordF x ((s, t):xs)    = prettyRecordF x xs $$ indent 1 ("," <+> text s <+> "=" <+> pretty t)
+prettyRecordF True [(s, t)]    = "@{" <+> text s <+> align ("=" <+> pretty t) <+> "}"
+prettyRecordF _ [(s, t)]       = "@{" <+> text s <+> align ("=" <+> pretty t)
+prettyRecordF True ((s, t):xs) = prettyRecordF False xs $$ indent 1 ("," <+> text s <+> align ("=" <+> pretty t) <$> "}")
+prettyRecordF x ((s, t):xs)    = prettyRecordF x xs $$ indent 1 ("," <+> text s <+> align ("=" <+> pretty t))
 
 prettyDL :: [DataPropLeaf] -> Doc
 prettyDL []                               = mempty

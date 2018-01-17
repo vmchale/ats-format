@@ -1,5 +1,5 @@
 name:                ats-format
-version:             0.1.0.28
+version:             0.1.3.0
 synopsis:            A source-code formatter for ATS
 description:         An opinionated source-code formatter for [ATS](http://www.ats-lang.org/).
 homepage:            https://hub.darcs.net/vmchale/ats-format#readme
@@ -26,9 +26,7 @@ cabal-version:       >=1.18
 custom-setup
   setup-depends:   base
                  , Cabal
-                 , directory
-                 , lens
-                 , process >= 1.4.0.0
+                 , cli-setup >= 0.1.0.2
 
 Flag development {
   Description: Enable `-Werror`

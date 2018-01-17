@@ -4,10 +4,11 @@ approve FILE:
 
 next:
     @export VERSION=$(ac ats-format.cabal | grep -P -o '\d+\.\d+\.\d+\.\d+' ats-format.cabal | head -n1 | awk -F. '{$NF+=1; print $0}' | sed 's/ /\./g') && echo $VERSION && sed -i "2s/[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+/$VERSION/" ats-format.cabal
-    git commit -am "next"
     sn c .
 
 release:
+    sn c .
+    git commit -am "release"
     git tag "$(grep -P -o '\d+\.\d+\.\d+\.\d+' ats-format.cabal | head -n1)"
     git push origin --tags
     git tag -d "$(grep -P -o '\d+\.\d+\.\d+\.\d+' ats-format.cabal | head -n1)"
