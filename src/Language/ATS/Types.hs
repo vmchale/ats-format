@@ -191,7 +191,7 @@ data Universal = Universal { bound :: [Arg], typeU :: Maybe Type, prop :: Maybe 
     deriving (Show, Eq, Generic, NFData)
 
 -- | Wrapper for existential quantifiers/types
-data Existential = Existential { boundE :: [Arg], isOpen :: Bool, typeE :: Maybe Type, propE :: Maybe Expression } -- TODO #[id:int] existentials
+data Existential = Existential { boundE :: [Arg], isOpen :: Bool, typeE :: Maybe Type, propE :: Maybe Expression }
     deriving (Show, Eq, Generic, NFData)
 
 -- | @~@ is used to negate numbers in ATS

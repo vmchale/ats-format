@@ -12,11 +12,11 @@ fnx fact_boring(n : int) : int =
 (* (pf: !int @ l | n: int n, res: ptr l) : void = *)
 (* if n > 1  *)
 // TODO rewrite this for collatz?
-fnx fact {n : nat} (n : int(n)) : int =
+fnx fact {n:nat} (n : int(n)) : int =
   let
-    fun loop {n : nat}{l : addr} .<n>. ( pf : !int @ l | n : int(n)
-                                       , res : ptr(l)
-                                       ) : void =
+    fun loop {n:nat}{l:addr} .<n>. ( pf : !int @ l | n : int(n)
+                                   , res : ptr(l)
+                                   ) : void =
       if n > 0 then
         let
           val () = !res := n * !res

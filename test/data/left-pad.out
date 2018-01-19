@@ -11,7 +11,7 @@ fun left_pad { p, l : nat | p > 0 && l > 0 } ( pad : ssize_t(p)
                                              ) : [ cushion : nat ] (PAD(p, l, cushion) | strnptr(cushion+l))
 
 extern
-fun {t : t@ype} fill_list {n : nat} (size : ssize_t(n), c : t) :
+fun {t:t@ype} fill_list {n:nat} (size : ssize_t(n), c : t) :
   list_vt(t, n)
 
 implement {t} fill_list {n} (size, c) =
@@ -58,10 +58,10 @@ implement main0 (argc, argv) =
           (let
             prval _ = lemma_not_empty(s) where
             { extern
-              praxi lemma_not_empty {n : int} (x : string(n)) : [ n > 0 ] void }
+              praxi lemma_not_empty {n:int} (x : string(n)) : [ n > 0 ] void }
             prval _ = lemma_not_zero(pad) where
             { extern
-              praxi lemma_not_zero {n : int} (x : int(n)) : [ n > 0 ] void }
+              praxi lemma_not_zero {n:int} (x : int(n)) : [ n > 0 ] void }
             val (pf | res) = left_pad(i2ssz(pad), c, string1_copy(s))
           in
             (println!("padding: ", res) ; strnptr_free(res))

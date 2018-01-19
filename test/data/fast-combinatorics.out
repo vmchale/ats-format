@@ -4,19 +4,19 @@
 
 staload "libats/libc/SATS/math.sats"
 
-fnx fact {n : nat} .<n>. (k : int(n)) :<> int =
+fnx fact {n:nat} .<n>. (k : int(n)) :<> int =
   case+ k of
     | 0 => 1
     | k =>> fact(k - 1) * k
 
-fnx dfact {n : nat} .<n>. (k : int(n)) :<> int =
+fnx dfact {n:nat} .<n>. (k : int(n)) :<> int =
   case+ k of
     | 0 => 1
     | 1 => 1
     | k =>> k * dfact(k - 2)
 
 // TODO make this more versatile?
-fn choose {n : nat}{ m : nat | m <= n } (n : int(n), k : int(m)) : int =
+fn choose {n:nat}{ m : nat | m <= n } (n : int(n), k : int(m)) : int =
   let
     fun numerator_loop { m : nat | m > 1 } .<m>. (i : int(m)) : int =
       case+ i of
@@ -45,9 +45,8 @@ fun is_prime(k : intGt(0)) : bool =
           var pre_bound: int = g0float2int(sqrt_float(g0int2float_int_float(k)))
           var bound: [ m : nat ] int(m) = bad(pre_bound)
           
-          fun loop {n : nat}{m : nat} .<max(0,m-n)>. ( i : int(n)
-                                                     , bound : int(m)
-                                                     ) :<> bool =
+          fun loop {n:nat}{m:nat} .<max(0,m-n)>. (i : int(n), bound : int(m)) :<>
+            bool =
             if i < bound then
               if k % i = 0 then
                 false
@@ -67,15 +66,15 @@ fun is_prime(k : intGt(0)) : bool =
       end
 
 extern
-fun choose_ats {n : nat}{ m : nat | m <= n } : (int(n), int(m)) -> int =
+fun choose_ats {n:nat}{ m : nat | m <= n } : (int(n), int(m)) -> int =
   "mac#"
 
 extern
-fun double_factorial {n : nat} : int(n) -> int =
+fun double_factorial {n:nat} : int(n) -> int =
   "mac#"
 
 extern
-fun factorial_ats {n : nat} : int(n) -> int =
+fun factorial_ats {n:nat} : int(n) -> int =
   "mac#"
 
 extern

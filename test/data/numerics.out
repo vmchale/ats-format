@@ -5,7 +5,7 @@
 staload "libats/libc/SATS/math.sats"
 staload UN = "prelude/SATS/unsafe.sats"
 
-fun exp {n : nat} .<n>. (x : int, n : int(n)) :<> int =
+fun exp {n:nat} .<n>. (x : int, n : int(n)) :<> int =
   case+ x of
     | 0 => 0
     | x => 
@@ -41,9 +41,9 @@ fn is_prime(k : intGt(0)) : bool =
     | k => 
       begin
         let
-          fun loop {n : nat}{m : nat} .<max(0,m-n)>. ( i : int(n)
-                                                     , bound : int(m)
-                                                     ) :<> bool =
+          fun loop {n:nat}{m:nat} .<max(0,m-n)>. ( i : int(n)
+                                                 , bound : int(m)
+                                                 ) :<> bool =
             if i < bound then
               if k % i = 0 then
                 false

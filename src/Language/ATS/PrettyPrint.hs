@@ -241,12 +241,18 @@ instance Pretty Pattern where
         a (UniversalPatternF _ n us p) = text n <> prettyArgsU "" "" us <> p
         a (ExistentialPatternF e p)    = pretty e <> p
 
+singleArg :: Arg -> Doc
+singleArg = argHelper (<>)
+
+argHelper :: (Doc -> Doc -> Doc) -> Arg -> Doc
+argHelper _ (Arg (First s))   = pretty s
+argHelper _ (Arg (Second t))  = pretty t
+argHelper op (Arg (Both s t)) = pretty s `op` colon `op` pretty t
+argHelper op (PrfArg a a')    = pretty a `op` "|" `op` pretty a'
+argHelper _ NoArgs            = undefined -- in theory we handle this elsewhere.
+
 instance Pretty Arg where
-    pretty (Arg (First s))  = pretty s
-    pretty (Arg (Second t)) = pretty t
-    pretty (Arg (Both s t)) = pretty s <+> colon <+> pretty t
-    pretty (PrfArg a a')    = pretty a <+> "|" <+> pretty a'
-    pretty NoArgs           = undefined
+    pretty = argHelper (<+>)
 
 squish :: BinOp -> Bool
 squish Add  = True
@@ -325,7 +331,7 @@ instance Pretty Existential where
 
 instance Pretty Universal where
     pretty (Universal [x@PrfArg{}] Nothing Nothing) = lbrace <+> pretty x <+> rbrace -- FIXME universals can now be length-one arguments
-    pretty (Universal [x] Nothing Nothing) = lbrace <> pretty x <> rbrace -- FIXME universals can now be length-one arguments
+    pretty (Universal [x] Nothing Nothing) = lbrace <> singleArg x <> rbrace -- FIXME universals can now be length-one arguments
     pretty (Universal bs ty Nothing) = lbrace <+> mconcat (punctuate ", " (fmap pretty (reverse bs))) <> gan ty <+> rbrace
     pretty (Universal bs ty (Just e)) = lbrace <+> mconcat (punctuate ", " (fmap go (reverse bs))) <> gan ty <+> "|" <+> pretty e <+> rbrace
         where go (Arg (First s))  = pretty s
