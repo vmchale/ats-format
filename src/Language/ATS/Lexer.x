@@ -198,7 +198,7 @@ tokens :-
     absview                  { tok (\p s -> Keyword p KwAbsview) }
     "$list"                  { tok (\p s -> Keyword p (KwListLit "")) }
     "$list_vt"               { tok (\p s -> Keyword p (KwListLit "_vt")) }
-    "fold@"                  { tok (\p s -> Identifier p s) }
+    "fold@"                  { tok (\p s -> IdentifierSpace p s) }
     "free@"                  { tok (\p s -> Identifier p s) }
     @fixity_decl             { tok (\p s -> FixityTok p s) }
     @double_parens           { tok (\p s -> DoubleParenTok p) }

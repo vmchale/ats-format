@@ -78,8 +78,6 @@ data Declaration = Func AlexPosn Function
                  | Staload (Maybe String) String
                  | Stadef String Name [Type]
                  | CBlock String
-                 | RecordType String [Arg] [Universal] [(String, Type)]
-                 | RecordViewType String [Arg] [Universal] [(String, Type)]
                  | TypeDef AlexPosn String [Arg] Type
                  | ViewTypeDef AlexPosn String [Arg] Type
                  | SumType { typeName :: String, typeArgs :: [Arg], _leaves :: [Leaf] }
@@ -98,7 +96,7 @@ data Declaration = Func AlexPosn Function
                  | Define String
                  | SortDef AlexPosn String Type
                  | AndD Declaration Declaration
-                 | Local AlexPosn [Declaration] [Declaration]
+                 | Local AlexPosn ATS ATS
                  | AbsProp AlexPosn String [Arg]
                  | Assume Name [Arg] Expression
                  | TKind AlexPosn Name String
@@ -139,13 +137,14 @@ data Type = Bool
           | Vt0p Addendum -- vt@ype
           | At AlexPosn (Maybe Type) Type
           | ProofType AlexPosn Type Type -- Aka (prf | val)
-          | ConcreteType Expression
+          | ConcreteType StaticExpression
           | RefType Type
           | ViewType AlexPosn Type
           | FunctionType String Type Type
           | NoneType AlexPosn
           | ImplicitType AlexPosn
           | ViewLiteral Addendum
+          | AnonymousRecord AlexPosn [(String, Type)]
           deriving (Show, Eq, Generic, NFData)
 
 -- | A type for the various lambda arrows (@=>@, @=\<cloref1>@, etc.)
@@ -172,6 +171,8 @@ data Pattern = Wildcard AlexPosn
              | Proof AlexPosn [Pattern] [Pattern]
              | TuplePattern [Pattern]
              | AtPattern AlexPosn Pattern
+             | UniversalPattern AlexPosn String [Universal] Pattern
+             | ExistentialPattern Existential Pattern
              deriving (Show, Eq, Generic, NFData)
 
 data Paired a b = Both a b
@@ -190,7 +191,7 @@ data Universal = Universal { bound :: [Arg], typeU :: Maybe Type, prop :: Maybe 
     deriving (Show, Eq, Generic, NFData)
 
 -- | Wrapper for existential quantifiers/types
-data Existential = Existential { boundE :: [Arg], typeE :: Maybe Type, propE :: Maybe Expression } -- TODO #[id:int] existentials
+data Existential = Existential { boundE :: [Arg], isOpen :: Bool, typeE :: Maybe Type, propE :: Maybe Expression } -- TODO #[id:int] existentials
     deriving (Show, Eq, Generic, NFData)
 
 -- | @~@ is used to negate numbers in ATS

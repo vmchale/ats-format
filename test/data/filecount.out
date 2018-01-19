@@ -22,7 +22,8 @@ and flow_stream(s : string, init : int) : int =
   in
     stream_vt_foldleft_cloptr( ffiles
                              , init
-                             , lam (acc, next) => step_stream(acc, s + "/" + next)
+                             , lam (acc, next) =>
+                                 step_stream(acc, s + "/" + next)
                              )
   end
 

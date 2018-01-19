@@ -8,7 +8,7 @@ extern
 fun left_pad { p, l : nat | p > 0 && l > 0 } ( pad : ssize_t(p)
                                              , c : charNZ
                                              , s : strnptr(l)
-                                             ) : [ cushion : nat ] (PAD(p, l, cushion) | strnptr(cushion + l))
+                                             ) : [ cushion : nat ] (PAD(p, l, cushion) | strnptr(cushion+l))
 
 extern
 fun {t : t@ype} fill_list {n : nat} (size : ssize_t(n), c : t) :
@@ -18,7 +18,7 @@ implement {t} fill_list {n} (size, c) =
   let
     fun loop { i : nat | i <= n } .<i>. ( size : ssize_t(i)
                                         , c : t
-                                        , res : list_vt(t, n - i)
+                                        , res : list_vt(t, n-i)
                                         ) : list_vt(t, n) =
       if (size = i2ssz(0)) then
         res

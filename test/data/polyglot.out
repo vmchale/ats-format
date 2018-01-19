@@ -1035,7 +1035,8 @@ fun check_keywords(s : string, size : file, ext : string) : pl_type =
         var viewstream = $EXTRA.streamize_fileref_word(x)
         val result = stream_vt_foldleft_cloptr( viewstream
                                               , init
-                                              , lam (acc, next) => step_keyword(size, acc, next, ext)
+                                              , lam (acc, next) =>
+                                                  step_keyword(size, acc, next, ext)
                                               )
         val _ = fileref_close(x)
       in
@@ -1564,14 +1565,10 @@ fun threads(includes : List0(string), excludes : List0(string)) :
     val (fst, snd) = apportion(new_includes)
     val _ = channel_insert(send1, fst)
     val _ = channel_insert(send2, snd)
-    val t2 = athread_create_cloptr_exn(llam () => work( excludes
-                                                      , send_r1
-                                                      , chan2
-                                                      ))
-    val t3 = athread_create_cloptr_exn(llam () => work( excludes
-                                                      , send_r2
-                                                      , chan3
-                                                      ))
+    val t2 = athread_create_cloptr_exn(llam () =>
+        work(excludes, send_r1, chan2))
+    val t3 = athread_create_cloptr_exn(llam () =>
+        work(excludes, send_r2, chan3))
     val- ~None_vt() = channel_unref(send1)
     val- ~None_vt() = channel_unref(send2)
     val- (n) = channel_remove(chan)

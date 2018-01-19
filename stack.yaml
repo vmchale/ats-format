@@ -8,7 +8,7 @@ extra-deps:
   - composition-prelude-1.1.0.0
   - dirstream-1.0.3
   - hspec-dirstream-0.3.0.0
-  - cli-setup-0.1.0.2
+  - cli-setup-0.1.0.3
 flags:
   ats-format:
     development: false

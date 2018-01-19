@@ -59,6 +59,10 @@ test:
     @rm -rf rm .ghc.environment.* polyglot
     @git clone https://github.com/vmchale/polyglot
     cd polyglot && atsfmt src/polyglot.dats -i
+    cd polyglot && atsfmt src/cli.dats -i
+    cd polyglot && atsfmt src/concurrency.dats -i
+    cd polyglot && atsfmt src/shared.dats -i
+    cd polyglot && atsfmt src/filetype.sats -i
     cd polyglot && ./shake.hs
     @rm -rf polyglot
 
