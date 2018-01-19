@@ -115,6 +115,7 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     extfcall { Identifier $$ "extfcall" }
     ldelay { Identifier $$ "ldelay" }
     listVT { Identifier $$ "list_vt" }
+    foldAt { Identifier $$ "fold@" }
     identifier { $$@Identifier{} }
     identifierSpace { $$@IdentifierSpace{} }
     closeParen { Special $$ ")" }
@@ -328,10 +329,9 @@ LambdaArrow : plainArrow { Plain $1 }
             | closeParen {% Left $ Expected $1 "Arrow" ")" }
 
 -- | Expression or named call to an expression
-Expression : PreExpression { $1 }
+Expression : identifierSpace PreExpression { Call (Unqualified $ to_string $1) [] [] Nothing [$2] }
+           | PreExpression { $1 }
            | openParen Tuple closeParen { TupleEx $1 $2 }
-           | identifierSpace PreExpression { Call (Unqualified $ to_string $1) [] [] Nothing [$2] }
-           | begin Expression end { Begin $1 $2 }
            | Expression semicolon Expression { Precede $1 $3 }
            | Expression semicolon { $1 }
            | openParen Expression closeParen { $2 }
@@ -381,7 +381,7 @@ StaticExpression : Name { StaticVal $1 }
 PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqualified $ to_string $1) $3 }
               | Literal { $1 }
               | Call { $1 }
-              | case PreExpression of Case { Case $3 $1 $2 $4 }
+              | case Expression of Case { Case $3 $1 $2 $4 }
               | openParen Expression closeParen { ParenExpr $1 $2 }
               | PreExpression BinOp PreExpression { Binary $2 $1 $3 }
               | UnOp PreExpression { Unary $1 $2 } -- FIXME throw error when we try to negate a string literal/time
@@ -392,6 +392,7 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | if Expression then Expression else Expression { If $2 $4 (Just $6) }
               | let ATS in end { Let $1 $2 Nothing }
               | let ATS in Expression end { Let $1 $2 (Just $4) }
+              | let ATS in Expression vbar {% Left $ Expected $5 "end" "|" }
               | lambda Pattern LambdaArrow Expression { Lambda $1 $3 $2 $4 }
               | llambda Pattern LambdaArrow Expression { LinearLambda $1 $3 $2 $4 }
               | addrAt PreExpression { AddrAt $1 $2 }
@@ -405,6 +406,7 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | PreExpression mutateEq PreExpression { Mutate $1 $3 }
               | PreExpression where lbrace Declarations rbrace { WhereExp $1 $4 }
               | identifierSpace { NamedVal (Unqualified $ to_string $1) }
+              | begin Expression end { Begin $1 $2 }
               | Name { NamedVal $1 }
               | lbrace ATS rbrace { Actions $2 }
               | while openParen PreExpression closeParen PreExpression { While $1 $3 $5 }
@@ -454,6 +456,7 @@ FunName : IdentifierOr { Unqualified $1 }
 Name : identifier { Unqualified (to_string $1) }
      | underscore { Unqualified "_" }
      | listVT { Unqualified "list_vt" }
+     | foldAt { Unqualified "fold@" }
      | dollar identifier dot identifier { Qualified $1 (to_string $4) (to_string $2) }
      | dollar identifier dot identifierSpace { Qualified $1 (to_string $4) (to_string $2) }
      | dollar effmaskWrt { SpecialName $1 "effmask_wrt" }

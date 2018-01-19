@@ -93,7 +93,7 @@ fun line_count(s : string, pre : Option(string)) : file =
 
 // Pad a string of bounded length on the right by adding spaces.
 fnx right_pad { k : int | k >= 0 }{ m : int | m <= k } .<k>.
-  (s : string(m), n : int(k)) : string =
+(s : string(m), n : int(k)) : string =
   case+ length(s) < n of
     | true when n > 0 => right_pad(s, n - 1) + " "
     | _ => s
@@ -1450,12 +1450,12 @@ fun process(s : string, acc : command_line, is_first : bool) :
   end
 
 fnx get_cli { n : int | n >= 1 }{ m : nat | m < n } .<n-m>.
-  ( argc : int(n)
-  , argv : !argv(n)
-  , current : int(m)
-  , prev_is_exclude : bool
-  , acc : command_line
-  ) : command_line =
+( argc : int(n)
+, argv : !argv(n)
+, current : int(m)
+, prev_is_exclude : bool
+, acc : command_line
+) : command_line =
   let
     var arg = argv[current]
   in

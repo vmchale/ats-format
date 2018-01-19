@@ -143,7 +143,7 @@ fn totient(n : intGte(1)) : int =
       begin
         let
           fnx loop { k : nat | k >= 2 }{ m : nat | m > 0 && k >= m } .<k-m>.
-            (i : int(m), n : int(k)) : int =
+          (i : int(m), n : int(k)) : int =
             if i >= n then
               if is_prime(n) then
                 n - 1
