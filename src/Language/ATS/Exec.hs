@@ -4,7 +4,7 @@
 module Language.ATS.Exec ( exec
                          ) where
 
-import Control.Arrow hiding ((<+>))
+import           Control.Arrow
 import           Control.Monad                (unless, (<=<))
 import           Data.FileEmbed               (embedStringFile)
 import qualified Data.HashMap.Lazy            as HM
@@ -18,10 +18,10 @@ import           Paths_ats_format
 import           System.Directory             (doesFileExist)
 import           System.Exit                  (exitFailure)
 import           System.IO                    (hPutStr, stderr)
+import           System.Process               (readCreateProcess, shell)
 import           Text.PrettyPrint.ANSI.Leijen (pretty)
 import           Text.Toml
 import           Text.Toml.Types              hiding (Parser)
-import           System.Process                        (readCreateProcess, shell)
 
 data Program = Program { _path :: Maybe FilePath, _inplace :: Bool, _noConfig :: Bool, _defaultConfig :: Bool }
 
@@ -31,17 +31,17 @@ takeBlock (y:ys)       = first (y:) $ takeBlock ys
 takeBlock []           = ([], [])
 
 rest :: String -> IO String
-rest xs = fmap (<> (snd $ takeBlock xs)) $ printClang (fst $ takeBlock xs)
+rest xs = (<> (snd $ takeBlock xs)) <$> printClang (fst $ takeBlock xs)
 
 printClang :: String -> IO String
 printClang = readCreateProcess (shell "clang-format")
 
 processClang :: String -> IO String
-processClang ('%':'{':'^':xs) = fmap (('%':) . ('{':) . ('^':)) $ rest xs
-processClang ('%':'{':'#':xs) = fmap (('%':) . ('{':) . ('#':)) $ rest xs
-processClang ('%':'{':'$':xs) = fmap (('%':) . ('{':) . ('$':)) $ rest xs
-processClang ('%':'{':xs)     = fmap (('%':) . ('{':)) $ rest xs
-processClang (x:xs)           = fmap (x:) $ processClang xs
+processClang ('%':'{':'^':xs) = ('%':) . ('{':) . ('^':) <$> rest xs
+processClang ('%':'{':'#':xs) = ('%':) . ('{':) . ('#':) <$> rest xs
+processClang ('%':'{':'$':xs) = ('%':) . ('{':) . ('$':) <$> rest xs
+processClang ('%':'{':xs)     = ('%':) . ('{':) <$> rest xs
+processClang (x:xs)           = (x:) <$> processClang xs
 processClang []               = pure []
 
 file :: Parser Program

@@ -43,14 +43,13 @@ install:
 ci: test
     cabal new-build
     cabal new-haddock
-    cabal new-test
-    hlint src app bench test
+    hlint src app
     tomlcheck --file .atsfmt.toml
     yamllint .travis.yml
     yamllint .hlint.yaml
     yamllint .stylish-haskell.yaml
     yamllint .yamllint
-    stack build --test --bench --no-run-tests --no-run-benchmarks
+    stack build
     weeder
 
 test:
@@ -61,7 +60,7 @@ test:
     cd polyglot && atsfmt src/concurrency.dats -i
     cd polyglot && atsfmt src/shared.dats -i
     cd polyglot && atsfmt src/filetype.sats -i
-    cd polyglot && ./bash/setup.sh && ./build
+    cd polyglot && ./bash/bootstrap.sh && ./build
     @rm -rf polyglot
 
 size:

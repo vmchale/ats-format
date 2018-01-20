@@ -43,7 +43,6 @@ library
   build-depends:       base >= 4.10 && < 5
                      , language-ats
                      , optparse-applicative
-                     , composition-prelude >= 0.1.1.2
                      , htoml-megaparsec >= 1.1.0.0
                      , text
                      , ansi-wl-pprint

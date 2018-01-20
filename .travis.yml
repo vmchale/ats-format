@@ -42,7 +42,7 @@ before_install:
     fi
 
 install:
-  - stack --no-terminal --install-ghc build --test --bench --no-run-tests --no-run-benchmarks --only-dependencies
+  - stack --no-terminal --install-ghc build --only-dependencies
 
 script:
   - stack --no-terminal build --haddock --no-haddock-deps --test --bench --no-run-tests --no-run-benchmarks
@@ -56,12 +56,12 @@ script:
       yamllint .travis.yml
       yamllint .hlint.yaml
       yamllint .stylish-haskell.yaml
-      curl -sL https://raw.github.com/ndmitchell/hlint/master/misc/travis.sh | sh -s src app test/ bench
+      curl -sL https://raw.github.com/ndmitchell/hlint/master/misc/travis.sh | sh -s src app
       curl -sL https://raw.github.com/ndmitchell/weeder/master/misc/travis.sh | sh -s .
     else
       echo "skipping yaml verification..."
     fi
-  - stack build --test --bench --no-run-tests --no-run-benchmarks
+  - stack build
   - |
     if [ `uname` = "Darwin" ]
     then
