@@ -8,7 +8,7 @@ extern
 fun left_pad { p, l : nat | p > 0 && l > 0 } ( pad : ssize_t(p)
                                              , c : charNZ
                                              , s : strnptr(l)
-                                             ) : [ cushion : nat ] (PAD(p, l, cushion) | strnptr(cushion+l))
+                                             ) : [cushion:nat] (PAD(p, l, cushion) | strnptr(cushion+l))
 
 extern
 fun {t:t@ype} fill_list {n:nat} (size : ssize_t(n), c : t) :
@@ -51,7 +51,7 @@ implement main0 (argc, argv) =
     val _ = if list_vt_length(args) = 3 then
       (let
         val c = '0'
-        val s = g1ofg0(args[1]) : [ n : nat ] string(n)
+        val s = g1ofg0(args[1]) : [n:nat] string(n)
         val pad = g1ofg0(g0string2int(args[2]))
       in
         if length(s) > 0 && pad > 0 then

@@ -206,14 +206,12 @@ instance Pretty Expression where
         a (BeginF _ e)
             | not (startsParens e) = linebreak <> indent 2 ("begin" <$> indent 2 e <$> "end")
             | otherwise = e
-        a (FixAtF (PreF n s [] [] as t Nothing (Just e))) = "fix@" <+> pretty n <+> prettyArgs as <+> ":" <> pretty s <+> pretty t <+> "=>" <$> indent 2 (pretty e)
-        a (LambdaAtF (PreF Unnamed{} s [] [] as t Nothing (Just e))) = "lam@" <+> prettyArgs as <+> ":" <> pretty s <+> pretty t <+> "=>" <$> indent 2 (pretty e)
+        a (FixAtF n (StackF s as t e)) = "fix@" <+> text n <+> prettyArgs as <+> ":" <> pretty s <+> pretty t <+> "=>" <$> indent 2 (pretty e)
+        a (LambdaAtF (StackF s as t e)) = "lam@" <+> prettyArgs as <+> ":" <> pretty s <+> pretty t <+> "=>" <$> indent 2 (pretty e)
         a (AddrAtF _ e)                = "addr@" <> e
         a (ViewAtF _ e)                = "view@" <> e
         a (ListLiteralF _ s t es)      = "list" <> string s <> "{" <> pretty t <> "}" <> prettyArgs es
         a BinListF{} = undefined
-        a FixAtF{} = undefined
-        a LambdaAtF{} = undefined
         a CallF{} = undefined
         prettyCases []              = mempty
         prettyCases [(s, l, t)]     = "|" <+> pretty s <+> pretty l <+> t
@@ -242,7 +240,8 @@ instance Pretty Pattern where
         a (ExistentialPatternF e p)    = pretty e <> p
 
 singleArg :: Arg -> Doc
-singleArg = argHelper (<>)
+singleArg x@Arg{} = argHelper (<>) x
+singleArg x       = pretty x
 
 argHelper :: (Doc -> Doc -> Doc) -> Arg -> Doc
 argHelper _ (Arg (First s))   = pretty s
@@ -322,6 +321,7 @@ withHashtag _    = lbracket
 
 instance Pretty Existential where
     pretty (Existential [] b Nothing (Just e)) = withHashtag b <+> pretty e <+> rbracket
+    pretty (Existential [x@Arg{}] b Nothing Nothing) = withHashtag b <> singleArg x <> rbracket
     pretty (Existential bs b ty Nothing)  = withHashtag b <+> mconcat (punctuate ", " (fmap pretty (reverse bs))) <> gan ty <+> rbracket
     pretty (Existential bs b ty (Just e)) = withHashtag b <+> mconcat (punctuate ", " (fmap go (reverse bs))) <> gan ty <+> "|" <+> pretty e <+> rbracket
         where go (Arg (First s))  = pretty s
@@ -476,20 +476,20 @@ fancyU = foldMap pretty . reverse
 -- FIXME figure out a nicer algorithm for when/how to split lines.
 -- aka don't use '</>' in places.
 instance Pretty PreFunction where
-    pretty (PreF i si [] [] [NoArgs] rt Nothing (Just e)) = pretty i <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e) -- FIXME this is an awful hack
-    pretty (PreF i si [] [] as rt Nothing (Just e)) = pretty i <> prettyArgs as <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
-    pretty (PreF i si [] [] as rt (Just t) (Just e)) = pretty i </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
-    pretty (PreF i si [] us as rt (Just t) (Just e)) = pretty i </> fancyU us </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
-    pretty (PreF i si [] us [NoArgs] rt Nothing (Just e)) = pretty i </> fancyU us <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
-    pretty (PreF i si [] us as rt Nothing (Just e)) = pretty i </> fancyU us </> prettyArgs as <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
-    pretty (PreF i si pus [] as rt Nothing (Just e)) = fancyU pus </> pretty i <> prettyArgs as <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
-    pretty (PreF i si pus [] as rt (Just t) (Just e)) = fancyU pus </> pretty i <+> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
-    pretty (PreF i si pus us as rt (Just t) (Just e)) = fancyU pus </> pretty i </> fancyU us </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
-    pretty (PreF i si pus us as rt Nothing (Just e)) = fancyU pus </> pretty i </> fancyU us </> prettyArgs as <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
-    pretty (PreF i si [] [] as rt Nothing Nothing) = pretty i <> prettyArgs as <+> ":" <> text si <#> pretty rt
-    pretty (PreF i si [] us [] rt Nothing Nothing) = pretty i </> fancyU us <+> ":" <> text si <#> pretty rt
-    pretty (PreF i si [] us as rt Nothing Nothing) = pretty i </> fancyU us </> prettyArgs as <+> ":" <> text si <#> pretty rt
-    pretty (PreF i si pus us as rt Nothing Nothing) = fancyU pus </> pretty i </> fancyU us </> prettyArgs as <+> ":" <> text si <#> pretty rt
+    pretty (PreF i si [] [] [NoArgs] (Just rt) Nothing (Just e)) = pretty i <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e) -- FIXME this is an awful hack
+    pretty (PreF i si [] [] as (Just rt) Nothing (Just e)) = pretty i <> prettyArgs as <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
+    pretty (PreF i si [] [] as (Just rt) (Just t) (Just e)) = pretty i </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
+    pretty (PreF i si [] us as (Just rt) (Just t) (Just e)) = pretty i </> fancyU us </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
+    pretty (PreF i si [] us [NoArgs] (Just rt) Nothing (Just e)) = pretty i </> fancyU us <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
+    pretty (PreF i si [] us as (Just rt) Nothing (Just e)) = pretty i </> fancyU us </> prettyArgs as <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
+    pretty (PreF i si pus [] as (Just rt) Nothing (Just e)) = fancyU pus </> pretty i <> prettyArgs as <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
+    pretty (PreF i si pus [] as (Just rt) (Just t) (Just e)) = fancyU pus </> pretty i <+> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
+    pretty (PreF i si pus us as (Just rt) (Just t) (Just e)) = fancyU pus </> pretty i </> fancyU us </> ".<" <> pretty t <> ">." </> prettyArgs as <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
+    pretty (PreF i si pus us as (Just rt) Nothing (Just e)) = fancyU pus </> pretty i </> fancyU us </> prettyArgs as <+> ":" <> text si <#> pretty rt <+> "=" <$> indent 2 (pretty e)
+    pretty (PreF i si [] [] as (Just rt) Nothing Nothing) = pretty i <> prettyArgs as <+> ":" <> text si <#> pretty rt
+    pretty (PreF i si [] us [] (Just rt) Nothing Nothing) = pretty i </> fancyU us <+> ":" <> text si <#> pretty rt
+    pretty (PreF i si [] us as (Just rt) Nothing Nothing) = pretty i </> fancyU us </> prettyArgs as <+> ":" <> text si <#> pretty rt
+    pretty (PreF i si pus us as (Just rt) Nothing Nothing) = fancyU pus </> pretty i </> fancyU us </> prettyArgs as <+> ":" <> text si <#> pretty rt
     pretty _ = undefined
 
 instance Pretty DataPropLeaf where

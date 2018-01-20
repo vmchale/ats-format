@@ -9,8 +9,8 @@ staload "contrib/atscntrb-hx-intinf/SATS/intinf_vt.sats"
 
 // Existential types for even and odd numbers. These are only usable with the
 // ATS library.
-typedef Even = [ n : nat ] int(2*n)
-typedef Odd = [ n : nat ] int(2*n+1)
+typedef Even = [n:nat] int(2*n)
+typedef Odd = [n:nat] int(2*n+1)
 
 // TODO jacobi symbol
 // fn legendre(a: int, p: int) : int =

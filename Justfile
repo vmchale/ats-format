@@ -63,7 +63,7 @@ test:
     cd polyglot && atsfmt src/concurrency.dats -i
     cd polyglot && atsfmt src/shared.dats -i
     cd polyglot && atsfmt src/filetype.sats -i
-    cd polyglot && ./shake.hs
+    cd polyglot && ./bash/setup.sh && ./build
     @rm -rf polyglot
 
 size:

@@ -178,7 +178,7 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
     exp { Operator $$ "**" }
     mod { Keyword $$ KwMod }
     fixAt { Keyword $$ KwFixAt }
-    lambdaAt { Keyword $$ KwLambdaAt }
+    lamAt { Keyword $$ KwLambdaAt }
     infixr { FixityTok $$ "infixr" }
     infixl { FixityTok $$ "infixr" }
     prefix { FixityTok $$ "prefix" }
@@ -422,6 +422,7 @@ PreExpression : identifier lsqbracket PreExpression rsqbracket { Index $2 (Unqua
               | let ATS in Expression lineComment {% Left $ Expected (token_posn $5) "end" (take 2 $ to_string $5) }
               | let ATS in Expression extern {% Left $ Expected $5 "end" "extern" }
               | let ATS in Expression fun {% Left $ Expected $5 "end" "fun" }
+              | let ATS in Expression vtypedef {% Left $ Expected $5 "end" "vtypedef" }
               | if Expression then Expression else else {% Left $ Expected $6 "Expression" "else" }
 
 -- | Parse a termetric
@@ -430,12 +431,12 @@ Termetric : openTermetric StaticExpression closeTermetric { ($1, $2) }
           | dollar {% Left $ Expected $1 "$" "Termination metric" }
 
 -- | Parse an existential quantier on a type
-Existential : lsqbracket Args vbar Expression rsqbracket { Existential $2 False Nothing (Just $4) }
+Existential : lsqbracket Args vbar StaticExpression rsqbracket { Existential $2 False Nothing (Just $4) }
             | lsqbracket Args rsqbracket { Existential $2 False Nothing Nothing }
             | openExistential Args rsqbracket { Existential $2 True Nothing Nothing }
-            | openExistential Args vbar Expression rsqbracket { Existential $2 True Nothing (Just $4) }
+            | openExistential Args vbar StaticExpression rsqbracket { Existential $2 True Nothing (Just $4) }
             | lsqbracket Args colon Type rsqbracket { Existential $2 False (Just $4) Nothing } -- FIXME arguments should include more than just ':'
-            | lsqbracket Expression rsqbracket { Existential [] False Nothing (Just $2) }
+            | lsqbracket StaticExpression rsqbracket { Existential [] False Nothing (Just $2) }
             
 -- | Parse a universal quantifier on a type
 Universal : lbrace Args rbrace { Universal $2 Nothing Nothing }
@@ -548,13 +549,16 @@ DataPropLeaves : DataPropLeaf { [$1] }
 Signature : signature { $1 }
           | colon { "" }
 
+OptType : Type { Just $1 }
+        | { Nothing }
+
 -- | Parse a type signature and optional function body
-PreFunction : FunName openParen FullArgs closeParen Signature Type OptExpression { (PreF $1 $5 [] [] $3 $6 Nothing $7) }
-            | FunName Universals OptTermetric Signature Type OptExpression { PreF $1 $4 [] $2 [NoArgs] $5 $3 $6 }
-            | FunName Universals OptTermetric doubleParens Signature Type OptExpression { PreF $1 $5 [] $2 [] $6 $3 $7 }
-            | FunName Universals OptTermetric openParen FullArgs closeParen Signature Type OptExpression { PreF $1 $7 [] $2 $5 $8 $3 $9 }
-            | Universals FunName Universals OptTermetric openParen FullArgs closeParen Signature Type OptExpression { PreF $2 $8 $1 $3 $6 $9 $4 $10 }
-            | Universals FunName Universals OptTermetric Signature Type OptExpression { PreF $2 $5 $1 $3 [] $6 $4 $7 }
+PreFunction : FunName openParen FullArgs closeParen Signature OptType OptExpression { (PreF $1 $5 [] [] $3 $6 Nothing $7) }
+            | FunName Universals OptTermetric Signature OptType OptExpression { PreF $1 $4 [] $2 [NoArgs] $5 $3 $6 }
+            | FunName Universals OptTermetric doubleParens Signature OptType OptExpression { PreF $1 $5 [] $2 [] $6 $3 $7 }
+            | FunName Universals OptTermetric openParen FullArgs closeParen Signature OptType OptExpression { PreF $1 $7 [] $2 $5 $8 $3 $9 }
+            | Universals FunName Universals OptTermetric openParen FullArgs closeParen Signature OptType OptExpression { PreF $2 $8 $1 $3 $6 $9 $4 $10 }
+            | Universals FunName Universals OptTermetric Signature OptType OptExpression { PreF $2 $5 $1 $3 [] $6 $4 $7 }
             | prval {% Left $ Expected $1 "Function signature" "prval" }
             | var {% Left $ Expected $1 "Function signature" "var" }
             | val {% Left $ Expected (token_posn $1) "Function signature" "val" }
@@ -629,6 +633,8 @@ Operators : Operator { [$1] }
           | Operators Operator { $2 : $1 }
           | Operators identifier { to_string $2 : $1 }
 
+StackFunction : openParen Args closeParen Signature Type plainArrow Expression { StackF $4 $2 $5 $7 }
+
 -- | Parse a declaration
 Declaration : include string { Include $2 }
             | define { Define $1 }
@@ -646,8 +652,8 @@ Declaration : include string { Include $2 }
             | val Pattern eq Expression { Val (get_addendum $1) Nothing $2 $4 }
             | var Pattern eq Expression { Var Nothing $2 (Just $4) Nothing }
             | var Pattern colon Type { Var (Just $4) $2 Nothing Nothing }
-            | var Pattern eq fixAt IdentifierOr openParen Args closeParen Signature Type plainArrow Expression { Var Nothing $2 (Just $ FixAt (PreF (Unqualified $5) $9 [] [] $7 $10 Nothing (Just $12))) Nothing }
-            | var Pattern eq lambdaAt openParen Args closeParen Signature Type plainArrow Expression { Var Nothing $2 (Just $ LambdaAt (PreF (Unnamed $4) $8 [] [] $6 $9 Nothing (Just $11))) Nothing }
+            | var Pattern eq fixAt IdentifierOr StackFunction { Var Nothing $2 (Just $ FixAt $5 $6) Nothing }
+            | var Pattern eq lamAt StackFunction { Var Nothing $2 (Just $ LambdaAt $5) Nothing }
             | prval Pattern eq Expression { PrVal $2 $4 }
             | praxi PreFunction { Func $1 (Praxi $2) }
             | primplmnt Implementation { ProofImpl $2 }

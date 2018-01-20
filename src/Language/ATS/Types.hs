@@ -37,6 +37,7 @@ module Language.ATS.Types
     , StaticExpression (..)
     , StaticExpressionF (..)
     , Fixity (..)
+    , StackFunction (..)
     , rewriteATS
     , rewriteDecl
     -- * Lenses
@@ -191,7 +192,7 @@ data Universal = Universal { bound :: [Arg], typeU :: Maybe Type, prop :: Maybe 
     deriving (Show, Eq, Generic, NFData)
 
 -- | Wrapper for existential quantifiers/types
-data Existential = Existential { boundE :: [Arg], isOpen :: Bool, typeE :: Maybe Type, propE :: Maybe Expression }
+data Existential = Existential { boundE :: [Arg], isOpen :: Bool, typeE :: Maybe Type, propE :: Maybe StaticExpression }
     deriving (Show, Eq, Generic, NFData)
 
 -- | @~@ is used to negate numbers in ATS
@@ -277,8 +278,8 @@ data Expression = Let AlexPosn ATS (Maybe Expression)
                 | Begin AlexPosn Expression
                 | BinList { _op :: BinOp, _exprs :: [Expression] }
                 | PrecedeList { _exprs :: [Expression] }
-                | FixAt PreFunction
-                | LambdaAt PreFunction
+                | FixAt String StackFunction
+                | LambdaAt StackFunction
                 | ParenExpr AlexPosn Expression
                 deriving (Show, Eq, Generic, NFData)
 
@@ -304,12 +305,19 @@ data Function = Fun PreFunction
               | CastFn PreFunction
               deriving (Show, Eq, Generic, NFData)
 
+data StackFunction = StackF { stSig        :: String
+                            , stArgs       :: [Arg]
+                            , stReturnType :: Type
+                            , stExpression :: Expression
+                            }
+                            deriving (Show, Eq, Generic, NFData)
+
 data PreFunction = PreF { fname         :: Name -- ^ Function name
                         , sig           :: String -- ^ e.g. <> or \<!wrt>
                         , preUniversals :: [Universal] -- ^ Universal quantifiers making a function generic
                         , universals    :: [Universal] -- ^ Universal quantifiers/refinement type
                         , args          :: [Arg] -- ^ Actual function arguments
-                        , returnType    :: Type -- ^ Return type
+                        , returnType    :: Maybe Type -- ^ Return type
                         , termetric     :: Maybe StaticExpression -- ^ Optional termination metric
                         , expression    :: Maybe Expression -- ^ Expression holding the actual function body (not present in static templates)
                         }
