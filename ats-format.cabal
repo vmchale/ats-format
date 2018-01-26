@@ -2,7 +2,6 @@ name:                ats-format
 version:             0.2.0.5
 synopsis:            A source-code formatter for ATS
 description:         An opinionated source-code formatter for [ATS](http://www.ats-lang.org/).
-homepage:            https://hub.darcs.net/vmchale/ats-format#readme
 license:             BSD3
 license-file:        LICENSE
 author:              Vanessa McHale
@@ -15,7 +14,6 @@ data-files:          .travis.yml
                    , appveyor.yml
                    , Justfile
 extra-source-files:  stack.yaml
-                   , cabal.project.local
                    , .atsfmt.toml
                    , man/atsfmt.1
 cabal-version:       >=1.18
@@ -41,7 +39,7 @@ library
   exposed-modules:     Language.ATS.Exec
   other-modules:       Paths_ats_format
   build-depends:       base >= 4.10 && < 5
-                     , language-ats
+                     , language-ats >= 0.1.0.6
                      , optparse-applicative
                      , htoml-megaparsec >= 1.1.0.0
                      , text
@@ -74,5 +72,5 @@ executable atsfmt
   ghc-options:         -Wall 
 
 source-repository head
-  type:     git
-  location: https://github.com/vmchale/ats-format
+  type:     darcs
+  location: https://hub.darcs.net/vmchale/ats
