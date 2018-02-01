@@ -33,13 +33,6 @@ before_install:
       curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
     fi
   - chmod a+x ~/.local/bin/stack
-  - |
-    if [ `uname` = "Linux" ]
-    then
-      pip install yamllint
-    else
-      echo "skipping yaml verification..."
-    fi
 
 install:
   - stack --no-terminal --install-ghc build --only-dependencies
@@ -47,20 +40,6 @@ install:
 script:
   - stack --no-terminal build --haddock --no-haddock-deps --test --bench --no-run-tests --no-run-benchmarks
   - curl -sL https://raw.githubusercontent.com/vmchale/tomlcheck/master/sh/check | sh -s .atsfmt.toml
-  - |
-    if [ `uname` = "Linux" ]
-    then
-      yamllint stack.yaml
-      yamllint appveyor.yml
-      yamllint .yamllint
-      yamllint .travis.yml
-      yamllint .hlint.yaml
-      yamllint .stylish-haskell.yaml
-      curl -sL https://raw.github.com/ndmitchell/hlint/master/misc/travis.sh | sh -s src app
-      curl -sL https://raw.github.com/ndmitchell/weeder/master/misc/travis.sh | sh -s .
-    else
-      echo "skipping yaml verification..."
-    fi
   - stack build
   - |
     if [ `uname` = "Darwin" ]
