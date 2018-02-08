@@ -1,12 +1,12 @@
 name:                ats-format
-version:             0.2.0.14
+version:             0.2.0.15
 synopsis:            A source-code formatter for ATS
 description:         An opinionated source-code formatter for [ATS](http://www.ats-lang.org/).
 license:             BSD3
 license-file:        LICENSE
 author:              Vanessa McHale
 maintainer:          vamchale@gmail.com
-copyright:           Copyright: (c) 2017 Vanessa McHale
+copyright:           Copyright: (c) 2017-2018 Vanessa McHale
 category:            Parser, Language, ATS, Development
 build-type:          Custom
 extra-doc-files:     README.md

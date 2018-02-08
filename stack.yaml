@@ -10,7 +10,6 @@ extra-deps:
   - hspec-dirstream-0.3.0.0
   - cli-setup-0.1.0.3
   - language-ats-0.2.0.5
-  - ats-setup-0.3.0.2
 flags:
   ats-format:
     development: false
