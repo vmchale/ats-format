@@ -6,7 +6,7 @@
 <img alt="Screenshot of sample results" src=https://github.com/vmchale/ats-format/raw/master/atsfmt2.png>
 
 This is a code formatter for [ATS](http://www.ats-lang.org/). It is
-a work-in-progress, but it can handle a subset of the language already.
+a work-in-progress, but it can handle a good portion of the language already.
 
 If you find something that's not listed in `TODO.md` feel free to open
 an issue. Code samples that were formatted into something ugly are also welcome.

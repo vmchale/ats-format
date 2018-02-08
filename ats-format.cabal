@@ -1,5 +1,5 @@
 name:                ats-format
-version:             0.2.0.11
+version:             0.2.0.12
 synopsis:            A source-code formatter for ATS
 description:         An opinionated source-code formatter for [ATS](http://www.ats-lang.org/).
 license:             BSD3
