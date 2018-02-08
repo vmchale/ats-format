@@ -1,5 +1,5 @@
 name:                ats-format
-version:             0.2.0.12
+version:             0.2.0.13
 synopsis:            A source-code formatter for ATS
 description:         An opinionated source-code formatter for [ATS](http://www.ats-lang.org/).
 license:             BSD3
@@ -47,8 +47,6 @@ library
                      , unordered-containers
                      , process
                      , file-embed
-  build-tools:         happy
-                     , alex
   default-language:    Haskell2010
   if flag(development)
     ghc-options:       -Werror
