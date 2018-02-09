@@ -1,5 +1,5 @@
 name:                ats-format
-version:             0.2.0.16
+version:             0.2.0.17
 synopsis:            A source-code formatter for ATS
 description:         An opinionated source-code formatter for [ATS](http://www.ats-lang.org/).
 license:             BSD3
@@ -15,7 +15,7 @@ data-files:          .travis.yml
 extra-source-files:  stack.yaml
                    , .atsfmt.toml
                    , man/atsfmt.1
-cabal-version:       >=1.18
+cabal-version:       1.18
 
 custom-setup
   setup-depends:   base
@@ -28,14 +28,9 @@ Flag development {
   default: False
 }
 
-Flag library {
-  Description: Do not build executable
-  default: False
-}
-
-library
-  hs-source-dirs:      src
-  exposed-modules:     Language.ATS.Exec
+executable atsfmt
+  hs-source-dirs:      app
+  main-is:             Main.hs
   other-modules:       Paths_ats_format
   build-depends:       base >= 4.10 && < 5
                      , language-ats >= 0.1.1.10
@@ -47,20 +42,6 @@ library
                      , unordered-containers
                      , process
                      , file-embed
-  default-language:    Haskell2010
-  if flag(development)
-    ghc-options:       -Werror
-  if impl(ghc >= 8.0)
-    ghc-options:       -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat
-  ghc-options:         -Wall
-
-executable atsfmt
-  if flag(library)
-    buildable:         False
-  hs-source-dirs:      app
-  main-is:             Main.hs
-  build-depends:       base
-                     , ats-format
   default-language:    Haskell2010
   if flag(development)
     ghc-options:       -Werror

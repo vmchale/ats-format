@@ -3,6 +3,8 @@ sudo: false
 cache:
   directories:
     - $HOME/.stack
+    - $HOME/.cabal
+    - $HOME/.ghc
 addons:
   apt:
     packages:
@@ -38,6 +40,7 @@ install:
   - stack --no-terminal --install-ghc build --only-dependencies
 
 script:
+  # - cabal new-build --happy-options='-gcsa' --alex-options='-g'
   - stack --no-terminal build --haddock --no-haddock-deps --test --bench --no-run-tests --no-run-benchmarks
   - curl -sL https://raw.githubusercontent.com/vmchale/tomlcheck/master/sh/check | sh -s .atsfmt.toml
   - stack build
