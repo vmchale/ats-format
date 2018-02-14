@@ -131,8 +131,8 @@ fancyError :: Either (ATSError String) ATS -> IO ATS
 fancyError = either (printFail . show . pretty) pure
 
 pick :: Program -> IO ()
-pick (Program (Just p) False nc _)  = (genErr nc . parseATS . lexATS) =<< readFile p
-pick (Program Nothing _ nc False)   = (genErr nc . parseATS . lexATS) =<< getContents
+pick (Program (Just p) False nc _)  = (genErr nc . parse) =<< readFile p
+pick (Program Nothing _ nc False)   = (genErr nc . parse) =<< getContents
 pick (Program Nothing _ _ True)     = defaultConfig ".atsfmt.toml"
-pick (Program (Just p) True True _) = inplace p (fmap printATS . fancyError . parseATS . lexATS)
-pick (Program (Just p) True _ _)    = inplace p ((printCustom <=< fancyError) . parseATS . lexATS)
+pick (Program (Just p) True True _) = inplace p (fmap printATS . fancyError . parse)
+pick (Program (Just p) True _ _)    = inplace p ((printCustom <=< fancyError) . parse)

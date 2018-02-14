@@ -1,5 +1,5 @@
 ---
-resolver: lts-10.4
+resolver: lts-10.5
 packages:
   - '.'
 extra-deps:
@@ -9,7 +9,7 @@ extra-deps:
   - dirstream-1.0.3
   - hspec-dirstream-0.3.0.0
   - cli-setup-0.1.0.3
-  - language-ats-0.2.0.5
+  - language-ats-0.3.0.1
 flags:
   ats-format:
     development: false
