@@ -102,7 +102,7 @@ parseToml p = do
             pure (r, w, cf)
         Left e  -> printFail $ parseErrorPretty e
 
-printCustom :: ATS -> IO String
+printCustom :: Eq a => ATS a -> IO String
 printCustom ats = do
     let p = ".atsfmt.toml"
     config <- doesFileExist p
@@ -116,7 +116,7 @@ printCustom ats = do
     else
         pure $ printATS ats
 
-genErr :: Bool -> Either (ATSError String) ATS -> IO ()
+genErr :: Eq a => Bool -> Either ATSError (ATS a) -> IO ()
 genErr b = either (printFail . show . pretty) (putStrLn <=< go)
     where go = if not b then printCustom else pure . printATS
 
@@ -127,7 +127,7 @@ inplace p f = do
     unless (null newContents) $
         writeFile p newContents
 
-fancyError :: Either (ATSError String) ATS -> IO ATS
+fancyError :: Either ATSError (ATS a) -> IO (ATS a)
 fancyError = either (printFail . show . pretty) pure
 
 pick :: Program -> IO ()
