@@ -13,7 +13,7 @@ atsfmt - a source code formatter for ATS
 
   atsfmt -\-default-config
 
-  ac file.dats | atsfmt
+  cat file.dats | atsfmt
 
   atsfmt --default-config
 
