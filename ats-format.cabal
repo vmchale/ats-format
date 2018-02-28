@@ -10,8 +10,6 @@ copyright:           Copyright: (c) 2017-2018 Vanessa McHale
 category:            Parser, Language, ATS, Development
 build-type:          Custom
 extra-doc-files:     README.md
-data-files:          .travis.yml
-                   , appveyor.yml
 extra-source-files:  stack.yaml
                    , .atsfmt.toml
                    , man/atsfmt.1
